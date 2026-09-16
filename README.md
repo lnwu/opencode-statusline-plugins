@@ -1,5 +1,8 @@
 # opencode-go-statusline
 
+[![npm version](https://img.shields.io/npm/v/opencode-go-statusline)](https://www.npmjs.com/package/opencode-go-statusline)
+[![license](https://img.shields.io/npm/l/opencode-go-statusline)](https://github.com/lnwu/opencode-go-statusline/blob/main/LICENSE)
+
 在 OpenCode TUI 底栏显示 OpenCode Go 订阅用量。
 Display your OpenCode Go subscription quota in the TUI footer statusline.
 
