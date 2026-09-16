@@ -47,7 +47,7 @@ opencode plugin add opencode-go-statusline
 | 入口 | 作用 |
 | --- | --- |
 | `index.ts` | 服务端插件：通过 `ctx.integration.connection.active("opencode-go")` + `resolve()` 解析凭据，请求用量接口，并通过 RPC（`ctx.rpc.register`）暴露数据。 |
-| `tui.tsx` | TUI 插件：每 60 秒轮询 RPC，为 `opencode-go` 会话渲染底栏状态行。 |
+| `dist/tui.js` | TUI 插件（由 `tui.tsx` 编译而来）：每 60 秒轮询 RPC，为 `opencode-go` 会话渲染底栏状态行。 |
 
 ## 行为说明
 
@@ -58,8 +58,15 @@ opencode plugin add opencode-go-statusline
 
 ```sh
 bun install
+bun run build     # 编译 tui.tsx -> dist/tui.js
 bun run typecheck
 ```
+
+> **为什么 TUI 入口要预编译？** OpenCode 只对 `node_modules` 之外的插件文件应用
+> Solid JSX 转换（`babel-preset-solid`，universal 输出）。npm 包必然位于
+> `node_modules` 下，因此必须发布**已经过该转换编译**的 JSX——否则响应式属性会
+> 丢失 getter，底栏只渲染一次、之后不再更新。构建脚本复用
+> `@opentui/solid/bun-plugin`，即 OpenCode 运行时使用的同一个转换。
 
 ## 许可证
 

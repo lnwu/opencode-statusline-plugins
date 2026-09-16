@@ -47,7 +47,7 @@ The package contains two entries:
 | Entry | Role |
 | --- | --- |
 | `index.ts` | Server plugin. Resolves the `opencode-go` credential via `ctx.integration.connection.active("opencode-go")` + `resolve()`, fetches the usage endpoint, and exposes it over RPC (`ctx.rpc.register`). |
-| `tui.tsx` | TUI plugin. Polls the RPC every 60s and renders the footer statusline for `opencode-go` sessions. |
+| `dist/tui.js` | TUI plugin (compiled from `tui.tsx`). Polls the RPC every 60s and renders the footer statusline for `opencode-go` sessions. |
 
 ## Behavior notes
 
@@ -58,8 +58,17 @@ The package contains two entries:
 
 ```sh
 bun install
+bun run build     # compiles tui.tsx -> dist/tui.js
 bun run typecheck
 ```
+
+> **Why is the TUI entry pre-compiled?** OpenCode applies its Solid JSX transform
+> (`babel-preset-solid`, universal output) only to plugin files outside
+> `node_modules`. An npm package always lives under `node_modules`, so it must
+> ship JSX that is already compiled with that transform — otherwise reactive
+> props lose their getters and the footer paints once and never updates. The
+> build reuses `@opentui/solid/bun-plugin`, the same transform OpenCode uses at
+> runtime.
 
 ## License
 
