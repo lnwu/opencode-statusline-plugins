@@ -23,7 +23,8 @@
   "files": [
     "index.ts",
     "rpc.ts",
-    "tui.tsx"
+    "tui.tsx",
+    "tsconfig.json"
   ],
   "exports": {
     ".": "./index.ts",
