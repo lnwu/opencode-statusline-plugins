@@ -1,6 +1,6 @@
 {
   "name": "opencode-go-statusline",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "OpenCode TUI plugin: display OpenCode Go subscription quota (rolling 5h / weekly / monthly) in the footer statusline. V2-native, zero-config, no cookies.",
   "type": "module",
   "license": "MIT",
