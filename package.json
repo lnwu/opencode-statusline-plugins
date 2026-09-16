@@ -1,0 +1,52 @@
+{
+  "name": "opencode-go-statusline",
+  "version": "0.1.0",
+  "description": "OpenCode TUI plugin: display OpenCode Go subscription quota (rolling 5h / weekly / monthly) in the footer statusline. V2-native, zero-config, no cookies.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lnwu/opencode-go-statusline.git"
+  },
+  "homepage": "https://github.com/lnwu/opencode-go-statusline#readme",
+  "bugs": {
+    "url": "https://github.com/lnwu/opencode-go-statusline/issues"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "opencode-go",
+    "statusline",
+    "usage",
+    "quota"
+  ],
+  "files": [
+    "index.ts",
+    "rpc.ts",
+    "tui.tsx"
+  ],
+  "exports": {
+    ".": "./index.ts",
+    "./rpc": "./rpc.ts",
+    "./tui": "./tui.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode/plugin": "^2.0.4"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.5.10",
+    "@opentui/solid": ">=0.5.10",
+    "solid-js": ">=1.9.0"
+  },
+  "devDependencies": {
+    "@opencode/theme": "^2.0.4",
+    "@opentui/core": "^0.5.11",
+    "@opentui/solid": "^0.5.11",
+    "bun-types": "latest",
+    "solid-js": "^1.9.15",
+    "typescript": "latest"
+  }
+}
