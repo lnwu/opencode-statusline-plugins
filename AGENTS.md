@@ -36,6 +36,22 @@ instances at load time.
 - Single package: `bun run --filter opencode-go-statusline build`.
 - No tests exist; verify with build + typecheck.
 
+## CI & branch policy
+
+- `main` is protected by the `main-protection` ruleset: changes land via pull
+  request only, with the required check `ci`
+  (`.github/workflows/ci.yml` — install + typecheck + build) on an up-to-date
+  branch. Merging is squash-only and the head branch is deleted on merge.
+- `auto-merge.yml` queues every same-repo, non-draft PR for GitHub native
+  auto-merge, so a green `ci` merges the PR without further action. Drafts are
+  skipped until marked ready; fork PRs are never auto-merged.
+- The repository admin keeps a `pull_request`-scoped bypass as an emergency
+  valve: direct pushes to `main` are rejected, but an admin can force-merge a
+  failing PR. Don't use it in normal work.
+- Renovate auto-merges non-major dependency updates (pin/digest, and
+  devDependencies minor + patch) once `ci` passes; major updates need manual
+  review. Its `platformAutomerge` relies on the required check above.
+
 ## Conventions
 
 - Plugin ids use the npm package name: the server plugin id is the package name
