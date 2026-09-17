@@ -94,10 +94,14 @@ release event triggers `publish.yml`.
 ```sh
 gh run list --workflow publish.yml --limit 1
 gh run watch <run-id>
-npm view <pkg>@<version> version
 ```
 
-Report the release URL and the npm version once the workflow is green.
+The workflow is the verification bar: the run is green and its Publish log
+prints `+ <pkg>@<version>` with a signed provenance statement. A freshly
+published version can 404 on the registry for a few minutes — npm processes
+the upload — so don't wait for `npm view <pkg>@<version>` and don't treat a
+404 right after a green run as a failure. Report the release URL and the
+version; check the registry only on request or when the run looks wrong.
 
 ## Never
 
