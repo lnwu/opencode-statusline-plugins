@@ -130,10 +130,11 @@ How it works, and why (verified against opencode 2.0.5):
   entry, which is why the server relays them.
 - Each implemented package keeps a bilingual changelog: `CHANGELOG.md`
   (English) and `CHANGELOG.zh-CN.md`, Keep a Changelog structure (persistent
-  `## Unreleased`, `## x.y.z - YYYY-MM-DD`, Added/Changed/Fixed/Security)
-  written in Common Changelog style: imperative, one line per change, linked
-  PRs, no CI/internal/dependency noise. Planned README-only packages have none;
-  create the pair together with the first implementation release.
+  `## Unreleased` with the `_None yet._` / `_暂无变更。_` placeholder while
+  empty, `## x.y.z - YYYY-MM-DD`, Added/Changed/Fixed/Security) written in
+  Common Changelog style: imperative, one line per change, linked PRs, no
+  CI/internal/dependency noise. Planned README-only packages have none; create
+  the pair together with the first implementation release.
 - When planning any change, consider whether this file needs an update (new
   commands, package layout, release process) and include it in the same change.
 
