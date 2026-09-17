@@ -68,8 +68,10 @@ How it works, and why (verified against opencode 2.0.5):
   (`RPC is unavailable`), leaving the statusline at `Go —`; `opencode.json`
   `plugins: ["/abs/path"]` entries do not load at all because that loader only
   looks for `<dir>/index.ts` and ignores package `exports`.
-- Frames land in `test/e2e/.artifacts/<case>.txt` and are uploaded by CI. Never
-  upload OpenCode logs — they can contain the Authorization header.
+- Frames land in `test/e2e/.artifacts/<case>.txt`, are rendered into the CI job
+  summary (so they are readable without downloading), and are uploaded as an
+  artifact. Never upload OpenCode logs — they can contain the Authorization
+  header.
 - The test TUI writes an isolated `cli.json` that hides the sidebar and the tab
   strip (`session.sidebar: "hide"`, `tabs.enabled: false`), so the frame has no
   session-dependent panels and the footer has room for the full statusline. The
