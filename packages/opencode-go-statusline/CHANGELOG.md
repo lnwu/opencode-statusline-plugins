@@ -6,6 +6,10 @@
 
 _None yet._
 
+## 1.0.0 - 2026-09-17
+
+_First stable release._
+
 ## 0.3.1 - 2026-09-17
 
 ### Changed
