@@ -1,0 +1,37 @@
+name: Auto-merge
+
+# Queue every same-repo, non-draft PR for GitHub native auto-merge so a green
+# `ci` merges it without manual action. Uses the `pull_request` event (never
+# `pull_request_target`): fork PRs receive a read-only token and the `if`
+# condition excludes them anyway, so untrusted code is never auto-merged.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  enable:
+    if: >-
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [[ "$(gh pr view "$PR" --json autoMergeRequest --jq '.autoMergeRequest == null')" == "true" ]]; then
+            gh pr merge --auto --squash "$PR"
+          else
+            echo "auto-merge already enabled for #$PR"
+          fi
