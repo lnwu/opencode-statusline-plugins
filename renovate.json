@@ -3,27 +3,15 @@
   "extends": [
     "config:recommended"
   ],
-  "automergeStrategy": "squash",
-  "platformAutomerge": true,
   "packageRules": [
     {
-      "description": "Auto-merge pin and digest updates once CI passes",
+      "description": "Major updates need manual review; the auto-merge workflow skips PRs with this label",
       "matchUpdateTypes": [
-        "pin",
-        "digest"
+        "major"
       ],
-      "automerge": true
-    },
-    {
-      "description": "Auto-merge devDependency minor and patch updates once CI passes",
-      "matchDepTypes": [
-        "devDependencies"
-      ],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ],
-      "automerge": true
+      "addLabels": [
+        "manual-merge"
+      ]
     }
   ]
 }
