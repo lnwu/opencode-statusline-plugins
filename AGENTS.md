@@ -220,8 +220,11 @@ integration tests.
   instead.
 - Package screenshots live in `packages/<pkg>/assets/` and are referenced by
   relative paths (`./assets/...`), so they render in the repo and in PR
-  previews. npm does not resolve relative image paths, so on the npm page the
-  screenshot falls back to its alt text. They are captured from the real TUI;
-  `files: ["dist"]` keeps them out of the tarball.
+  previews. npm rewrites relative paths against the repository's default
+  branch (`raw.githubusercontent.com/<owner>/<repo>/HEAD/...`) — verified for a
+  root-level package, but whether it honors `repository.directory` in this
+  monorepo is untested. Check the npm page after the first release and switch
+  to an absolute raw URL if the image is broken. `files: ["dist"]` keeps the
+  assets out of the tarball.
 - Check the V2 plugin docs (https://opencode.ai/v2/docs/build/plugins) or the
   `opencode` skill before changing plugin API usage.
