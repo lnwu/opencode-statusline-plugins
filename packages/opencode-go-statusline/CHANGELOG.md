@@ -6,6 +6,10 @@
 
 _None yet._
 
+## 0.3.0 - 2026-09-17
+
+_Internal refactor: extract shared code into a `core` workspace package and publish pre-built entries. No behavior changes._
+
 ## 0.2.0 - 2026-09-17
 
 ### Added
