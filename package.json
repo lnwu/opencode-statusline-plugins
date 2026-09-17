@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "bun run --filter './packages/*' --if-present build",
-    "typecheck": "bun run --filter './packages/*' --if-present typecheck"
+    "typecheck": "bun run --filter './packages/*' --if-present typecheck",
+    "test": "bun run --filter './packages/*' --if-present test"
   }
 }
