@@ -7,6 +7,8 @@
 
 Display your OpenCode Go subscription quota in the TUI footer statusline.
 
+![OpenCode Go quota in the footer statusline](https://raw.githubusercontent.com/lnwu/opencode-statusline-plugins/main/packages/opencode-go-statusline/assets/usage.en.png)
+
 ## ✨ Features
 
 - Live **rolling 5h / weekly / monthly** usage percentages in the prompt footer
