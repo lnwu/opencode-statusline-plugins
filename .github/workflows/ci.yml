@@ -38,7 +38,8 @@ jobs:
         env:
           OPENCODE_VERSION: "2.0.5"
         run: |
-          bun add -g "@opencode/cli@$OPENCODE_VERSION"
+          # `--trust` runs the package postinstall that downloads the platform binary.
+          bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
           echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
           "$HOME/.bun/bin/opencode" --version
 
