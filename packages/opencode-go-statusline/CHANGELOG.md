@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_None yet._
+### Changed
+
+- Refresh the README with emoji headings, a corrected `language` value table, an `opencode.jsonc` example, and demo screenshots.
 
 ## 0.3.0 - 2026-09-17
 

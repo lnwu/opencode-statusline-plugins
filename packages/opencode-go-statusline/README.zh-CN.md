@@ -1,4 +1,4 @@
-# opencode-go-statusline
+# 📊 opencode-go-statusline
 
 [![npm version](https://img.shields.io/npm/v/opencode-go-statusline)](https://www.npmjs.com/package/opencode-go-statusline)
 [![license](https://img.shields.io/npm/l/opencode-go-statusline)](https://github.com/lnwu/opencode-statusline-plugins/blob/main/packages/opencode-go-statusline/LICENSE)
@@ -7,7 +7,9 @@
 
 在 OpenCode TUI 底栏显示 OpenCode Go 订阅用量。
 
-## 功能
+![OpenCode 底栏中的 OpenCode Go 用量](./assets/usage.zh-CN.png)
+
+## ✨ 功能
 
 - 在输入框底栏实时显示 **5 小时滚动 / 每周 / 每月** 用量百分比
 - 展开底栏详情（或终端足够宽）时显示各窗口的重置倒计时
@@ -16,58 +18,47 @@
 - 用量约每分钟自动刷新一次
 - 标签跟随终端语言（`5h / 周 / 月` 或 `5h / Weekly / Monthly`），可用 `language` 选项覆盖
 
-## 环境要求
+## 📋 环境要求
 
-- OpenCode `>2.0.0`
-- 已登录 OpenCode Go 凭据（`opencode-go`）
+- OpenCode@2
+- 已登录 OpenCode Go（`opencode-go` 凭据）
 
-## 安装
+## 🚀 安装
 
 ```sh
 opencode plugin add opencode-go-statusline
 ```
 
-或在 `~/.config/opencode/opencode.json` 中添加：
-
-```jsonc
-{
-  "plugins": ["opencode-go-statusline"]
-}
-```
-
-## 语言
+## 🌐 语言
 
 底栏标签默认跟随终端语言环境：`zh*` 显示 `5h / 周 / 月`，其他显示
 `5h / Weekly / Monthly`。
 
 可在 `language` 选项中覆盖：
 
-```jsonc title="~/.config/opencode/opencode.json"
+```jsonc title="~/.config/opencode/opencode.jsonc"
 {
   "plugins": [
-    { "package": "opencode-go-statusline", "options": { "language": "zh-CN" } }
-  ]
+    { "package": "opencode-go-statusline", "options": { "language": "zh-CN" } },
+  ],
 }
 ```
 
-服务端插件会把该选项转给底栏。也可以在 `~/.config/opencode/cli.json` 中用
-相同的 object 形式配置，CLI 本地值优先于服务端值。
+| 取值               | 显示                                                    |
+| ------------------ | ------------------------------------------------------- |
+| `"auto"`（默认）   | 按 `LC_ALL`、`LC_MESSAGES`、`LANGUAGE`、`LANG` 自动判断 |
+| `"en"`             | `5h / Weekly / Monthly`                                 |
+| `"zh-CN"` / `"zh"` | `5h / 周 / 月`                                          |
 
-| 取值 | 显示 |
-| --- | --- |
-| `"auto"`（默认） | 按 `LC_ALL`、`LC_MESSAGES`、`LANGUAGE`、`LANG` 自动判断 |
-| `"en"` | `5h / Weekly / Monthly` |
-| `"zh-CN"` 或 `"zh"` | `5h / 周 / 月` |
-
-## 疑难排查
+## 🩺 疑难排查
 
 - **底栏始终不显示** —— 仅当会话模型 provider 为 `opencode-go` 时才显示，请先在会话中切换到 OpenCode Go 模型。
 - **只显示 `Go —` 而没有数字** —— 无法解析 `opencode-go` 凭据，或服务端插件被禁用。请检查 OpenCode Go 登录状态。
 
-## 变更日志
+## 📜 变更日志
 
 完整发布历史见 [CHANGELOG.zh-CN.md](https://github.com/lnwu/opencode-statusline-plugins/blob/main/packages/opencode-go-statusline/CHANGELOG.zh-CN.md)。
 
-## 许可证
+## 📄 许可证
 
 MIT

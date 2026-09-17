@@ -17,8 +17,8 @@ release is published. Invariants live in `AGENTS.md` → Release / Conventions.
    - pre-1.0: breaking changes or features → minor; fixes only → patch
    - 1.0+: breaking → major; features → minor; fixes → patch
    - nothing user-visible under `## Unreleased` (the placeholder counts as
-     nothing) → ask whether to release at all; if yes, use a notice instead of
-     change groups (see 0.1.6)
+     nothing; package README updates count as user-visible) → ask whether to
+     release at all; if yes, use a notice instead of change groups (see 0.1.6)
 3. Use the tag form `<package>@<version>`, e.g. `opencode-go-statusline@0.2.1`.
 
 ## 1. Prepare the release PR
@@ -111,8 +111,8 @@ Report the release URL and the npm version once the workflow is green.
   the default cuts a commit and tag during the bump, before the release PR is
   merged.
 - Never update only one language file; `bun run changelog:check` fails CI.
-- Never list internal-only changes (CI, tests, dependency bumps); entries are
-  curated — see `AGENTS.md` → Conventions.
+- Never list internal-only changes (CI, tests, dependency bumps, internal
+  docs); entries are curated — see `AGENTS.md` → Conventions.
 
 ## If something fails
 
