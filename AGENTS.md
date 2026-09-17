@@ -42,15 +42,17 @@ instances at load time.
   request only, with the required check `ci`
   (`.github/workflows/ci.yml` — install + typecheck + build) on an up-to-date
   branch. Merging is squash-only and the head branch is deleted on merge.
-- `auto-merge.yml` queues every same-repo, non-draft PR for GitHub native
-  auto-merge, so a green `ci` merges the PR without further action. Drafts are
-  skipped until marked ready; fork PRs are never auto-merged.
+- `auto-merge.yml` waits for the required `ci` check on same-repo, non-draft
+  PRs, then squash-merges and deletes the head branch. It merges synchronously
+  rather than through GitHub's native auto-merge: with `GITHUB_TOKEN`, native
+  auto-merge silently skips `delete_branch_on_merge` and suppresses the
+  resulting push events on `main`. Add the `manual-merge` label to opt a PR
+  out; fork PRs are never auto-merged.
 - The repository admin keeps a `pull_request`-scoped bypass as an emergency
   valve: direct pushes to `main` are rejected, but an admin can force-merge a
   failing PR. Don't use it in normal work.
-- Renovate auto-merges non-major dependency updates (pin/digest, and
-  devDependencies minor + patch) once `ci` passes; major updates need manual
-  review. Its `platformAutomerge` relies on the required check above.
+- Renovate labels major updates `manual-merge` so they wait for a human; the
+  rest of its dependency PRs are merged by `auto-merge.yml` once `ci` passes.
 
 ## Conventions
 
