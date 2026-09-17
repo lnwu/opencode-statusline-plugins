@@ -22,18 +22,11 @@
     "quota"
   ],
   "files": [
-    "src",
     "dist"
   ],
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
-    },
-    "./rpc": {
-      "types": "./src/rpc.ts",
-      "import": "./src/rpc.ts"
-    },
+    ".": "./dist/index.js",
+    "./rpc": "./dist/rpc.js",
     "./tui": "./dist/tui.js"
   },
   "scripts": {
@@ -62,6 +55,7 @@
     "@opentui/core": "^0.5.11",
     "@opentui/solid": "^0.5.11",
     "bun-types": "^1.4.2",
+    "core": "*",
     "solid-js": "^1.9.15",
     "typescript": "^7.0.2"
   }

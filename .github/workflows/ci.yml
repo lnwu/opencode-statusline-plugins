@@ -27,6 +27,9 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: Core unit tests
+        run: bun run --filter core test
+
       - name: Check changelogs
         run: bun run changelog:check
 

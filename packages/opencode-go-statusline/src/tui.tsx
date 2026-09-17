@@ -2,6 +2,7 @@
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createSignal, onCleanup, Show } from "solid-js"
+import { resolveLanguage, type Language } from "core/language"
 import { UsageRpc, type Usage, type UsageWindow } from "./rpc"
 
 const INTERVAL_MS = 60000
@@ -13,21 +14,7 @@ const LABELS = {
   "zh-CN": { rolling: "5h", weekly: "周", monthly: "月" },
 } as const
 
-type Language = keyof typeof LABELS
 type Labels = (typeof LABELS)[Language]
-
-function detectLanguage(): Language {
-  const locale = process.env.LC_ALL || process.env.LC_MESSAGES || process.env.LANGUAGE || process.env.LANG || ""
-  return /^zh([_.-]|$)/i.test(locale) ? "zh-CN" : "en"
-}
-
-function resolveLabels(...options: unknown[]): Labels {
-  for (const option of options) {
-    if (option === "en") return LABELS.en
-    if (option === "zh" || option === "zh-CN") return LABELS["zh-CN"]
-  }
-  return LABELS[detectLanguage()]
-}
 
 function countdown(resetsAt: string, now: number) {
   const ms = new Date(resetsAt).getTime() - now
@@ -140,7 +127,7 @@ export default Plugin.define({
     const rpc = context.client.rpc(UsageRpc)
     const [usage, setUsage] = createSignal<Usage>()
     const [serverLanguage, setServerLanguage] = createSignal<unknown>()
-    const labels = () => resolveLabels(context.options.language, serverLanguage())
+    const labels = () => LABELS[resolveLanguage(context.options.language, serverLanguage())]
     let timer: ReturnType<typeof setInterval> | undefined
 
     async function refresh() {
