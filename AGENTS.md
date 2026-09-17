@@ -170,6 +170,10 @@ integration tests.
   the change; a `core` change that alters a plugin's behavior is recorded in
   that plugin's changelog. Changes that only touch CI, tests, dev tooling, or
   dependencies get no entries.
+- Package README updates count as user-visible changes: npm renders the README
+  from the published tarball, so edits reach the npm page only through a normal
+  release. Land entries under `## Unreleased` with the README change; internal
+  docs (`AGENTS.md`, dev notes) get no entries.
 - Each implemented package keeps a bilingual changelog: `CHANGELOG.md`
   (English) and `CHANGELOG.zh-CN.md`, Keep a Changelog structure (persistent
   `## Unreleased` with the `_None yet._` / `_暂无变更。_` placeholder while
@@ -208,7 +212,8 @@ integration tests.
 ## Docs
 
 - Update `README.md` and `README.zh-CN.md` together (root and package) when
-  behavior or plugin status changes.
+  behavior or plugin status changes, and release package README changes like
+  any other user-visible change so the npm page stays in sync (see Conventions).
 - Package READMEs are user-facing only: features, requirements, install, and
   troubleshooting. Keep implementation and development notes in this file
   instead.

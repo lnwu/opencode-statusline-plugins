@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_暂无变更。_
+### 变更
+
+- 更新 README：标题加 emoji，修正 `language` 取值表格，示例改用 `opencode.jsonc`。
 
 ## 0.3.0 - 2026-09-17
 
