@@ -12,8 +12,9 @@
 //
 // `--check` runs in CI. Per package it verifies that both language files
 // exist, list the same section headings in the same order (starting with
-// `## Unreleased`), use the heading format, have no empty released sections,
-// and cover the `package.json` version. Packages without a `CHANGELOG.md`
+// `## Unreleased`), use the heading format, have no empty sections (released
+// ones carry entries, `## Unreleased` carries at least its placeholder), and
+// cover the `package.json` version. Packages without a `CHANGELOG.md`
 // (README-only, planned) are skipped, so creating the file opts a package
 // into validation.
 import { existsSync, readdirSync, readFileSync } from "node:fs"
@@ -124,7 +125,14 @@ function check(): void {
       ["CHANGELOG.zh-CN.md", zh],
     ] as const) {
       for (const section of sections) {
-        if (section.label === "Unreleased") continue
+        if (section.label === "Unreleased") {
+          if (section.body === "") {
+            errors.push(
+              `${pkg}: ${file}: the "## Unreleased" section is empty (use a placeholder such as "_None yet._" until an entry lands)`,
+            )
+          }
+          continue
+        }
         const dated = DATED.exec(section.label)
         const version = dated ? dated[1]! : section.label
         if (!SEMVER.test(version)) {

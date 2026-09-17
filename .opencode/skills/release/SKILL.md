@@ -16,8 +16,9 @@ release is published. Invariants live in `AGENTS.md` → Release / Conventions.
 2. Propose the version and get explicit approval before changing files:
    - pre-1.0: breaking changes or features → minor; fixes only → patch
    - 1.0+: breaking → major; features → minor; fixes → patch
-   - nothing user-visible under `## Unreleased` → ask whether to release at
-     all; if yes, use a notice instead of change groups (see 0.1.6)
+   - nothing user-visible under `## Unreleased` (the placeholder counts as
+     nothing) → ask whether to release at all; if yes, use a notice instead of
+     change groups (see 0.1.6)
 3. Use the tag form `<package>@<version>`, e.g. `opencode-go-statusline@0.2.1`.
 
 ## 1. Prepare the release PR
@@ -32,7 +33,9 @@ git switch -c release/<pkg>-<version>
 In **both** language files of the package:
 
 - Rename `## Unreleased` to `## <version> - <YYYY-MM-DD>` (`date +%F`).
-- Add a fresh empty `## Unreleased` at the top of the version list.
+- Add a fresh `## Unreleased` at the top of the version list with the
+  placeholder line (`_None yet._` / `_暂无变更。_`); the first entry replaces
+  the placeholder.
 - Do not add link-reference footers: `release-notes.ts` computes the compare
   and changelog links when it prints the release body.
 
