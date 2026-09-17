@@ -203,6 +203,11 @@ integration tests.
   merge commit on `main` (`git tag -a`), create the release from the promoted
   section (`bun scripts/release-notes.ts … | gh release create … -F -`), and
   verify `publish.yml`.
+- Publish verification stops at `publish.yml`: the run is green and its
+  Publish log prints `+ <package>@<version>` with a signed provenance
+  statement. npm can take minutes to process a fresh upload, so don't block on
+  `npm view <package>@<version>` — a registry 404 right after a green run is
+  normal. Only check the registry when asked or when the run looks wrong.
 - Don't automate the changelog or the release creation (release-please,
   changesets, semantic-release, git-cliff). Entries are curated by hand on
   purpose, the tooling would require Conventional Commits or changeset files,
