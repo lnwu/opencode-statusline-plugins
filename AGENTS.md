@@ -219,12 +219,9 @@ integration tests.
   troubleshooting. Keep implementation and development notes in this file
   instead.
 - Package screenshots live in `packages/<pkg>/assets/` and are referenced by
-  relative paths (`./assets/...`), so they render in the repo and in PR
-  previews. npm rewrites relative paths against the repository's default
-  branch (`raw.githubusercontent.com/<owner>/<repo>/HEAD/...`) — verified for a
-  root-level package, but whether it honors `repository.directory` in this
-  monorepo is untested. Check the npm page after the first release and switch
-  to an absolute raw URL if the image is broken. `files: ["dist"]` keeps the
-  assets out of the tarball.
+  relative paths (`./assets/...`). They render in the repo, in PR previews, and
+  on the npm page — npm rewrites relative paths and resolves the package
+  subdirectory (verified with `opencode-go-statusline@0.3.1`). `files: ["dist"]`
+  keeps the assets out of the tarball.
 - Check the V2 plugin docs (https://opencode.ai/v2/docs/build/plugins) or the
   `opencode` skill before changing plugin API usage.
