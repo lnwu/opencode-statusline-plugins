@@ -50,6 +50,28 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
         run: bun run --filter opencode-go-statusline test
 
+      - name: Publish TUI frames to the job summary
+        if: always()
+        run: |
+          dir=packages/opencode-go-statusline/test/e2e/.artifacts
+          {
+            echo "## TUI frames"
+            echo
+            shopt -s nullglob
+            files=("$dir"/*.txt)
+            if (( ${#files[@]} == 0 )); then
+              echo "_No frames captured._"
+            fi
+            for file in "${files[@]}"; do
+              echo "### $(basename "$file" .txt)"
+              echo
+              echo '```text'
+              cat "$file"
+              echo '```'
+              echo
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload TUI frames
         if: always()
         uses: actions/upload-artifact@v7
