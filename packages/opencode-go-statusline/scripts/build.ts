@@ -1,28 +1,8 @@
-// Build the TUI entry with the same Solid transform OpenCode applies to
-// local .tsx plugins at runtime.
-//
-// Why this is required: OpenCode only runs the Solid JSX transform
-// (babel-preset-solid, `generate: "universal"`) on plugin files *outside*
-// node_modules. A published package is always under node_modules, so its JSX
-// must already be compiled with this transform — otherwise the JSX runtime
-// receives plain, eagerly-evaluated props (no reactive getters) and the
-// statusline paints once and never updates.
+// Build the server, RPC, and TUI entries referenced by package.json via the
+// shared core helper (see `core/src/build.ts` for why pre-compiling is
+// required and what stays external).
 //
 // Run from the package root: `bun run build` (bun run scripts/build.ts).
-import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
+import { buildPlugin } from "core/build"
 
-const result = await Bun.build({
-  entrypoints: ["src/tui.tsx"],
-  outdir: "dist",
-  target: "bun",
-  format: "esm",
-  plugins: [createSolidTransformPlugin({ moduleName: "@opentui/solid" })],
-  external: ["@opencode/plugin", "@opencode/plugin/*", "@opentui/*", "solid-js", "solid-js/*"],
-})
-
-if (!result.success) {
-  for (const log of result.logs) console.error(log)
-  process.exit(1)
-}
-
-for (const output of result.outputs) console.log(`built ${output.path}`)
+await buildPlugin()

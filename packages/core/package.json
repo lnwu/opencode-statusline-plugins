@@ -1,0 +1,21 @@
+{
+  "name": "core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Internal shared code for the statusline plugins: language resolution, the e2e harness, and the build helper. Never published.",
+  "exports": {
+    "./language": "./src/language.ts",
+    "./harness": "./src/harness.ts",
+    "./build": "./src/build.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@opentui/solid": "^0.5.11",
+    "bun-types": "^1.4.2",
+    "typescript": "^7.0.2"
+  }
+}

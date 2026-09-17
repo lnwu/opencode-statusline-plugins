@@ -1,23 +1,24 @@
-// End-to-end integration tests: boot a real `opencode` TUI against the working
-// tree and assert the footer statusline. Requires the OpenCode CLI on PATH and
-// OPENCODE_API_KEY (see AGENTS.md).
+// End-to-end integration tests: boot a real `opencode` TUI against the built
+// `dist/` entries and assert the footer statusline. The reusable harness lives
+// in `core/src/harness.ts`; this file configures it and declares the cases.
+// Requires the OpenCode CLI and tmux on PATH and OPENCODE_API_KEY (see
+// AGENTS.md).
 //
 // Run: bun run build && OPENCODE_API_KEY=... bun run test
+import { join, resolve } from "node:path"
 import { afterAll, beforeAll, expect, test } from "bun:test"
-import {
-  cleanupCase,
-  prepareCase,
-  requireApiKey,
-  run,
-  sendPrompt,
-  startTui,
-  waitForFrame,
-  writeArtifacts,
-  type CaseContext,
-  type CaseSpec,
-} from "./harness"
+import { createHarness, type CaseContext, type CaseSpec } from "core/harness"
 
+const PACKAGE_ROOT = resolve(import.meta.dir, "..", "..")
 const CASE_TIMEOUT_MS = 240_000
+
+const harness = createHarness({
+  packageRoot: PACKAGE_ROOT,
+  serverEntry: join(PACKAGE_ROOT, "dist", "index.js"),
+  tuiEntry: join(PACKAGE_ROOT, "dist", "tui.js"),
+  credentialEnv: "OPENCODE_API_KEY",
+  invalidCredential: "sk-e2e-invalid",
+})
 
 // One object per scenario. `expect` patterns must all match the captured frame,
 // `reject` patterns must not. Cases with `prompt` send a real model request
@@ -66,61 +67,39 @@ const CASES: CaseSpec[] = [
     width: 160,
     height: 20,
     model: { providerID: "opencode-go", id: "deepseek-v4.1-flash" },
-    invalidKey: true,
+    credential: "invalid",
     expect: [/Go —/],
   },
 ]
 
-let apiKey = ""
-
-const TOOLS = [
-  { name: "opencode", args: ["--version"] },
-  { name: "tmux", args: ["-V"] },
-]
-
-async function checkTool(name: string, args: string[]): Promise<{ ok: boolean; version: string; error?: string }> {
-  try {
-    const result = await run([name, ...args], { timeoutMs: 30_000 })
-    const version = result.stdout.trim().split("\n")[0] ?? ""
-    if (result.code === 0 && version) return { ok: true, version }
-    return { ok: false, version, error: result.stderr.trim() || `exit ${result.code}` }
-  } catch (error) {
-    return { ok: false, version: "", error: String(error) }
-  }
-}
-
 beforeAll(async () => {
-  apiKey = requireApiKey()
-  for (const tool of TOOLS) {
-    const check = await checkTool(tool.name, tool.args)
-    if (!check.ok) throw new Error(`${tool.name} is required for the integration tests: ${check.error ?? "not found"}`)
-    console.log(check.version)
-  }
+  harness.requireCredential()
+  await harness.assertTools()
 }, 60_000)
 
 const contexts: CaseContext[] = []
 
 afterAll(async () => {
-  for (const context of contexts) await cleanupCase(context)
+  for (const context of contexts) await harness.cleanupCase(context)
 }, 120_000)
 
 for (const spec of CASES) {
   test(
     spec.name,
     async () => {
-      const context = await prepareCase(spec, apiKey)
+      const context = await harness.prepareCase(spec)
       contexts.push(context)
       let frame = ""
       try {
         console.log(`[${spec.name}] session=${context.sessionID} service=:${context.servicePort}`)
 
         if (spec.prompt) {
-          await sendPrompt(context, spec.prompt)
+          await harness.sendPrompt(context, spec.prompt)
           console.log(`[${spec.name}] model request succeeded`)
         }
 
-        await startTui(context)
-        frame = await waitForFrame(context, spec.expect[0]!)
+        await harness.startTui(context)
+        frame = await harness.waitForFrame(context, spec.expect[0]!)
 
         for (const pattern of spec.expect) {
           expect(frame, `expected ${pattern} in ${spec.name} frame`).toMatch(pattern)
@@ -134,7 +113,7 @@ for (const spec of CASES) {
         console.error(`[${spec.name}] captured frame:\n${captured}`)
         throw error
       } finally {
-        if (frame) await writeArtifacts(context, frame)
+        if (frame) await harness.writeArtifacts(context, frame)
       }
     },
     CASE_TIMEOUT_MS,
