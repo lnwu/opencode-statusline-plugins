@@ -9,6 +9,7 @@
   "scripts": {
     "build": "bun run --filter './packages/*' --if-present build",
     "typecheck": "bun run --filter './packages/*' --if-present typecheck",
+    "changelog:check": "bun scripts/release-notes.ts --check",
     "test": "bun run --filter './packages/*' --if-present test"
   }
 }

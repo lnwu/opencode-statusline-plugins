@@ -23,6 +23,8 @@ Bun-workspace monorepo of OpenCode V2 TUI plugins (footer statusline quota).
 | `test/e2e/harness.ts` | Integration harness: isolated OpenCode env, real TUI in tmux, frame capture. |
 | `test/e2e/tui.test.ts` | `bun test` cases: live usage, locale labels, non-Go session hidden, `Go —` fallback. |
 | `test/e2e/.artifacts/` | Captured TUI frames (gitignored; uploaded by CI). |
+| `CHANGELOG.md` | Release history (English). Source of truth for the GitHub release body. |
+| `CHANGELOG.zh-CN.md` | Release history (Simplified Chinese); `bun run changelog:check` keeps the pair in sync. |
 
 The TUI entry must ship pre-compiled: OpenTUI's Solid transform skips `.tsx`
 under `node_modules`, so raw JSX from a published package loses reactive props
@@ -31,11 +33,16 @@ and the statusline paints only once. `scripts/build.ts` reuses
 `solid-js` as bare imports so OpenCode rewrites them to its own runtime
 instances at load time.
 
+The repo-level `scripts/release-notes.ts` turns a changelog section into the
+GitHub release body and validates the bilingual pair (`bun run changelog:check`;
+see Release).
+
 ## Commands
 
 - `bun install` — lockfile is `bun.lock`; use Bun, not npm/pnpm.
 - `bun run build` / `bun run typecheck` — all packages; root scripts use
   `--if-present`, so README-only packages are skipped.
+- `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
 - `bun run test` — all packages (integration tests; see below).
 - Single package: `bun run --filter opencode-go-statusline build`.
 
@@ -87,9 +94,9 @@ How it works, and why (verified against opencode 2.0.5):
 
 - `main` is protected by the `main-protection` ruleset: changes land via pull
   request only, with the required check `ci`
-  (`.github/workflows/ci.yml` — install + typecheck + build + integration tests)
-  on an up-to-date branch. Merging is squash-only and the head branch is deleted
-  on merge.
+  (`.github/workflows/ci.yml` — install + typecheck + changelog check + build +
+  integration tests) on an up-to-date branch. Merging is squash-only and the
+  head branch is deleted on merge.
 - The `ci` job's integration-test step needs the `OPENCODE_GO_API_KEY`
   repository secret (a real OpenCode Go API key; CI exposes it to the tests as
   `OPENCODE_API_KEY`). It makes one small model request per case and reads live
@@ -121,6 +128,12 @@ How it works, and why (verified against opencode 2.0.5):
   terminal locale (`LC_ALL` → `LC_MESSAGES` → `LANGUAGE` → `LANG`). The TUI
   plugin loader does not forward `opencode.json` plugin options to the `./tui`
   entry, which is why the server relays them.
+- Each implemented package keeps a bilingual changelog: `CHANGELOG.md`
+  (English) and `CHANGELOG.zh-CN.md`, Keep a Changelog structure (persistent
+  `## Unreleased`, `## x.y.z - YYYY-MM-DD`, Added/Changed/Fixed/Security)
+  written in Common Changelog style: imperative, one line per change, linked
+  PRs, no CI/internal/dependency noise. Planned README-only packages have none;
+  create the pair together with the first implementation release.
 - When planning any change, consider whether this file needs an update (new
   commands, package layout, release process) and include it in the same change.
 
@@ -130,6 +143,21 @@ How it works, and why (verified against opencode 2.0.5):
   `publish.yml`; the tag must match that package's `package.json`. It runs
   build + typecheck, then publishes via npm OIDC trusted publishing. Don't run
   `npm publish` locally.
+- The changelog section is the release body — one release, one section. The
+  step-by-step runbook is the `release` skill
+  (`.opencode/skills/release/SKILL.md`); follow it when asked to release.
+  In short: user-visible changes land under `## Unreleased` in both
+  changelogs (same PR as the change); a release PR promotes the section to
+  `## x.y.z - YYYY-MM-DD` and bumps `package.json`; after the merge, tag the
+  merge commit on `main` (`git tag -a`), create the release from the promoted
+  section (`bun scripts/release-notes.ts … | gh release create … -F -`), and
+  verify `publish.yml`.
+- Don't automate the changelog or the release creation (release-please,
+  changesets, semantic-release, git-cliff). Entries are curated by hand on
+  purpose, the tooling would require Conventional Commits or changeset files,
+  and a release created with the default `GITHUB_TOKEN` would not trigger
+  `publish.yml` (GitHub suppresses workflow runs for token-created events) —
+  silently skipping the npm publish.
 
 ## Docs
 

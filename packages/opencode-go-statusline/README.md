@@ -65,6 +65,10 @@ wins over the server one.
 - **The statusline never shows up** — it is hidden unless the session's model provider is `opencode-go`. Switch to an OpenCode Go model in the session.
 - **It shows `Go —` instead of numbers** — the `opencode-go` credential could not be resolved, or the server plugin is disabled. Check your OpenCode Go login.
 
+## Changelog
+
+See [CHANGELOG.md](https://github.com/lnwu/opencode-statusline-plugins/blob/main/packages/opencode-go-statusline/CHANGELOG.md) for the release history.
+
 ## License
 
 MIT

@@ -27,6 +27,9 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: Check changelogs
+        run: bun run changelog:check
+
       - name: Build
         run: bun run build
 

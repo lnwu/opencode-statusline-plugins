@@ -64,6 +64,10 @@ opencode plugin add opencode-go-statusline
 - **底栏始终不显示** —— 仅当会话模型 provider 为 `opencode-go` 时才显示，请先在会话中切换到 OpenCode Go 模型。
 - **只显示 `Go —` 而没有数字** —— 无法解析 `opencode-go` 凭据，或服务端插件被禁用。请检查 OpenCode Go 登录状态。
 
+## 变更日志
+
+完整发布历史见 [CHANGELOG.zh-CN.md](https://github.com/lnwu/opencode-statusline-plugins/blob/main/packages/opencode-go-statusline/CHANGELOG.zh-CN.md)。
+
 ## 许可证
 
 MIT
