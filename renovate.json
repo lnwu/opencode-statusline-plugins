@@ -3,6 +3,21 @@
   "extends": [
     "config:recommended"
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track the pinned OpenCode CLI used by the integration tests",
+      "fileMatch": [
+        "^\\.github/workflows/ci\\.yml$"
+      ],
+      "matchStrings": [
+        "OPENCODE_VERSION:\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "@opencode/cli",
+      "versioningTemplate": "npm"
+    }
+  ],
   "packageRules": [
     {
       "description": "Major updates need manual review; the auto-merge workflow skips PRs with this label",
