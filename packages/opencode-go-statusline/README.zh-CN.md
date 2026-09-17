@@ -14,6 +14,7 @@
 - 颜色提示：正常为弱化色，≥70% 变提示色，≥90% 或配额窗口状态异常时变错误色
 - 仅当会话模型 provider 为 `opencode-go` 时显示
 - 用量约每分钟自动刷新一次
+- 标签跟随终端语言（`5h / 周 / 月` 或 `5h / Weekly / Monthly`），可用 `language` 选项覆盖
 
 ## 环境要求
 
@@ -33,6 +34,30 @@ opencode plugin add opencode-go-statusline
   "plugins": ["opencode-go-statusline"]
 }
 ```
+
+## 语言
+
+底栏标签默认跟随终端语言环境：`zh*` 显示 `5h / 周 / 月`，其他显示
+`5h / Weekly / Monthly`。
+
+可在 `language` 选项中覆盖：
+
+```jsonc title="~/.config/opencode/opencode.json"
+{
+  "plugins": [
+    { "package": "opencode-go-statusline", "options": { "language": "zh-CN" } }
+  ]
+}
+```
+
+服务端插件会把该选项转给底栏。也可以在 `~/.config/opencode/cli.json` 中用
+相同的 object 形式配置，CLI 本地值优先于服务端值。
+
+| 取值 | 显示 |
+| --- | --- |
+| `"auto"`（默认） | 按 `LC_ALL`、`LC_MESSAGES`、`LANGUAGE`、`LANG` 自动判断 |
+| `"en"` | `5h / Weekly / Monthly` |
+| `"zh-CN"` 或 `"zh"` | `5h / 周 / 月` |
 
 ## 疑难排查
 

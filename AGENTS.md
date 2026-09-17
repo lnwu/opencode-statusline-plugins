@@ -41,6 +41,12 @@ instances at load time.
 - Plugin ids use the npm package name: the server plugin id is the package name
   (`opencode-go-statusline`), the TUI entry appends `.tui`, and the RPC id
   matches the server plugin id. Follow this for the planned packages too.
+- The footer `language` option (`"auto"` default / `"en"` / `"zh-CN"`) resolves
+  in the TUI entry with this priority: `cli.json` plugin options, then the
+  server plugin's `options.language` relayed over the usage RPC, then the
+  terminal locale (`LC_ALL` → `LC_MESSAGES` → `LANGUAGE` → `LANG`). The TUI
+  plugin loader does not forward `opencode.json` plugin options to the `./tui`
+  entry, which is why the server relays them.
 - When planning any change, consider whether this file needs an update (new
   commands, package layout, release process) and include it in the same change.
 

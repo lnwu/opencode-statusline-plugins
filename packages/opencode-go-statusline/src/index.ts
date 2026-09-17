@@ -8,6 +8,8 @@ const FETCH_TIMEOUT_MS = 10000
 export default Plugin.define({
   id: "opencode-go-statusline",
   async setup(ctx) {
+    const language = ctx.options.language
+
     async function fetchUsage(): Promise<Usage | undefined> {
       try {
         const connection = await ctx.integration.connection.active(INTEGRATION_ID)
@@ -31,7 +33,10 @@ export default Plugin.define({
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
         const usage = await fetchUsage()
-        return usage ? { usage } : {}
+        return {
+          ...(usage ? { usage } : {}),
+          ...(typeof language === "string" ? { language } : {}),
+        }
       },
     })
   },

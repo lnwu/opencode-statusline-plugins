@@ -14,6 +14,7 @@ Display your OpenCode Go subscription quota in the TUI footer statusline.
 - Color feedback: subdued normally, info at ≥70%, error at ≥90% or when a quota window reports a non-`ok` status
 - Only appears for sessions whose model provider is `opencode-go`
 - Usage refreshes about once per minute
+- Labels follow your terminal locale (`5h / Weekly / Monthly` or `5h / 周 / 月`), overridable with the `language` option
 
 ## Requirements
 
@@ -33,6 +34,31 @@ Or add it to your `~/.config/opencode/opencode.json`:
   "plugins": ["opencode-go-statusline"]
 }
 ```
+
+## Language
+
+Labels follow your terminal locale by default: `zh*` locales show `5h / 周 / 月`,
+everything else shows `5h / Weekly / Monthly`.
+
+Override it with the plugin's `language` option:
+
+```jsonc title="~/.config/opencode/opencode.json"
+{
+  "plugins": [
+    { "package": "opencode-go-statusline", "options": { "language": "zh-CN" } }
+  ]
+}
+```
+
+The server plugin relays the option to the statusline. You can also set it in
+`~/.config/opencode/cli.json` with the same object form; the CLI-local value
+wins over the server one.
+
+| Value               | Display                          |
+| ------------------- | -------------------------------- |
+| `"auto"` (default)  | Detect from `LC_ALL`, `LC_MESSAGES`, `LANGUAGE`, `LANG` |
+| `"en"`              | `5h / Weekly / Monthly`          |
+| `"zh-CN"` or `"zh"` | `5h / 周 / 月`                    |
 
 ## Troubleshooting
 

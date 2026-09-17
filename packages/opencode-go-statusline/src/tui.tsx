@@ -8,6 +8,27 @@ const INTERVAL_MS = 60000
 const DETAILED_WIDTH = 125
 const GO_PROVIDER_ID = "opencode-go"
 
+const LABELS = {
+  en: { rolling: "5h", weekly: "Weekly", monthly: "Monthly" },
+  "zh-CN": { rolling: "5h", weekly: "周", monthly: "月" },
+} as const
+
+type Language = keyof typeof LABELS
+type Labels = (typeof LABELS)[Language]
+
+function detectLanguage(): Language {
+  const locale = process.env.LC_ALL || process.env.LC_MESSAGES || process.env.LANGUAGE || process.env.LANG || ""
+  return /^zh([_.-]|$)/i.test(locale) ? "zh-CN" : "en"
+}
+
+function resolveLabels(...options: unknown[]): Labels {
+  for (const option of options) {
+    if (option === "en") return LABELS.en
+    if (option === "zh" || option === "zh-CN") return LABELS["zh-CN"]
+  }
+  return LABELS[detectLanguage()]
+}
+
 function countdown(resetsAt: string, now: number) {
   const ms = new Date(resetsAt).getTime() - now
   if (!Number.isFinite(ms) || ms <= 0) return undefined
@@ -53,6 +74,7 @@ function GoUsage(props: {
   sessionID: () => string | undefined
   showDetails: () => boolean
   usage: () => Usage | undefined
+  labels: Labels
 }) {
   const ctx = usePlugin()
   const [isGo, setIsGo] = createSignal(false)
@@ -99,11 +121,11 @@ function GoUsage(props: {
         >
           {(u) => (
             <box flexDirection="row" flexShrink={1} minWidth={0}>
-              <Segment label="5h" win={u().rolling} detailed={detailed()} />
+              <Segment label={props.labels.rolling} win={u().rolling} detailed={detailed()} />
               <Separator />
-              <Segment label="周" win={u().weekly} detailed={detailed()} />
+              <Segment label={props.labels.weekly} win={u().weekly} detailed={detailed()} />
               <Separator />
-              <Segment label="月" win={u().monthly} detailed={detailed()} />
+              <Segment label={props.labels.monthly} win={u().monthly} detailed={detailed()} />
             </box>
           )}
         </Show>
@@ -117,12 +139,15 @@ export default Plugin.define({
   setup(context) {
     const rpc = context.client.rpc(UsageRpc)
     const [usage, setUsage] = createSignal<Usage>()
+    const [serverLanguage, setServerLanguage] = createSignal<unknown>()
+    const labels = () => resolveLabels(context.options.language, serverLanguage())
     let timer: ReturnType<typeof setInterval> | undefined
 
     async function refresh() {
       try {
-        const result = (await rpc.get({})) as { usage?: Usage }
+        const result = (await rpc.get({})) as { usage?: Usage; language?: string }
         if (result?.usage) setUsage(result.usage)
+        if (typeof result?.language === "string") setServerLanguage(result.language)
       } catch {
         // keep the last known usage; retry on the next interval
       }
@@ -138,6 +163,7 @@ export default Plugin.define({
           sessionID={() => input.sessionID}
           showDetails={() => input.showDetails}
           usage={usage}
+          labels={labels()}
         />
       ),
     })

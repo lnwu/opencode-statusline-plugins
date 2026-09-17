@@ -32,7 +32,7 @@ export const UsageRpc = Rpc.define({
       input: { type: "object", properties: {}, additionalProperties: false },
       output: {
         type: "object",
-        properties: { usage: usageSchema },
+        properties: { usage: usageSchema, language: { type: "string" } },
         additionalProperties: false,
       },
     },
