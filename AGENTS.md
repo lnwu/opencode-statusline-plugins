@@ -165,11 +165,16 @@ integration tests.
 - Published packages ship `dist/` only: `files: ["dist"]` and every `exports`
   entry points at a built bundle. `src/` is dev-only. `core` is never published
   and has no changelog; it is inlined into each plugin's bundles.
+- User-visible changes (features, behavior changes, fixes, breaking changes)
+  land with entries under `## Unreleased` in both changelogs, in the same PR as
+  the change; a `core` change that alters a plugin's behavior is recorded in
+  that plugin's changelog. Changes that only touch CI, tests, dev tooling, or
+  dependencies get no entries.
 - Each implemented package keeps a bilingual changelog: `CHANGELOG.md`
   (English) and `CHANGELOG.zh-CN.md`, Keep a Changelog structure (persistent
   `## Unreleased` with the `_None yet._` / `_暂无变更。_` placeholder while
   empty, `## x.y.z - YYYY-MM-DD`, Added/Changed/Fixed/Security) written in
-  Common Changelog style: imperative, one line per change, linked PRs, no
+  Common Changelog style: imperative, one line per change, no
   CI/internal/dependency noise. Planned README-only packages have none; create
   the pair together with the first implementation release.
 - When planning any change, consider whether this file needs an update (new
