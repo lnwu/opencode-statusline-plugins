@@ -1,8 +1,15 @@
 # AGENTS.md
 
 Bun-workspace monorepo of OpenCode V2 TUI plugins (footer statusline quota).
-Only `packages/opencode-go-statusline` is implemented; kimi-code and copilot
-are README-only placeholders.
+
+## Packages
+
+- `opencode-go-statusline` — OpenCode Go quota (rolling 5h / weekly / monthly).
+  Implemented; the only package with code and published releases.
+- `opencode-kimi-code-statusline` — Kimi Code (Kimi For Coding) quota. Planned;
+  README-only, npm name reserved.
+- `opencode-copilot-statusline` — GitHub Copilot premium requests. Planned;
+  README-only, npm name reserved.
 
 ## Commands
 
