@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["bun-types"]
   },
-  "include": ["index.ts", "rpc.ts", "tui.tsx", "build.ts"]
+  "include": ["src", "scripts"]
 }

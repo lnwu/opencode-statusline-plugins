@@ -12,15 +12,15 @@ OpenCode TUI plugin that displays your **GitHub Copilot** premium request quota 
 
 ## Planned requirements
 
-- OpenCode v2.0.4 or newer
+- OpenCode `>2.0.0`
 - A GitHub Copilot subscription with credentials available locally (GitHub CLI / Copilot auth)
 
 ## Status
 
 - [ ] Research credential source
 - [ ] Research usage endpoint
-- [ ] Implement server plugin (`index.ts`, RPC)
-- [ ] Implement TUI entry (`tui.tsx`)
+- [ ] Implement server plugin (`src/index.ts`, RPC)
+- [ ] Implement TUI entry (`src/tui.tsx`)
 
 npm package name reserved for release: `opencode-copilot-statusline`
 

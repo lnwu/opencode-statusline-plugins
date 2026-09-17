@@ -7,23 +7,27 @@
     },
     "packages/opencode-go-statusline": {
       "name": "opencode-go-statusline",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
-        "@opencode/plugin": "^2.0.4",
+        "@opencode/plugin": ">2.0.0",
       },
       "devDependencies": {
-        "@opencode/theme": "^2.0.4",
+        "@opencode/theme": ">2.0.0",
         "@opentui/core": "^0.5.11",
         "@opentui/solid": "^0.5.11",
-        "bun-types": "latest",
+        "bun-types": "^1.4.2",
         "solid-js": "^1.9.15",
-        "typescript": "latest",
+        "typescript": "^7.0.2",
       },
       "peerDependencies": {
+        "@opencode/theme": ">2.0.0",
         "@opentui/core": ">=0.5.10",
         "@opentui/solid": ">=0.5.10",
         "solid-js": ">=1.9.0",
       },
+      "optionalPeers": [
+        "@opencode/theme",
+      ],
     },
   },
   "packages": {

@@ -1,6 +1,6 @@
 {
   "name": "opencode-go-statusline",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "OpenCode TUI plugin: display OpenCode Go subscription quota (rolling 5h / weekly / monthly) in the footer statusline. V2-native, zero-config, no cookies.",
   "type": "module",
   "license": "MIT",
@@ -22,35 +22,45 @@
     "quota"
   ],
   "files": [
-    "index.ts",
-    "rpc.ts",
-    "tui.tsx",
+    "src",
     "dist"
   ],
   "exports": {
-    ".": "./index.ts",
-    "./rpc": "./rpc.ts",
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./rpc": {
+      "types": "./src/rpc.ts",
+      "import": "./src/rpc.ts"
+    },
     "./tui": "./dist/tui.js"
   },
   "scripts": {
-    "build": "bun run build.ts",
+    "build": "bun run scripts/build.ts",
     "typecheck": "tsc --noEmit",
     "prepack": "bun run build"
   },
   "dependencies": {
-    "@opencode/plugin": "^2.0.4"
+    "@opencode/plugin": ">2.0.0"
   },
   "peerDependencies": {
+    "@opencode/theme": ">2.0.0",
     "@opentui/core": ">=0.5.10",
     "@opentui/solid": ">=0.5.10",
     "solid-js": ">=1.9.0"
   },
+  "peerDependenciesMeta": {
+    "@opencode/theme": {
+      "optional": true
+    }
+  },
   "devDependencies": {
-    "@opencode/theme": "^2.0.4",
+    "@opencode/theme": ">2.0.0",
     "@opentui/core": "^0.5.11",
     "@opentui/solid": "^0.5.11",
-    "bun-types": "latest",
+    "bun-types": "^1.4.2",
     "solid-js": "^1.9.15",
-    "typescript": "latest"
+    "typescript": "^7.0.2"
   }
 }

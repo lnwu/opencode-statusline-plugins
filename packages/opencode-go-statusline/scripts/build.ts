@@ -7,10 +7,12 @@
 // must already be compiled with this transform — otherwise the JSX runtime
 // receives plain, eagerly-evaluated props (no reactive getters) and the
 // statusline paints once and never updates.
+//
+// Run from the package root: `bun run build` (bun run scripts/build.ts).
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
 
 const result = await Bun.build({
-  entrypoints: ["tui.tsx"],
+  entrypoints: ["src/tui.tsx"],
   outdir: "dist",
   target: "bun",
   format: "esm",

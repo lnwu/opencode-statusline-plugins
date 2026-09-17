@@ -13,15 +13,15 @@ OpenCode TUI plugin that displays your **Kimi Code** (Kimi For Coding) subscript
 
 ## Planned requirements
 
-- OpenCode v2.0.4 or newer
+- OpenCode `>2.0.0`
 - An active Kimi Code subscription with credentials available locally
 
 ## Status
 
 - [ ] Research credential source (Kimi CLI / OAuth token)
 - [ ] Research usage endpoint
-- [ ] Implement server plugin (`index.ts`, RPC)
-- [ ] Implement TUI entry (`tui.tsx`)
+- [ ] Implement server plugin (`src/index.ts`, RPC)
+- [ ] Implement TUI entry (`src/tui.tsx`)
 
 npm package name reserved for release: `opencode-kimi-code-statusline`
 
