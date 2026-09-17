@@ -28,3 +28,31 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: Install tmux
+        run: sudo apt-get update && sudo apt-get install -y tmux
+
+      # Pinned on purpose: the integration harness depends on opencode's TUI
+      # plugin loading and managed-service behavior.
+      - name: Install OpenCode CLI
+        env:
+          OPENCODE_VERSION: "2.0.5"
+        run: |
+          # `--trust` runs the package postinstall that downloads the platform binary.
+          bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+          "$HOME/.bun/bin/opencode" --version
+
+      - name: Integration tests (real TUI)
+        env:
+          # Repo secret name; the tests read it as OPENCODE_API_KEY.
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
+        run: bun run --filter opencode-go-statusline test
+
+      - name: Upload TUI frames
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tui-frames
+          path: packages/opencode-go-statusline/test/e2e/.artifacts
+          if-no-files-found: ignore
