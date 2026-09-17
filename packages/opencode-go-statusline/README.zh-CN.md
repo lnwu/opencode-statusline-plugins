@@ -7,7 +7,7 @@
 
 在 OpenCode TUI 底栏显示 OpenCode Go 订阅用量。
 
-![OpenCode 底栏中的 OpenCode Go 用量](https://raw.githubusercontent.com/lnwu/opencode-statusline-plugins/main/packages/opencode-go-statusline/assets/usage.zh-CN.png)
+![OpenCode 底栏中的 OpenCode Go 用量](./assets/usage.zh-CN.png)
 
 ## ✨ 功能
 
