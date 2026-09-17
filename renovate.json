@@ -1,7 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":automergeMinor",
+    ":automergeDigest"
   ],
   "customManagers": [
     {
@@ -16,17 +18,6 @@
       "datasourceTemplate": "npm",
       "depNameTemplate": "@opencode/cli",
       "versioningTemplate": "npm"
-    }
-  ],
-  "packageRules": [
-    {
-      "description": "Major updates need manual review; the auto-merge workflow skips PRs with this label",
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "addLabels": [
-        "manual-merge"
-      ]
     }
   ]
 }

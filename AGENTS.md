@@ -94,19 +94,21 @@ How it works, and why (verified against opencode 2.0.5):
   repository secret (a real OpenCode Go API key; CI exposes it to the tests as
   `OPENCODE_API_KEY`). It makes one small model request per case and reads live
   quota; there is no mock. Fork PRs get no secret, so they fail this step.
-- `OPENCODE_VERSION` in `ci.yml` is tracked by a Renovate custom manager; its
-  major updates carry `manual-merge` like other majors.
-- `auto-merge.yml` waits for the required `ci` check on same-repo, non-draft
-  PRs, then squash-merges and deletes the head branch. It merges synchronously
-  rather than through GitHub's native auto-merge: with `GITHUB_TOKEN`, native
-  auto-merge silently skips `delete_branch_on_merge` and suppresses the
-  resulting push events on `main`. Add the `manual-merge` label to opt a PR
-  out; fork PRs are never auto-merged.
+- Renovate is the only auto-merging actor. Its config extends
+  `:automergeMinor` and `:automergeDigest`, so non-major dependency and GitHub
+  Actions updates carry `automerge` and Renovate enables the platform's native
+  auto-merge; GitHub squash-merges them once `ci` passes. Major updates wait
+  for a human. `platformAutomerge` defaults to `true`, no label is involved.
+- No workflow auto-merges PRs in general: human PRs are merged manually. The
+  repository's native auto-merge setting stays enabled so a PR can be opted in
+  by hand from the UI. Merges driven by a workflow's `GITHUB_TOKEN` were also
+  observed to skip `delete_branch_on_merge` and suppress the resulting `main`
+  push events.
+- `OPENCODE_VERSION` in `ci.yml` is tracked by a Renovate custom manager and
+  follows the Renovate policy above: non-major updates auto-merge, majors wait.
 - The repository admin keeps a `pull_request`-scoped bypass as an emergency
   valve: direct pushes to `main` are rejected, but an admin can force-merge a
   failing PR. Don't use it in normal work.
-- Renovate labels major updates `manual-merge` so they wait for a human; the
-  rest of its dependency PRs are merged by `auto-merge.yml` once `ci` passes.
 
 ## Conventions
 
