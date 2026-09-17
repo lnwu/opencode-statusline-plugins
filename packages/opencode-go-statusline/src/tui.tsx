@@ -113,7 +113,7 @@ function GoUsage(props: {
 }
 
 export default Plugin.define({
-  id: "lnwu.go-usage.tui",
+  id: "opencode-go-statusline.tui",
   setup(context) {
     const rpc = context.client.rpc(UsageRpc)
     const [usage, setUsage] = createSignal<Usage>()

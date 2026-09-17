@@ -26,7 +26,7 @@ const usageSchema = {
 }
 
 export const UsageRpc = Rpc.define({
-  id: "lnwu.go-usage",
+  id: "opencode-go-statusline",
   methods: {
     get: {
       input: { type: "object", properties: {}, additionalProperties: false },

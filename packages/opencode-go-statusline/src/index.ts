@@ -6,7 +6,7 @@ const INTEGRATION_ID = "opencode-go"
 const FETCH_TIMEOUT_MS = 10000
 
 export default Plugin.define({
-  id: "lnwu.go-usage",
+  id: "opencode-go-statusline",
   async setup(ctx) {
     async function fetchUsage(): Promise<Usage | undefined> {
       try {

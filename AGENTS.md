@@ -38,6 +38,9 @@ instances at load time.
 
 ## Conventions
 
+- Plugin ids use the npm package name: the server plugin id is the package name
+  (`opencode-go-statusline`), the TUI entry appends `.tui`, and the RPC id
+  matches the server plugin id. Follow this for the planned packages too.
 - When planning any change, consider whether this file needs an update (new
   commands, package layout, release process) and include it in the same change.
 
