@@ -33,7 +33,8 @@
     "build": "bun run scripts/build.ts",
     "typecheck": "tsc --noEmit",
     "pretest": "bun run build",
-    "test": "bun test",
+    "test": "bun test test/e2e",
+    "test:pack": "bun test test/pack.test.ts",
     "prepack": "bun run build"
   },
   "dependencies": {
