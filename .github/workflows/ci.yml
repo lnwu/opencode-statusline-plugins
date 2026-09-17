@@ -46,7 +46,7 @@ jobs:
       # plugin loading and managed-service behavior.
       - name: Install OpenCode CLI
         env:
-          OPENCODE_VERSION: "2.0.5"
+          OPENCODE_VERSION: "2.0.6"
         run: |
           # `--trust` runs the package postinstall that downloads the platform binary.
           bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
