@@ -39,7 +39,11 @@ In **both** language files of the package:
 - Do not add link-reference footers: `release-notes.ts` computes the compare
   and changelog links when it prints the release body.
 
-Bump `version` in `packages/<pkg>/package.json`.
+Bump `version` in `packages/<pkg>/package.json` (hand-edit, or
+`bun pm version <version> --no-git-tag-version` from the package directory).
+Then run `bun install` and include `bun.lock` in the release commit if its
+workspace version entry changed — only `bun install` syncs it, `bun pm version`
+does not (oven-sh/bun#28935).
 
 First release of a package with no changelog yet: create the pair (English +
 `.zh-CN.md`) with the first version entry, following
@@ -58,7 +62,7 @@ tests on the PR with the repository secret.
 ## 3. Land the release PR
 
 ```sh
-git add packages/<pkg>
+git add packages/<pkg> bun.lock
 git commit -m "Release <pkg> <version>"
 git push -u origin HEAD
 gh pr create --title "Release <pkg> <version>" --body "<what ships>"
@@ -103,6 +107,9 @@ Report the release URL and the npm version once the workflow is green.
   stays behind. The maintainer's `gh release create` is intentional.
 - Never tag before the release PR is merged, and never tag a commit that is
   not on `main`.
+- Never use `bun pm version` / `npm version` without `--no-git-tag-version`:
+  the default cuts a commit and tag during the bump, before the release PR is
+  merged.
 - Never update only one language file; `bun run changelog:check` fails CI.
 - Never list internal-only changes (CI, tests, dependency bumps); entries are
   curated — see `AGENTS.md` → Conventions.

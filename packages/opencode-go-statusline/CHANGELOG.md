@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 0.3.0 - 2026-09-17
+
 ### Changed
 
 - Publish pre-built `dist/` bundles and move shared internals into a `core` workspace package. Statusline behavior is unchanged.
