@@ -6,11 +6,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lnwu/opencode-go-statusline.git"
+    "url": "git+https://github.com/lnwu/opencode-statusline-plugins.git",
+    "directory": "packages/opencode-go-statusline"
   },
-  "homepage": "https://github.com/lnwu/opencode-go-statusline#readme",
+  "homepage": "https://github.com/lnwu/opencode-statusline-plugins/tree/main/packages/opencode-go-statusline#readme",
   "bugs": {
-    "url": "https://github.com/lnwu/opencode-go-statusline/issues"
+    "url": "https://github.com/lnwu/opencode-statusline-plugins/issues"
   },
   "keywords": [
     "opencode",

@@ -1,9 +1,9 @@
 # opencode-go-statusline
 
 [![npm version](https://img.shields.io/npm/v/opencode-go-statusline)](https://www.npmjs.com/package/opencode-go-statusline)
-[![license](https://img.shields.io/npm/l/opencode-go-statusline)](https://github.com/lnwu/opencode-go-statusline/blob/main/LICENSE)
+[![license](https://img.shields.io/npm/l/opencode-go-statusline)](https://github.com/lnwu/opencode-statusline-plugins/blob/main/packages/opencode-go-statusline/LICENSE)
 
-**English** | [简体中文](https://github.com/lnwu/opencode-go-statusline/blob/main/README.zh-CN.md)
+**English** | [简体中文](https://github.com/lnwu/opencode-statusline-plugins/blob/main/packages/opencode-go-statusline/README.zh-CN.md)
 
 Display your OpenCode Go subscription quota in the TUI footer statusline.
 
