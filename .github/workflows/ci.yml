@@ -56,3 +56,6 @@ jobs:
           name: tui-frames
           path: packages/opencode-go-statusline/test/e2e/.artifacts
           if-no-files-found: ignore
+          # The artifact directory is dot-prefixed, which upload-artifact treats
+          # as hidden and skips by default.
+          include-hidden-files: true
