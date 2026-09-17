@@ -44,11 +44,11 @@ instances at load time.
 `test/e2e/tui.test.ts` boots the real OpenCode TUI against the working tree and
 asserts the footer statusline. Requirements: `opencode` on PATH, `tmux` on PATH
 (CI installs it), `OPENCODE_API_KEY` in the environment (the `OPENCODE_GO_API_KEY`
-repository secret in CI), a completed `bun run build`, and network access
-(models.dev + a real model call to `opencode-go/deepseek-v4.1-flash`).
+repository secret in CI), and network access (models.dev + a real model call to
+`opencode-go/deepseek-v4.1-flash`). The package's `pretest` script rebuilds
+`dist/tui.js`, so the tests always exercise the current source.
 
 ```sh
-bun run build
 OPENCODE_API_KEY=sk-... bun run --filter opencode-go-statusline test
 ```
 
@@ -92,6 +92,8 @@ How it works, and why (verified against opencode 2.0.5):
   repository secret (a real OpenCode Go API key; CI exposes it to the tests as
   `OPENCODE_API_KEY`). It makes one small model request per case and reads live
   quota; there is no mock. Fork PRs get no secret, so they fail this step.
+- `OPENCODE_VERSION` in `ci.yml` is tracked by a Renovate custom manager; its
+  major updates carry `manual-merge` like other majors.
 - `auto-merge.yml` waits for the required `ci` check on same-repo, non-draft
   PRs, then squash-merges and deletes the head branch. It merges synchronously
   rather than through GitHub's native auto-merge: with `GITHUB_TOKEN`, native
