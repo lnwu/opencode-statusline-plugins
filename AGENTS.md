@@ -23,7 +23,7 @@ plus an internal shared `core` package (never published).
 | --- | --- |
 | `src/language.ts` | Terminal language detection and `language` option resolution for statusline labels. |
 | `src/harness.ts` | `createHarness`: isolated OpenCode env, real TUI in tmux, frame capture; parameterized per package. |
-| `src/record-demo.ts` | `recordDemo`: local-mode README demo recorder (real TUI in tmux, wrapped in `terminal-svg rec`, rendered to an animated SVG); takes a list of takes (prompt, model, env, output name) so it carries no locale/label knowledge. Runbook: the `record-demo` skill. |
+| `src/record-demo.ts` | `recordDemo`: local-mode README demo recorder (real TUI in tmux, wrapped in `terminal-svg rec`, rendered to an animated SVG); takes a list of takes (prompt, model, env, output name) so it carries no locale/label knowledge. Hides the cursor by default and pins each take's model in opencode's `model.json` (home-screen model selection) while recording. Runbook: the `record-demo` skill. |
 | `src/build.ts` | `buildPlugin`: compiles a package's `src/{index,rpc,tui}` entries with the Solid universal transform. |
 | `src/pack.ts` | `checkPackedPackage`: packaging smoke test (tarball contents, declared imports, install, entry imports). |
 | `test/language.test.ts` | Unit tests; run in CI before the integration tests. |

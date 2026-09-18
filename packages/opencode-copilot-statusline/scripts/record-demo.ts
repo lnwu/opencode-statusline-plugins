@@ -20,13 +20,14 @@
 //   bun scripts/record-demo.ts
 //   bun scripts/record-demo.ts --prompt "Reply with: ok"
 //   bun scripts/record-demo.ts --model github-copilot/gpt-4o-mini-2024-07-18
+//   bun scripts/record-demo.ts --cursor block  # render the TUI cursor
 //
 // Outputs (repo-only, never in the npm tarball):
 //   assets/demo.svg    animated README image
 //   assets/demo.cast   asciicast master
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
-import { assertRecordingTools, recordDemo } from "core/record-demo"
+import { assertRecordingTools, recordDemo, type CursorStyle } from "core/record-demo"
 import type { ModelRef } from "core/harness"
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..")
@@ -38,6 +39,7 @@ type Options = {
   prompt: string
   model: ModelRef
   theme: string
+  cursor: CursorStyle
   from?: number
   replyTimeoutMs?: number
   dir?: string
@@ -50,6 +52,8 @@ function usage(): string {
     `  --prompt <text>         Prompt to type (default: "${DEFAULT_PROMPT}")`,
     `  --model <provider/id>   Model to record with (default: ${DEFAULT_MODEL.providerID}/${DEFAULT_MODEL.id})`,
     "  --theme <name>          terminal-svg theme (default: github-dark)",
+    "  --cursor <style>        Cursor shape in the SVG: block|bar|underline|none",
+    "                          (default: none)",
     "  --from <seconds>        Start the animation here instead of the first paint",
     "  --reply-timeout <ms>    How long to wait for a finished turn (default: 180000)",
     `  --dir <path>            Throw-away project directory (default: ${LOCAL_DIR_DISPLAY})`,
@@ -80,6 +84,7 @@ function parseOptions(argv: string[]): Options {
     prompt: DEFAULT_PROMPT,
     model: DEFAULT_MODEL,
     theme: "github-dark",
+    cursor: "none",
   }
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
@@ -96,6 +101,15 @@ function parseOptions(argv: string[]): Options {
         options.theme = need(argv, i, flag)
         i++
         break
+      case "--cursor": {
+        const value = need(argv, i, flag)
+        if (value !== "block" && value !== "bar" && value !== "underline" && value !== "none") {
+          throw new Error(`unknown cursor style: ${value}`)
+        }
+        options.cursor = value
+        i++
+        break
+      }
       case "--from":
         options.from = Number(need(argv, i, flag))
         i++
@@ -126,6 +140,7 @@ await recordDemo({
   packageRoot: PACKAGE_ROOT,
   takes: [{ name: "demo", outputBasename: "demo", model: options.model, prompt: options.prompt }],
   theme: options.theme,
+  cursor: options.cursor,
   from: options.from,
   replyTimeoutMs: options.replyTimeoutMs,
   dir: options.dir,

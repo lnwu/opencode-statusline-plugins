@@ -13,7 +13,13 @@
 // The take opens on opencode's home screen (logo + composer), types the
 // prompt, waits for the reply to finish, then quits; the cast is rendered
 // starting at the TUI's first paint so the animation does not open on the
-// blank/collapsing terminal.
+// blank/collapsing terminal. The cursor is hidden by default (`cursor:
+// "block"` to render it) so the README image stays clean.
+//
+// The home screen's model (and therefore which statusline renders) follows
+// the globally most-recent model in opencode's `model.json`, not the project
+// config, so each take temporarily pins its model there and restores the
+// original file when done.
 import { mkdir, realpath, rm, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
@@ -29,12 +35,16 @@ const IDLE_TIME_LIMIT = 1.2
 const SPEED = 1.25
 const DEFAULT_REPLY_TIMEOUT_MS = 180_000
 const DEFAULT_THEME = "github-dark"
+/** Default cursor style: no cursor keeps the README image clean. */
+const DEFAULT_CURSOR: CursorStyle = "none"
 /** Window title shown in the SVG chrome (the cast header stores the command). */
 const WINDOW_TITLE = "opencode"
 /** Home-screen footer hint; present once the TUI is ready for input. */
 const READY_MARKER = "ctrl+p"
 /** Assistant metadata line; present once a turn has finished. */
 const DONE_MARKER = "tok/s"
+
+export type CursorStyle = "block" | "bar" | "underline" | "none"
 
 /** One recorded take: a prompt, a model, and where the output lands. */
 export type DemoTake = {
@@ -53,6 +63,8 @@ export type RecordDemoOptions = {
   packageRoot: string
   takes: DemoTake[]
   theme?: string
+  /** Cursor shape in the rendered SVG; defaults to `none` for a clean README image. */
+  cursor?: CursorStyle
   /** Start the animation here instead of the TUI's first paint. */
   from?: number
   replyTimeoutMs?: number
@@ -82,13 +94,14 @@ export async function recordDemo(options: RecordDemoOptions): Promise<void> {
   const packageRoot = resolve(options.packageRoot)
   const assetsDir = join(packageRoot, "assets")
   const theme = options.theme ?? DEFAULT_THEME
+  const cursor = options.cursor ?? DEFAULT_CURSOR
   const replyTimeoutMs = options.replyTimeoutMs ?? DEFAULT_REPLY_TIMEOUT_MS
   const dir = resolve(options.dir ?? join(homedir(), "oc-demo"))
 
   await mkdir(assetsDir, { recursive: true })
   for (const take of options.takes) {
     console.log(`\n=== ${take.name} ===`)
-    await recordTake(take, { assetsDir, theme, from: options.from, replyTimeoutMs, dir })
+    await recordTake(take, { assetsDir, theme, cursor, from: options.from, replyTimeoutMs, dir })
   }
 }
 
@@ -97,9 +110,34 @@ function shq(value: string): string {
   return `'${value.replaceAll("'", `'\\''`)}'`
 }
 
+/**
+ * Pin the home screen's model: the composer line (and therefore which
+ * statusline renders) follows the globally most-recent model in opencode's
+ * `model.json`, not the project config — a stale entry (e.g. a Go model from
+ * an unrelated session) silently produces the wrong demo. Prepends the take's
+ * model to `recent` and returns a restore callback for the original content.
+ */
+async function pinRecentModel(model: ModelRef): Promise<() => Promise<void>> {
+  const stateDir = process.env.XDG_STATE_HOME ?? join(homedir(), ".local", "state")
+  const path = join(stateDir, "opencode", "model.json")
+  const file = Bun.file(path)
+  if (!(await file.exists())) return async () => {}
+  const original = await file.text()
+  const parsed = JSON.parse(original) as { recent?: Array<{ providerID?: string; modelID?: string }> }
+  const recent = (parsed.recent ?? []).filter(
+    (entry) => entry.providerID !== model.providerID || entry.modelID !== model.id,
+  )
+  recent.unshift({ providerID: model.providerID, modelID: model.id })
+  parsed.recent = recent
+  await Bun.write(path, JSON.stringify(parsed))
+  return async () => {
+    await Bun.write(path, original)
+  }
+}
+
 async function recordTake(
   take: DemoTake,
-  ctx: { assetsDir: string; theme: string; from?: number; replyTimeoutMs: number; dir: string },
+  ctx: { assetsDir: string; theme: string; cursor: CursorStyle; from?: number; replyTimeoutMs: number; dir: string },
 ): Promise<void> {
   const projectDir = ctx.dir
   await rm(projectDir, { recursive: true, force: true })
@@ -142,6 +180,7 @@ async function recordTake(
   }
 
   let frame = ""
+  const restoreModel = await pinRecentModel(take.model)
   try {
     await rm(svgPath, { force: true })
     await rm(castPath, { force: true })
@@ -219,6 +258,8 @@ async function recordTake(
       String(IDLE_TIME_LIMIT),
       "--speed",
       String(SPEED),
+      "--cursor",
+      ctx.cursor,
       "--no-embed-source",
       "-o",
       svgPath,
@@ -237,6 +278,7 @@ async function recordTake(
     await run(["tmux", "-L", tmuxSocket, "kill-server"])
     await deleteSessionsFor(canonicalDir)
     await rm(projectDir, { recursive: true, force: true })
+    await restoreModel()
   }
 }
 
