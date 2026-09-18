@@ -249,11 +249,36 @@ export function createHarness(config: HarnessConfig): Harness {
       })
       const outcome = parseJson<{ data?: { outcome?: string } }>(result.stdout, "session.get").data?.outcome
       if (outcome === "succeeded") return
-      if (outcome === "failed") throw new Error(`model request failed (session ${context.sessionID})`)
+      if (outcome === "failed") {
+        throw new Error(
+          `model request failed (session ${context.sessionID})${await failureDetail(context)}`,
+        )
+      }
       last = result.stdout
       await Bun.sleep(2_000)
     }
     throw new Error(`model request did not finish within ${timeoutMs}ms; last session state:\n${last}`)
+  }
+
+  /**
+   * Provider errors are not on the session document; the failed assistant
+   * message carries them (`{type, message, status}`). Those fields are safe to
+   * log, unlike the server logs, which can contain request headers.
+   */
+  async function failureDetail(context: CaseContext): Promise<string> {
+    try {
+      const result = await run([OPENCODE, "api", "get", `/api/session/${context.sessionID}/message`], {
+        env: context.env,
+        cwd: context.projectDir,
+        timeoutMs: 30_000,
+      })
+      const messages =
+        parseJson<{ data?: Array<{ type?: string; error?: unknown }> }>(result.stdout, "session.message").data ?? []
+      const error = messages.filter((message) => message.type === "assistant" && message.error).at(-1)?.error
+      return error ? `; provider error: ${JSON.stringify(error)}` : ""
+    } catch {
+      return ""
+    }
   }
 
   async function startTui(context: CaseContext): Promise<void> {
