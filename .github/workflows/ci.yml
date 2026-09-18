@@ -141,13 +141,15 @@ jobs:
             code=$(curl -sS -o /tmp/models.json -w '%{http_code}' "$host/models" \
               -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2026-08-01")
             echo "models http=$code bytes=$(wc -c < /tmp/models.json)"
-            jq -r '.data[]?.id' /tmp/models.json 2>/dev/null | grep -iE 'haiku|mini' | head -8
-            code=$(curl -sS -o /tmp/chat.json -w '%{http_code}' -X POST "$host/chat/completions" \
-              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-              -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2025-04-01" \
-              -d '{"model":"claude-haiku-4.5","messages":[{"role":"user","content":"Reply with the single word: ok"}]}')
-            echo "chat http=$code"
-            head -c 400 /tmp/chat.json; echo
+            jq -r '.data[]?.id' /tmp/models.json 2>/dev/null | grep -iE 'haiku|gpt-5-mini' | head -8
+            for model in claude-haiku-4.5 gpt-5-mini; do
+              code=$(curl -sS -o /tmp/chat.json -w '%{http_code}' -X POST "$host/chat/completions" \
+                -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+                -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2025-04-01" \
+                -d "{\"model\":\"$model\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with the single word: ok\"}]}")
+              echo "chat $model http=$code"
+              head -c 300 /tmp/chat.json; echo
+            done
           done
 
       - name: Integration tests (Copilot, real TUI)

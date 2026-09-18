@@ -36,11 +36,13 @@ const harness = createHarness({
 const CASES: CaseSpec[] = [
   {
     // Happy path: live quota for a Copilot session, with the model answering.
-    // Cheapest current model so CI spends as little quota as possible.
+    // Cheapest model the Free plan exposes over the API so CI spends as little
+    // quota as possible (Claude models are rejected with model_not_supported
+    // by the free_limited_copilot SKU even though they are listed).
     name: "en-wide-usage",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "claude-haiku-4.5" },
+    model: { providerID: "github-copilot", id: "gpt-5-mini" },
     prompt: "Reply with the single word: ok",
     expect: [/Copilot \d+%/, /\(\d+(d\d+h|h\d+m|m)\)/, /\bok\b/],
   },
@@ -67,7 +69,7 @@ const CASES: CaseSpec[] = [
     name: "invalid-credential-fallback",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "claude-haiku-4.5" },
+    model: { providerID: "github-copilot", id: "gpt-5-mini" },
     credential: "invalid",
     expect: [/Copilot —/],
   },
