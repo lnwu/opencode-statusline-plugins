@@ -13,8 +13,8 @@ Each plugin reads usage from credentials that OpenCode already has — no manual
 | Plugin                                                                    | Subscription quota                          | Status       |
 | ------------------------------------------------------------------------- | ------------------------------------------- | ------------ |
 | [`opencode-go-statusline`](packages/opencode-go-statusline)               | OpenCode Go — rolling 5h / weekly / monthly | ✅ Available |
+| [`opencode-copilot-statusline`](packages/opencode-copilot-statusline)     | GitHub Copilot — premium requests / chat    | ✅ Available |
 | [`opencode-kimi-code-statusline`](packages/opencode-kimi-code-statusline) | Kimi Code (Kimi For Coding)                 | 🚧 Planned   |
-| [`opencode-copilot-statusline`](packages/opencode-copilot-statusline)     | GitHub Copilot — premium requests           | 🚧 Planned   |
 
 ## Install
 
