@@ -83,14 +83,12 @@ jobs:
             cp "${files[@]}" /tmp/tui-frames/opencode-go-statusline/
           fi
 
-      - name: Upload TUI frames
+      - name: Upload TUI frames (go)
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          # Both integration jobs merge into one artifact, each under its own
-          # package folder, so the frames stay grouped per statusline.
-          name: tui-frames
-          path: /tmp/tui-frames
+          name: tui-frames-go
+          path: /tmp/tui-frames/opencode-go-statusline
           if-no-files-found: ignore
           include-hidden-files: false
 
@@ -133,14 +131,12 @@ jobs:
             cp "${files[@]}" /tmp/tui-frames/opencode-copilot-statusline/
           fi
 
-      - name: Upload TUI frames
+      - name: Upload TUI frames (copilot)
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          # Both integration jobs merge into one artifact, each under its own
-          # package folder, so the frames stay grouped per statusline.
-          name: tui-frames
-          path: /tmp/tui-frames
+          name: tui-frames-copilot
+          path: /tmp/tui-frames/opencode-copilot-statusline
           if-no-files-found: ignore
           include-hidden-files: false
 
@@ -173,8 +169,11 @@ jobs:
         continue-on-error: true
         uses: actions/download-artifact@v7
         with:
-          name: tui-frames
+          # One artifact per package; not merging keeps them in per-statusline
+          # folders under `frames/`.
+          pattern: tui-frames-*
           path: frames
+          merge-multiple: false
 
       - name: Publish TUI frames to the job summary
         if: always()
@@ -184,13 +183,14 @@ jobs:
             echo
             found=0
             shopt -s nullglob
-            for dir in frames/*/; do
-              pkg="$(basename "$dir")"
+            for dir in frames/tui-frames-*/; do
+              label="$(basename "$dir")"
+              label="${label#tui-frames-}"
               files=("$dir"*.txt)
               for file in "${files[@]}"; do
                 found=1
                 echo "<details>"
-                echo "<summary>${pkg} · $(basename "$file" .txt)</summary>"
+                echo "<summary>${label} · $(basename "$file" .txt)</summary>"
                 echo
                 echo '```text'
                 cat "$file"
