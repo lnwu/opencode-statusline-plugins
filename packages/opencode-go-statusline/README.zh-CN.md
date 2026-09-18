@@ -7,7 +7,7 @@
 
 在 OpenCode TUI 底栏显示 OpenCode Go 订阅用量。
 
-![OpenCode 底栏中的 OpenCode Go 用量](./assets/usage.zh-CN.png)
+![动态演示：OpenCode 底栏中的 OpenCode Go 用量](./assets/demo.zh-CN.svg)
 
 ## ✨ 功能
 
