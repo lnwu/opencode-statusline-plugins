@@ -116,30 +116,6 @@ jobs:
           echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
           "$HOME/.bun/bin/opencode" --version
 
-      - name: Probe Copilot API (temporary diagnostic)
-        env:
-          TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-        run: |
-          set +e
-          user=$(curl -sS -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
-            -H "X-GitHub-Api-Version: 2025-04-01" https://api.github.com/copilot_internal/user)
-          api=$(echo "$user" | jq -r '.endpoints.api // "https://api.githubcopilot.com"')
-          echo "premium has_quota=$(echo "$user" | jq -r '.quota_snapshots.premium_interactions.has_quota') chat remaining=$(echo "$user" | jq -r '.quota_snapshots.chat.remaining')"
-          curl -sS "$api/models" -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode" \
-            -H "X-GitHub-Api-Version: 2026-08-01" -o /tmp/models.json
-          echo "--- models: id picker policy endpoints"
-          jq -r '.data[] | "\(.id) picker=\(.model_picker_enabled) policy=\(.policy.state) eps=\(.supported_endpoints | join(" "))"' /tmp/models.json | head -30
-          for model in gpt-4o-mini-2024-07-18 gpt-5-mini gemini-3.8-flash; do
-            code=$(curl -sS -o /tmp/chat.json -w '%{http_code}' -X POST "$api/chat/completions" \
-              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-              -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2025-04-01" \
-              -d "{\"model\":\"$model\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with the single word: ok\"}]}")
-            echo "chat $model http=$code $(head -c 160 /tmp/chat.json)"
-          done
-          code=$(curl -sS -o /tmp/ct.json -w '%{http_code}' https://api.github.com/copilot_internal/v2/token \
-            -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode")
-          echo "v2/token http=$code bytes=$(wc -c < /tmp/ct.json)"
-
       - name: Integration tests (Copilot, real TUI)
         env:
           # Repo secret name; the tests read it as COPILOT_GITHUB_TOKEN. Any

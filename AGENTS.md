@@ -97,7 +97,9 @@ credential:
 - `opencode-copilot-statusline`: `COPILOT_GITHUB_TOKEN` (the
   `COPILOT_GITHUB_TOKEN` repository secret in CI; a device-flow GitHub token,
   any Copilot-enabled account works including Copilot Free); makes a real call
-  to `github-copilot/gpt-5-mini`. The harness registers it under the
+  to `github-copilot/gpt-4o-mini-2024-07-18` (the legacy base model that
+  `free_limited_copilot` accounts are entitled to; newer models are rejected
+  with `model_not_supported`). The harness registers it under the
   `GITHUB_TOKEN` env-connection name the Copilot integration declares
   (`credentialName`), and the plugin accepts both that `key` connection and the
   OAuth credential the device flow stores.

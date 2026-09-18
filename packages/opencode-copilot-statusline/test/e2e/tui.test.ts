@@ -36,13 +36,20 @@ const harness = createHarness({
 const CASES: CaseSpec[] = [
   {
     // Happy path: live quota for a Copilot session, with the model answering.
-    // Cheapest model the Free plan exposes over the API so CI spends as little
-    // quota as possible (Claude models are rejected with model_not_supported
-    // by the free_limited_copilot SKU even though they are listed).
+    // `free_limited_copilot` accounts can only run the legacy base model over
+    // the API; newer models (including gpt-5-mini and all Claude models) are
+    // rejected with model_not_supported even though the models list includes
+    // them. The model is not in models.dev, so it is added to the provider in
+    // the test project config.
     name: "en-wide-usage",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "gpt-5-mini" },
+    model: { providerID: "github-copilot", id: "gpt-4o-mini-2024-07-18" },
+    providers: {
+      "github-copilot": {
+        models: { "gpt-4o-mini-2024-07-18": { name: "GPT-4o mini" } },
+      },
+    },
     prompt: "Reply with the single word: ok",
     expect: [/Copilot \d+%/, /\(\d+(d\d+h|h\d+m|m)\)/, /\bok\b/],
   },
@@ -69,7 +76,7 @@ const CASES: CaseSpec[] = [
     name: "invalid-credential-fallback",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "gpt-5-mini" },
+    model: { providerID: "github-copilot", id: "gpt-4o-mini-2024-07-18" },
     credential: "invalid",
     expect: [/Copilot —/],
   },
