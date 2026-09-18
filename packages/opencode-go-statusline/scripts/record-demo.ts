@@ -33,7 +33,7 @@
 // Outputs (repo-only, never in the npm tarball):
 //   assets/demo.en.svg / assets/demo.zh-CN.svg          animated README images
 //   assets/demo.en.cast / assets/demo.zh-CN.cast        asciicast masters
-import { mkdir, rm, writeFile } from "node:fs/promises"
+import { mkdir, realpath, rm, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
 import { createHarness, run, type Env } from "core/harness"
@@ -206,6 +206,9 @@ async function prepareLocal(options: Options): Promise<Take> {
   const projectDir = resolve(options.dir)
   await rm(projectDir, { recursive: true, force: true })
   await mkdir(projectDir, { recursive: true })
+  // opencode stores the canonical directory in a session, so match on it
+  // (e.g. `--dir /tmp/x` is `/private/tmp/x` on macOS).
+  const canonicalDir = await realpath(projectDir)
   await writeFile(
     join(projectDir, "opencode.json"),
     JSON.stringify({ $schema: "https://opencode.ai/config.json", model: `${MODEL.providerID}/${MODEL.id}` }, null, 2) +
@@ -218,7 +221,7 @@ async function prepareLocal(options: Options): Promise<Take> {
     tmuxSocket,
     cleanup: async () => {
       await run(["tmux", "-L", tmuxSocket, "kill-server"])
-      await deleteSessionsFor(projectDir)
+      await deleteSessionsFor(canonicalDir)
       await rm(projectDir, { recursive: true, force: true })
     },
   }
