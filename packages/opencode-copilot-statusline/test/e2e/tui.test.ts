@@ -33,25 +33,22 @@ const harness = createHarness({
 // One object per scenario. `expect` patterns must all match the captured frame,
 // `reject` patterns must not. Cases with `prompt` send a real model request
 // before the TUI starts and require it to succeed.
+//
+// The Copilot cases intentionally make no model request: the CI account has no
+// usable Copilot subscription. Copilot Free is entitled to the legacy
+// `gpt-4o-mini-2024-07-18` model only; every current model (including the
+// Claude and gpt-5 families) is rejected over the API with
+// `model_not_supported`, so a request-based case cannot run in CI. With a paid
+// Copilot subscription, add `prompt: "Reply with the single word: ok"` and a
+// `/\bok\b/` expectation to the usage case to cover that path.
 const CASES: CaseSpec[] = [
   {
-    // Happy path: live quota for a Copilot session, with the model answering.
-    // `free_limited_copilot` accounts can only run the legacy base model over
-    // the API; newer models (including gpt-5-mini and all Claude models) are
-    // rejected with model_not_supported even though the models list includes
-    // them. The model is not in models.dev, so it is added to the provider in
-    // the test project config.
+    // Live quota for a Copilot session, without a model request (see above).
     name: "en-wide-usage",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "gpt-4o-mini-2024-07-18" },
-    providers: {
-      "github-copilot": {
-        models: { "gpt-4o-mini-2024-07-18": { name: "GPT-4o mini" } },
-      },
-    },
-    prompt: "Reply with the single word: ok",
-    expect: [/Copilot \d+%/, /\(\d+(d\d+h|h\d+m|m)\)/, /\bok\b/],
+    model: { providerID: "github-copilot", id: "gpt-5-mini" },
+    expect: [/Copilot \d+%/, /\(\d+(d\d+h|h\d+m|m)\)/],
   },
   {
     // The statusline is hidden for sessions whose provider is not
@@ -76,7 +73,7 @@ const CASES: CaseSpec[] = [
     name: "invalid-credential-fallback",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "gpt-4o-mini-2024-07-18" },
+    model: { providerID: "github-copilot", id: "gpt-5-mini" },
     credential: "invalid",
     expect: [/Copilot —/],
   },

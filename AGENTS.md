@@ -89,18 +89,18 @@ see Release).
 asserts the footer statusline. The reusable harness lives in
 `packages/core/src/harness.ts`; each package configures it with its own built
 entries and credential env. Requirements: `opencode` on PATH, `tmux` on PATH
-(CI installs it), network access (models.dev + a real model call), and the live
-credential:
+(CI installs it), network access (models.dev; the go tests additionally make a
+real model call), and the live credential:
 
 - `opencode-go-statusline`: `OPENCODE_API_KEY` (the `OPENCODE_GO_API_KEY`
   repository secret in CI); makes a real call to `opencode-go/deepseek-v4.1-flash`.
 - `opencode-copilot-statusline`: `COPILOT_GITHUB_TOKEN` (the
   `COPILOT_GITHUB_TOKEN` repository secret in CI; a device-flow GitHub token,
-  any Copilot-enabled account works including Copilot Free); makes a real call
-  to `github-copilot/gpt-4o-mini-2024-07-18` (the legacy base model that
-  `free_limited_copilot` accounts are entitled to; newer models are rejected
-  with `model_not_supported`). The harness registers it under the
-  `GITHUB_TOKEN` env-connection name the Copilot integration declares
+  any Copilot-enabled account works including Copilot Free). The cases fetch
+  the real quota but intentionally send no model request: Copilot Free is
+  entitled to the legacy `gpt-4o-mini-2024-07-18` model only, and every current
+  model is rejected with `model_not_supported`. The harness registers the token
+  under the `GITHUB_TOKEN` env-connection name the Copilot integration declares
   (`credentialName`), and the plugin accepts both that `key` connection and the
   OAuth credential the device flow stores.
 
