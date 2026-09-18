@@ -31,6 +31,12 @@ builds its own take list and calls `recordDemo`:
 Uses the developer's own OpenCode configuration and credentials — records
 whatever plugins the local configuration loads (i.e. the released versions).
 
+Per-developer defaults live in `<package>/record-demo.config.json`
+(gitignored): `{ "model": "provider/id", "prompt": "...", "cursor": "none",
+"theme": "github-dark", "replyTimeout": 180000, "dir": "~/oc-demo" }`. All
+fields are optional; CLI flags override the file, and invalid values fail
+loudly instead of recording the wrong thing.
+
 The recorder hides the cursor in the SVG by default (`--cursor block|bar|
 underline|none`, default `none`) and pins the take's model in opencode's
 global `model.json` for the duration of the take, restoring the original file
@@ -65,6 +71,13 @@ bun scripts/record-demo.ts --model github-copilot/gpt-4o-mini-2024-07-18
 ```
 
 There is no npm key needed. Both `record:demo` scripts build `dist/` first.
+For a persistent override, put it in `record-demo.config.json` instead of
+passing the flag every time:
+
+```jsonc
+// packages/opencode-copilot-statusline/record-demo.config.json (gitignored)
+{ "model": "github-copilot/claude-sonnet-5" }
+```
 
 - Common options (both packages): `--prompt "..."`, `--theme <terminal-svg
   theme>` (default `github-dark`), `--cursor block|bar|underline|none` (default
@@ -131,10 +144,11 @@ There is no npm key needed. Both `record:demo` scripts build `dist/` first.
 - The cursor is hidden by default (`--cursor none`); pass `--cursor block` to
   record it.
 - **terminal-svg corrupts multi-byte glyphs at its 1024-byte read boundary**
-  (upstream bug): its PTY reader decodes each read as UTF-8 independently, so
-  a block glyph split across the boundary becomes `U+FFFD` plus a stray
-  continuation byte — visible as a `?`-looking cell in the logo. The recorder
-  repairs the cast after recording (`repairCast`, warned in the log); re-check
+  (upstream: russmckendrick/terminal-svg#4): its PTY reader decodes each read
+  as UTF-8 independently, so a block glyph split across the boundary becomes
+  `U+FFFD` plus a stray continuation byte — visible as a `?`-looking cell in
+  the logo. The recorder repairs the cast after recording (`repairCast`,
+  warned in the log); remove the repair once the upstream fix lands. Re-check
   the logo after re-recording and report upstream if it ever changes shape.
 - `--no-embed-source` is deliberate: the SVG does not carry the cast in its
   `<metadata>`; the `.cast` master is committed next to it.

@@ -12,6 +12,9 @@
 // each take); the throw-away sessions are deleted too. Records whatever
 // plugins the local configuration loads.
 //
+// Defaults can live in `<package>/record-demo.config.json` (gitignored, e.g.
+// `{ "model": "opencode-go/deepseek-v4.1-flash" }`); CLI flags override it.
+//
 // Requirements: `opencode`, `tmux`, and `terminal-svg`
 // (`brew install russmckendrick/tap/terminal-svg`) on PATH, and a logged-in
 // OpenCode Go credential.
@@ -27,10 +30,18 @@
 //   assets/demo.en.cast / assets/demo.zh-CN.cast        asciicast masters
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
-import { assertRecordingTools, recordDemo, type CursorStyle, type DemoTake } from "core/record-demo"
+import {
+  assertRecordingTools,
+  loadDemoConfig,
+  recordDemo,
+  type CursorStyle,
+  type DemoConfig,
+  type DemoTake,
+} from "core/record-demo"
+import type { ModelRef } from "core/harness"
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..")
-const MODEL = { providerID: "opencode-go", id: "deepseek-v4.1-flash" }
+const DEFAULT_MODEL = { providerID: "opencode-go", id: "deepseek-v4.1-flash" }
 const LOCAL_DIR_DISPLAY = "~/oc-demo"
 
 type Locale = "en" | "zh-CN"
@@ -43,6 +54,7 @@ const DEFAULT_PROMPTS: Record<Locale, string> = {
 type Options = {
   locales: Locale[]
   prompts: Record<Locale, string>
+  model: ModelRef
   theme: string
   cursor: CursorStyle
   from?: number
@@ -63,6 +75,9 @@ function usage(): string {
     "  --from <seconds>        Start the animation here instead of the first paint",
     "  --reply-timeout <ms>    How long to wait for a finished turn (default: 180000)",
     `  --dir <path>            Throw-away project directory (default: ${LOCAL_DIR_DISPLAY})`,
+    "",
+    `Defaults can be set in ${join(PACKAGE_ROOT, "record-demo.config.json")}`,
+    "(gitignored); CLI flags override it.",
   ].join("\n")
 }
 
@@ -79,12 +94,26 @@ function need(argv: string[], index: number, flag: string): string {
   return value
 }
 
-function parseOptions(argv: string[]): Options {
+function parseModel(value: string): ModelRef {
+  const slash = value.indexOf("/")
+  if (slash < 0) throw new Error(`model must be provider/id, got: ${value}`)
+  return { providerID: value.slice(0, slash), id: value.slice(slash + 1) }
+}
+
+function parseOptions(config: DemoConfig, argv: string[]): Options {
+  const configPrompt = config.prompt
+  const prompts: Record<Locale, string> = {
+    en: configPrompt ?? DEFAULT_PROMPTS.en,
+    "zh-CN": configPrompt ?? DEFAULT_PROMPTS["zh-CN"],
+  }
   const options: Options = {
     locales: ["en", "zh-CN"],
-    prompts: { ...DEFAULT_PROMPTS },
-    theme: "github-dark",
-    cursor: "none",
+    prompts,
+    model: config.model ? parseModel(config.model) : DEFAULT_MODEL,
+    theme: config.theme ?? "github-dark",
+    cursor: config.cursor ?? "none",
+    replyTimeoutMs: config.replyTimeout,
+    dir: config.dir ? expandHome(config.dir) : undefined,
   }
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
@@ -139,7 +168,8 @@ function parseOptions(argv: string[]): Options {
   return options
 }
 
-const options = parseOptions(process.argv.slice(2))
+const config = await loadDemoConfig(PACKAGE_ROOT)
+const options = parseOptions(config, process.argv.slice(2))
 await assertRecordingTools()
 
 // The terminal locale drives the statusline labels (`5h / Weekly / Monthly`
@@ -147,7 +177,7 @@ await assertRecordingTools()
 const takes: DemoTake[] = options.locales.map((locale) => ({
   name: locale,
   outputBasename: `demo.${locale}`,
-  model: MODEL,
+  model: options.model,
   prompt: options.prompts[locale],
   env: locale === "zh-CN" ? { LANG: "zh_CN.UTF-8", LC_ALL: "zh_CN.UTF-8" } : undefined,
 }))

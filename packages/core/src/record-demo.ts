@@ -63,6 +63,76 @@ export type DemoTake = {
   env?: Env
 }
 
+/** Per-package defaults for `record-demo.config.json`; all fields optional. */
+export type DemoConfig = {
+  /** Model to record with, as `provider/id` (e.g. `github-copilot/gpt-5-mini`). */
+  model?: string
+  /** Prompt to type; overrides the wrapper's default for every take. */
+  prompt?: string
+  cursor?: CursorStyle
+  theme?: string
+  /** How long to wait for a finished turn, in ms. */
+  replyTimeout?: number
+  /** Throw-away project directory; defaults to `~/oc-demo`. */
+  dir?: string
+}
+
+export const CONFIG_FILENAME = "record-demo.config.json"
+
+/**
+ * Load `<packageRoot>/record-demo.config.json` when present (the file is
+ * gitignored, so every developer can point the recorder at their own model and
+ * credentials). Invalid values throw rather than silently recording the wrong
+ * thing; CLI flags override the file.
+ */
+export async function loadDemoConfig(packageRoot: string): Promise<DemoConfig> {
+  const path = join(packageRoot, CONFIG_FILENAME)
+  const file = Bun.file(path)
+  if (!(await file.exists())) return {}
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(await file.text())
+  } catch (error) {
+    throw new Error(`${path} is not valid JSON: ${error instanceof Error ? error.message : error}`)
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new Error(`${path} must be a JSON object`)
+  }
+  const raw = parsed as Record<string, unknown>
+  const config: DemoConfig = {}
+  if (raw.model !== undefined) {
+    if (typeof raw.model !== "string" || !raw.model.includes("/")) {
+      throw new Error(`${path}: "model" must be "provider/id", got ${JSON.stringify(raw.model)}`)
+    }
+    config.model = raw.model
+  }
+  if (raw.prompt !== undefined) {
+    if (typeof raw.prompt !== "string" || raw.prompt === "") throw new Error(`${path}: "prompt" must be a non-empty string`)
+    config.prompt = raw.prompt
+  }
+  if (raw.cursor !== undefined) {
+    if (raw.cursor !== "block" && raw.cursor !== "bar" && raw.cursor !== "underline" && raw.cursor !== "none") {
+      throw new Error(`${path}: "cursor" must be block|bar|underline|none, got ${JSON.stringify(raw.cursor)}`)
+    }
+    config.cursor = raw.cursor
+  }
+  if (raw.theme !== undefined) {
+    if (typeof raw.theme !== "string" || raw.theme === "") throw new Error(`${path}: "theme" must be a non-empty string`)
+    config.theme = raw.theme
+  }
+  if (raw.replyTimeout !== undefined) {
+    if (typeof raw.replyTimeout !== "number" || !Number.isFinite(raw.replyTimeout) || raw.replyTimeout <= 0) {
+      throw new Error(`${path}: "replyTimeout" must be a positive number of milliseconds`)
+    }
+    config.replyTimeout = raw.replyTimeout
+  }
+  if (raw.dir !== undefined) {
+    if (typeof raw.dir !== "string" || raw.dir === "") throw new Error(`${path}: "dir" must be a non-empty string`)
+    config.dir = raw.dir
+  }
+  return config
+}
+
 export type RecordDemoOptions = {
   /** Plugin package root; takes are written under `<root>/assets`. */
   packageRoot: string
@@ -297,7 +367,8 @@ async function recordTake(
  * `\x1b[12;63H\uFFFD` / `\uFFFD\x1b[12;64H`. Both sit in the same cell (the
  * continuation byte is never drawn), so the original glyph is the two
  * replacement characters in event order; substituting a `▀` and dropping the
- * leftover byte restores the screen. Returns the number of repaired pairs.
+ * leftover byte restores the screen. Upstream: russmckendrick/terminal-svg#4
+ * (remove this once fixed). Returns the number of repaired pairs.
  */
 async function repairCast(castPath: string): Promise<number> {
   const text = await Bun.file(castPath).text()
