@@ -1,6 +1,6 @@
 {
   "name": "opencode-copilot-statusline",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "OpenCode TUI plugin: display GitHub Copilot quota (premium requests, with a chat fallback for Copilot Free) in the footer statusline. V2-native, zero-config, no cookies.",
   "type": "module",
   "license": "MIT",
