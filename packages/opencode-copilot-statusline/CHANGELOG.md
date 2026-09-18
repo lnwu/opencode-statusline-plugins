@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_None yet._
+### Changed
+
+- Color the `Copilot` label together with its percentage, and show `Copilot —` in the error color when the quota cannot be resolved.
 
 ## 0.1.0 - 2026-09-18
 
