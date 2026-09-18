@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 1.0.1 - 2026-09-18
+
 ### Changed
 
 - Replace the static README screenshots with animated SVG demos (English and Simplified Chinese).
