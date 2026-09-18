@@ -7,6 +7,8 @@
 
 在 OpenCode TUI 底栏显示 GitHub Copilot 配额用量。
 
+![动态演示：OpenCode 底栏中的 GitHub Copilot 配额用量](./assets/demo.svg)
+
 ## ✨ 功能
 
 - 在输入框底栏实时显示配额已用百分比（`Copilot 87%`）

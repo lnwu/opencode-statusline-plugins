@@ -32,6 +32,7 @@
   },
   "scripts": {
     "build": "bun run scripts/build.ts",
+    "record:demo": "bun run build && bun scripts/record-demo.ts",
     "typecheck": "tsc --noEmit",
     "pretest": "bun run build",
     "test": "bun test test/usage.test.ts test/e2e",

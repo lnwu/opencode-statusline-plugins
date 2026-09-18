@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_None yet._
+### Added
+
+- Add an animated README demo of the footer statusline.
 
 ## 0.2.0 - 2026-09-18
 

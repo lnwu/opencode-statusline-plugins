@@ -7,6 +7,8 @@
 
 Display your GitHub Copilot quota in the OpenCode TUI footer statusline.
 
+![Animated demo: GitHub Copilot quota in the footer statusline](./assets/demo.svg)
+
 ## ✨ Features
 
 - Live used-quota percentage in the prompt footer (`Copilot 87%`)
