@@ -12,10 +12,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Pinned on purpose: the integration harness depends on opencode's TUI
+  # plugin loading and managed-service behavior. Renovate tracks this value.
+  OPENCODE_VERSION: "2.0.7"
+
 jobs:
-  ci:
+  checks:
+    name: checks
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -39,58 +45,54 @@ jobs:
       - name: Packaging smoke test
         run: bun run --filter './packages/*' --if-present test:pack
 
+  go_integration:
+    name: go (real TUI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Install tmux
         run: sudo apt-get update && sudo apt-get install -y tmux
 
-      # Pinned on purpose: the integration harness depends on opencode's TUI
-      # plugin loading and managed-service behavior.
+      # `--trust` runs the package postinstall that downloads the platform binary.
       - name: Install OpenCode CLI
-        env:
-          OPENCODE_VERSION: "2.0.7"
         run: |
-          # `--trust` runs the package postinstall that downloads the platform binary.
           bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
           echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
           "$HOME/.bun/bin/opencode" --version
 
-      - name: Integration tests (real TUI)
+      - name: Integration tests (Go, real TUI)
         env:
           # Repo secret name; the tests read it as OPENCODE_API_KEY.
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
         run: bun run --filter opencode-go-statusline test
 
-      - name: Integration tests (Copilot, real TUI)
-        env:
-          # Repo secret name; the tests read it as COPILOT_GITHUB_TOKEN. Any
-          # Copilot-enabled account works, including Copilot Free.
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-        run: bun run --filter opencode-copilot-statusline test
-
       - name: Publish TUI frames to the job summary
         if: always()
         run: |
+          dir=packages/opencode-go-statusline/test/e2e/.artifacts
           {
-            echo "## TUI frames"
+            echo "## Go TUI frames"
             echo
-            found=0
             shopt -s nullglob
-            for dir in packages/*/test/e2e/.artifacts; do
-              pkg="${dir#packages/}"
-              pkg="${pkg%%/*}"
-              files=("$dir"/*.txt)
-              for file in "${files[@]}"; do
-                found=1
-                echo "### ${pkg}/$(basename "$file" .txt)"
-                echo
-                echo '```text'
-                cat "$file"
-                echo '```'
-                echo
-              done
-            done
-            if (( ! found )); then
+            files=("$dir"/*.txt)
+            if (( ${#files[@]} == 0 )); then
               echo "_No frames captured._"
             fi
+            for file in "${files[@]}"; do
+              echo "### $(basename "$file" .txt)"
+              echo
+              echo '```text'
+              cat "$file"
+              echo '```'
+              echo
+            done
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload TUI frames (go)
@@ -104,6 +106,79 @@ jobs:
           # as hidden and skips by default.
           include-hidden-files: true
 
+  copilot_integration:
+    name: copilot (real TUI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install tmux
+        run: sudo apt-get update && sudo apt-get install -y tmux
+
+      # `--trust` runs the package postinstall that downloads the platform binary.
+      - name: Install OpenCode CLI
+        run: |
+          bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+          "$HOME/.bun/bin/opencode" --version
+
+      - name: Probe Copilot API (temporary diagnostic)
+        env:
+          TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: |
+          user=$(curl -sS -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
+            -H "X-GitHub-Api-Version: 2025-04-01" https://api.github.com/copilot_internal/user)
+          api=$(echo "$user" | jq -r '.endpoints.api // "https://api.githubcopilot.com"')
+          echo "endpoints.api=$api"
+          for host in "$api" https://api.githubcopilot.com; do
+            echo "=== $host"
+            code=$(curl -sS -o /tmp/models.json -w '%{http_code}' "$host/models" \
+              -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2026-08-01")
+            echo "models http=$code bytes=$(wc -c < /tmp/models.json)"
+            jq -r '.data[]?.id' /tmp/models.json 2>/dev/null | grep -iE 'haiku|mini' | head -8
+            code=$(curl -sS -o /tmp/chat.json -w '%{http_code}' -X POST "$host/chat/completions" \
+              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2025-04-01" \
+              -d '{"model":"claude-haiku-4.5","messages":[{"role":"user","content":"Reply with the single word: ok"}]}')
+            echo "chat http=$code"
+            head -c 400 /tmp/chat.json; echo
+          done
+
+      - name: Integration tests (Copilot, real TUI)
+        env:
+          # Repo secret name; the tests read it as COPILOT_GITHUB_TOKEN. Any
+          # Copilot-enabled account works, including Copilot Free.
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: bun run --filter opencode-copilot-statusline test
+
+      - name: Publish TUI frames to the job summary
+        if: always()
+        run: |
+          dir=packages/opencode-copilot-statusline/test/e2e/.artifacts
+          {
+            echo "## Copilot TUI frames"
+            echo
+            shopt -s nullglob
+            files=("$dir"/*.txt)
+            if (( ${#files[@]} == 0 )); then
+              echo "_No frames captured._"
+            fi
+            for file in "${files[@]}"; do
+              echo "### $(basename "$file" .txt)"
+              echo
+              echo '```text'
+              cat "$file"
+              echo '```'
+              echo
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload TUI frames (copilot)
         if: always()
         uses: actions/upload-artifact@v7
@@ -114,3 +189,25 @@ jobs:
           # The artifact directory is dot-prefixed, which upload-artifact treats
           # as hidden and skips by default.
           include-hidden-files: true
+
+  # The `main-protection` ruleset requires a check named `ci`, so this fan-in
+  # job stays named `ci` and fails unless every job above succeeded. It runs
+  # even when a dependency fails so the required check reports the failure.
+  ci:
+    name: ci
+    if: always()
+    needs: [checks, go_integration, copilot_integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify all jobs succeeded
+        env:
+          CHECKS: ${{ needs.checks.result }}
+          GO: ${{ needs.go_integration.result }}
+          COPILOT: ${{ needs.copilot_integration.result }}
+        run: |
+          echo "checks=$CHECKS go=$GO copilot=$COPILOT"
+          if [[ "$CHECKS" != "success" || "$GO" != "success" || "$COPILOT" != "success" ]]; then
+            echo "::error::one or more CI jobs did not succeed"
+            exit 1
+          fi

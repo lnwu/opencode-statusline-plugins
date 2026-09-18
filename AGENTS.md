@@ -135,15 +135,15 @@ CI.
 
 - `main` is protected by the `main-protection` ruleset: changes land via pull
   request only, with the required check `ci`
-  (`.github/workflows/ci.yml` — install + typecheck + core unit tests +
-  changelog check + build + packaging smoke test + integration tests) on an
-  up-to-date branch. Merging is squash-only and the head branch is deleted on
-  merge.
-- The `ci` job's integration-test steps need the `OPENCODE_GO_API_KEY` and
+  (`.github/workflows/ci.yml` — a `checks` job plus per-package real-TUI
+  integration jobs, all running in parallel, and the `ci` fan-in job that the
+  ruleset actually requires) on an up-to-date branch. Merging is squash-only
+  and the head branch is deleted on merge.
+- The integration jobs need the `OPENCODE_GO_API_KEY` and
   `COPILOT_GITHUB_TOKEN` repository secrets (real credentials; CI exposes them
   to the tests as `OPENCODE_API_KEY` and `COPILOT_GITHUB_TOKEN`). The live-usage
   cases make a small model request and read live quota; there is no mock. Fork
-  PRs get no secrets, so they fail these steps.
+  PRs get no secrets, so they fail these jobs.
 - Renovate is the only auto-merging actor. Its config extends
   `:automergeMinor` and `:automergeDigest`, so non-major dependency and GitHub
   Actions updates carry `automerge` and Renovate enables the platform's native
