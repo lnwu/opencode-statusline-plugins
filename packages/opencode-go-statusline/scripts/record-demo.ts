@@ -20,13 +20,14 @@
 //   bun scripts/record-demo.ts                 # en and zh-CN
 //   bun scripts/record-demo.ts --locale en
 //   bun scripts/record-demo.ts --prompt "Reply with: ok"
+//   bun scripts/record-demo.ts --cursor block  # render the TUI cursor
 //
 // Outputs (repo-only, never in the npm tarball):
 //   assets/demo.en.svg / assets/demo.zh-CN.svg          animated README images
 //   assets/demo.en.cast / assets/demo.zh-CN.cast        asciicast masters
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
-import { assertRecordingTools, recordDemo, type DemoTake } from "core/record-demo"
+import { assertRecordingTools, recordDemo, type CursorStyle, type DemoTake } from "core/record-demo"
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..")
 const MODEL = { providerID: "opencode-go", id: "deepseek-v4.1-flash" }
@@ -43,6 +44,7 @@ type Options = {
   locales: Locale[]
   prompts: Record<Locale, string>
   theme: string
+  cursor: CursorStyle
   from?: number
   replyTimeoutMs?: number
   dir?: string
@@ -56,6 +58,8 @@ function usage(): string {
     "  --prompt <text>         Prompt to type; overrides the per-locale default",
     `                          (en: "${DEFAULT_PROMPTS.en}", zh-CN: "${DEFAULT_PROMPTS["zh-CN"]}")`,
     "  --theme <name>          terminal-svg theme (default: github-dark)",
+    "  --cursor <style>        Cursor shape in the SVG: block|bar|underline|none",
+    "                          (default: none)",
     "  --from <seconds>        Start the animation here instead of the first paint",
     "  --reply-timeout <ms>    How long to wait for a finished turn (default: 180000)",
     `  --dir <path>            Throw-away project directory (default: ${LOCAL_DIR_DISPLAY})`,
@@ -80,6 +84,7 @@ function parseOptions(argv: string[]): Options {
     locales: ["en", "zh-CN"],
     prompts: { ...DEFAULT_PROMPTS },
     theme: "github-dark",
+    cursor: "none",
   }
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
@@ -102,6 +107,15 @@ function parseOptions(argv: string[]): Options {
         options.theme = need(argv, i, flag)
         i++
         break
+      case "--cursor": {
+        const value = need(argv, i, flag)
+        if (value !== "block" && value !== "bar" && value !== "underline" && value !== "none") {
+          throw new Error(`unknown cursor style: ${value}`)
+        }
+        options.cursor = value
+        i++
+        break
+      }
       case "--from":
         options.from = Number(need(argv, i, flag))
         i++
@@ -142,6 +156,7 @@ await recordDemo({
   packageRoot: PACKAGE_ROOT,
   takes,
   theme: options.theme,
+  cursor: options.cursor,
   from: options.from,
   replyTimeoutMs: options.replyTimeoutMs,
   dir: options.dir,

@@ -31,6 +31,12 @@ builds its own take list and calls `recordDemo`:
 Uses the developer's own OpenCode configuration and credentials — records
 whatever plugins the local configuration loads (i.e. the released versions).
 
+The recorder hides the cursor in the SVG by default (`--cursor block|bar|
+underline|none`, default `none`) and pins the take's model in opencode's
+global `model.json` for the duration of the take, restoring the original file
+afterwards: the home screen's model — and therefore which statusline renders
+— follows the globally most-recent model, not the project config.
+
 ## Prerequisites
 
 - `opencode`, `tmux`, and `terminal-svg` on PATH
@@ -61,9 +67,10 @@ bun scripts/record-demo.ts --model github-copilot/gpt-4o-mini-2024-07-18
 There is no npm key needed. Both `record:demo` scripts build `dist/` first.
 
 - Common options (both packages): `--prompt "..."`, `--theme <terminal-svg
-  theme>` (default `github-dark`), `--from <seconds>` (defaults to the TUI's
-  first paint), `--reply-timeout <ms>` (default `180000`), `--dir <path>`
-  (default `~/oc-demo`).
+  theme>` (default `github-dark`), `--cursor block|bar|underline|none` (default
+  `none`), `--from <seconds>` (defaults to the TUI's first paint),
+  `--reply-timeout <ms>` (default `180000`), `--dir <path>` (default
+  `~/oc-demo`).
 - go-only: `--locale en|zh-CN|all` (default `all`); `--prompt` overrides both
   locales' default (en `Reply with exactly: ok`, zh-CN `请只回复：ok`).
 - copilot-only: `--model <provider/id>` (default `github-copilot/gpt-5-mini`);
@@ -78,7 +85,8 @@ There is no npm key needed. Both `record:demo` scripts build `dist/` first.
 - Check the window title (`opencode`, not the session id), the opening frame
   (home screen with the logo), the prompt typing, the finished reply, and the
   footer quota (go: `Go 5h … · Weekly … · Monthly …`, `周` / `月` for zh-CN;
-  copilot: `Copilot NN% (…)`).
+  copilot: `Copilot NN% (…)`). Confirm the model line matches the take's model
+  and that no cursor block is rendered.
 - Eyeball for secrets and personal paths; the prompt and the model's reply are
   recorded verbatim. The real local configuration is used — only the session
   and its project directory are throw-away.
@@ -113,6 +121,14 @@ There is no npm key needed. Both `record:demo` scripts build `dist/` first.
   a blank, collapsing window nor ends on opencode's exit frame.
 - `rec` titles the cast with the recorded command (session id included); the
   recorder rewrites the header title and passes `--title opencode`.
+- **The home screen's model comes from `model.json`, not the project config**:
+  opencode's home screen shows the globally most-recent model, so a stale
+  entry (e.g. a Go model from an unrelated session) silently records the wrong
+  statusline. The recorder pins the take's model there for the duration of the
+  take and restores the original file afterwards; verify the model line in the
+  frame (`Build · <model> <provider>`) after recording.
+- The cursor is hidden by default (`--cursor none`); pass `--cursor block` to
+  record it.
 - `--no-embed-source` is deliberate: the SVG does not carry the cast in its
   `<metadata>`; the `.cast` master is committed next to it.
 - Keep prompts short and tool-free so the turn finishes cleanly without
