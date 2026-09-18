@@ -120,30 +120,25 @@ jobs:
         env:
           TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
         run: |
+          set +e
           user=$(curl -sS -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
             -H "X-GitHub-Api-Version: 2025-04-01" https://api.github.com/copilot_internal/user)
           api=$(echo "$user" | jq -r '.endpoints.api // "https://api.githubcopilot.com"')
-          echo "endpoints.api=$api"
-          echo "premium: $(echo "$user" | jq -c '.quota_snapshots.premium_interactions')"
-          echo "chat: $(echo "$user" | jq -c '.quota_snapshots.chat')"
+          echo "premium has_quota=$(echo "$user" | jq -r '.quota_snapshots.premium_interactions.has_quota') chat remaining=$(echo "$user" | jq -r '.quota_snapshots.chat.remaining')"
           curl -sS "$api/models" -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode" \
             -H "X-GitHub-Api-Version: 2026-08-01" -o /tmp/models.json
-          echo "gpt-5-mini: $(jq -c '.data[] | select(.id=="gpt-5-mini") | {id, model_picker_enabled, policy, supported_endpoints, billing, supports: .capabilities.supports}' /tmp/models.json)"
-          curl -sS https://api.github.com/copilot_internal/v2/token -H "Authorization: Bearer $TOKEN" \
-            -H "User-Agent: opencode" -o /tmp/ct.json
-          echo "v2/token keys: $(jq -r 'keys | join(",")' /tmp/ct.json 2>/dev/null)"
-          CT=$(jq -r '.token // empty' /tmp/ct.json 2>/dev/null)
-          for mode in github copilot; do
-            if [ "$mode" = github ]; then AUTH="$TOKEN"; else AUTH="$CT"; fi
-            [ -n "$AUTH" ] || continue
+          echo "--- models: id picker policy endpoints"
+          jq -r '.data[] | "\(.id) picker=\(.model_picker_enabled) policy=\(.policy.state) eps=\(.supported_endpoints | join(" "))"' /tmp/models.json | head -30
+          for model in gpt-4o-mini-2024-07-18 gpt-5-mini gemini-3.8-flash; do
             code=$(curl -sS -o /tmp/chat.json -w '%{http_code}' -X POST "$api/chat/completions" \
-              -H "Authorization: Bearer $AUTH" -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
               -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2025-04-01" \
-              -H "Copilot-Integration-Id: vscode-chat" -H "Editor-Version: vscode/1.104.0" \
-              -d '{"model":"gpt-5-mini","messages":[{"role":"user","content":"Reply with the single word: ok"}]}')
-            echo "chat gpt-5-mini [$mode token + editor headers] http=$code"
-            head -c 250 /tmp/chat.json; echo
+              -d "{\"model\":\"$model\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with the single word: ok\"}]}")
+            echo "chat $model http=$code $(head -c 160 /tmp/chat.json)"
           done
+          code=$(curl -sS -o /tmp/ct.json -w '%{http_code}' https://api.github.com/copilot_internal/v2/token \
+            -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode")
+          echo "v2/token http=$code bytes=$(wc -c < /tmp/ct.json)"
 
       - name: Integration tests (Copilot, real TUI)
         env:
