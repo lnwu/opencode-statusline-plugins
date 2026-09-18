@@ -124,20 +124,25 @@ jobs:
             -H "X-GitHub-Api-Version: 2025-04-01" https://api.github.com/copilot_internal/user)
           api=$(echo "$user" | jq -r '.endpoints.api // "https://api.githubcopilot.com"')
           echo "endpoints.api=$api"
-          for host in "$api" https://api.githubcopilot.com; do
-            echo "=== $host"
-            code=$(curl -sS -o /tmp/models.json -w '%{http_code}' "$host/models" \
-              -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2026-08-01")
-            echo "models http=$code bytes=$(wc -c < /tmp/models.json)"
-            jq -r '.data[]?.id' /tmp/models.json 2>/dev/null | grep -iE 'haiku|gpt-5-mini' | head -8
-            for model in claude-haiku-4.5 gpt-5-mini; do
-              code=$(curl -sS -o /tmp/chat.json -w '%{http_code}' -X POST "$host/chat/completions" \
-                -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-                -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2025-04-01" \
-                -d "{\"model\":\"$model\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with the single word: ok\"}]}")
-              echo "chat $model http=$code"
-              head -c 300 /tmp/chat.json; echo
-            done
+          echo "premium: $(echo "$user" | jq -c '.quota_snapshots.premium_interactions')"
+          echo "chat: $(echo "$user" | jq -c '.quota_snapshots.chat')"
+          curl -sS "$api/models" -H "Authorization: Bearer $TOKEN" -H "User-Agent: opencode" \
+            -H "X-GitHub-Api-Version: 2026-08-01" -o /tmp/models.json
+          echo "gpt-5-mini: $(jq -c '.data[] | select(.id=="gpt-5-mini") | {id, model_picker_enabled, policy, supported_endpoints, billing, supports: .capabilities.supports}' /tmp/models.json)"
+          curl -sS https://api.github.com/copilot_internal/v2/token -H "Authorization: Bearer $TOKEN" \
+            -H "User-Agent: opencode" -o /tmp/ct.json
+          echo "v2/token keys: $(jq -r 'keys | join(",")' /tmp/ct.json 2>/dev/null)"
+          CT=$(jq -r '.token // empty' /tmp/ct.json 2>/dev/null)
+          for mode in github copilot; do
+            if [ "$mode" = github ]; then AUTH="$TOKEN"; else AUTH="$CT"; fi
+            [ -n "$AUTH" ] || continue
+            code=$(curl -sS -o /tmp/chat.json -w '%{http_code}' -X POST "$api/chat/completions" \
+              -H "Authorization: Bearer $AUTH" -H "Content-Type: application/json" \
+              -H "User-Agent: opencode" -H "X-GitHub-Api-Version: 2025-04-01" \
+              -H "Copilot-Integration-Id: vscode-chat" -H "Editor-Version: vscode/1.104.0" \
+              -d '{"model":"gpt-5-mini","messages":[{"role":"user","content":"Reply with the single word: ok"}]}')
+            echo "chat gpt-5-mini [$mode token + editor headers] http=$code"
+            head -c 250 /tmp/chat.json; echo
           done
 
       - name: Integration tests (Copilot, real TUI)
