@@ -6,79 +6,93 @@ description: Record or refresh the animated README demo for a statusline package
 # Record the demo animation
 
 The package READMEs show the statusline with an animated SVG recorded from a
-real TUI session. `packages/opencode-go-statusline/scripts/record-demo.ts`
-produces it: tmux runs the real TUI inside `terminal-svg rec` at a fixed
-120×28, the prompt is typed with `tmux send-keys` so the animation shows it
-character by character, and the finished cast is rendered to an SVG (with the
-`.cast` master kept next to it). The take starts on opencode's home screen
-(logo + composer), and the animation opens at the first paint — the blank
-terminal and its collapsing window are skipped.
+real TUI session. `packages/core/src/record-demo.ts` (`recordDemo`) drives it:
+tmux runs the real TUI inside `terminal-svg rec` at a fixed 120×28, the prompt
+is typed with `tmux send-keys` so the animation shows it character by
+character, and the finished cast is rendered to an SVG (with the `.cast`
+master kept next to it). The take starts on opencode's home screen (logo +
+composer), and the animation opens at the first paint — the blank terminal and
+its collapsing window are skipped.
 
-Two modes:
+`recordDemo` is always local and knows nothing about locale or footer label
+text: it takes a list of **takes** (`{ name, outputBasename, model, prompt,
+env? }`) and just records each one in a throw-away project directory (default
+`~/oc-demo`, deleted before and after every take; the throw-away sessions are
+deleted too). Each package's `scripts/record-demo.ts` is a thin wrapper that
+builds its own take list and calls `recordDemo`:
 
-- **Local (default)** — uses the developer's own OpenCode configuration and
-  credentials. The take runs in a throw-away project directory (default
-  `~/oc-demo`, deleted before and after) and records whatever plugins the
-  local configuration loads, i.e. the released versions. The session is
-  created by the first prompt; every throw-away session is deleted on
-  cleanup.
-- **`--isolated`** — clean-room take from `OPENCODE_API_KEY` via the `core`
-  harness (isolated HOME/XDG root, own service port, sidebar hidden). Use it
-  to record the working tree's built `dist/` entries (e.g. in CI) or when the
-  local configuration must not be touched.
+- **`opencode-go-statusline`** — two takes (`en`, `zh-CN`), because the footer
+  labels are bilingual (`5h / Weekly / Monthly` vs `5h / 周 / 月`). The only
+  difference between them is the pane's `LANG`/`LC_ALL` and the prompt; output
+  is `assets/demo.en.svg` / `assets/demo.zh-CN.svg`.
+- **`opencode-copilot-statusline`** — a single take, since the statusline has
+  no localizable text. Output is `assets/demo.svg` (no locale suffix).
+
+Uses the developer's own OpenCode configuration and credentials — records
+whatever plugins the local configuration loads (i.e. the released versions).
 
 ## Prerequisites
 
 - `opencode`, `tmux`, and `terminal-svg` on PATH
   (`brew install russmckendrick/tap/terminal-svg`)
-- `--isolated` additionally needs `OPENCODE_API_KEY` (the Go credential; the
-  CI secret name) and the built `dist/` entries
+- The package's own credential logged in locally: an OpenCode Go account for
+  `opencode-go-statusline`, a GitHub Copilot account
+  (`opencode auth login github-copilot`) for `opencode-copilot-statusline`
 - Network access (models.dev; every take makes a real model call)
 
 ## Record
 
 ```sh
-# Local: en and zh-CN
+# go: local, en and zh-CN
 bun run --filter opencode-go-statusline record:demo
 
-# One language; custom prompt/theme
+# go: one language; custom prompt/theme
 bun run --filter opencode-go-statusline record:demo -- --locale en
 bun scripts/record-demo.ts --prompt "Say hi in one short sentence." --theme dracula
 
-# Clean-room, working tree
-OPENCODE_API_KEY=sk-... bun scripts/record-demo.ts --isolated
+# copilot: single demo
+bun run --filter opencode-copilot-statusline record:demo
+
+# copilot: override the model if the default is rejected by your plan
+# (Copilot Free is entitled to gpt-4o-mini-2024-07-18 only)
+bun scripts/record-demo.ts --model github-copilot/gpt-4o-mini-2024-07-18
 ```
 
-There is no npm key needed for the local mode. The `record:demo` script builds
-`dist/` first.
+There is no npm key needed. Both `record:demo` scripts build `dist/` first.
 
-- Options: `--locale en|zh-CN|all` (default `all`), `--prompt "..."` (one
-  prompt for both), `--theme <terminal-svg theme>` (default `github-dark`),
-  `--from <seconds>` (defaults to the TUI's first paint), `--reply-timeout
-  <ms>`, `--isolated`, `--dir <path>`. Default prompts: en
-  `Reply with exactly: ok`, zh-CN `请只回复：ok`.
+- Common options (both packages): `--prompt "..."`, `--theme <terminal-svg
+  theme>` (default `github-dark`), `--from <seconds>` (defaults to the TUI's
+  first paint), `--reply-timeout <ms>` (default `180000`), `--dir <path>`
+  (default `~/oc-demo`).
+- go-only: `--locale en|zh-CN|all` (default `all`); `--prompt` overrides both
+  locales' default (en `Reply with exactly: ok`, zh-CN `请只回复：ok`).
+- copilot-only: `--model <provider/id>` (default `github-copilot/gpt-5-mini`);
+  default prompt is `Reply with exactly: ok`.
 - Outputs (repo-only; `files: ["dist"]` keeps them out of the npm tarball):
-  - `assets/demo.en.svg`, `assets/demo.zh-CN.svg` — animated images
-  - `assets/demo.en.cast`, `assets/demo.zh-CN.cast` — asciicast masters
+  - go: `assets/demo.en.svg`, `assets/demo.zh-CN.svg` (+ matching `.cast`)
+  - copilot: `assets/demo.svg` (+ `assets/demo.cast`)
 
 ## Verify
 
 - Open the SVG in a **browser** — Quick Look ignores the embedded fonts.
 - Check the window title (`opencode`, not the session id), the opening frame
   (home screen with the logo), the prompt typing, the finished reply, and the
-  footer quota (`Go 5h … · Weekly … · Monthly …`; `周` / `月` for zh-CN).
+  footer quota (go: `Go 5h … · Weekly … · Monthly …`, `周` / `月` for zh-CN;
+  copilot: `Copilot NN% (…)`).
 - Eyeball for secrets and personal paths; the prompt and the model's reply are
-  recorded verbatim. Local mode uses the real configuration — only the session
+  recorded verbatim. The real local configuration is used — only the session
   and its project directory are throw-away.
 - Re-render from the master without re-recording:
-  `terminal-svg assets/demo.en.cast --theme nord -o /tmp/demo.svg`.
+  `terminal-svg assets/demo.en.cast --theme nord -o /tmp/demo.svg` (go) or
+  `terminal-svg assets/demo.cast --theme nord -o /tmp/demo.svg` (copilot).
 
 ## Use in the README
 
 - Adding or updating a README image is user-visible: land bilingual changelog
   entries in the same PR (`AGENTS.md` → Conventions).
-- Reference assets by relative path (`./assets/demo.en.svg`); npm resolves
-  relative asset paths for the package page.
+- Reference assets by relative path (`./assets/demo.svg` or
+  `./assets/demo.en.svg`); npm resolves relative asset paths for the package
+  page.
 - The demo SVG is the README's hero image. It is scaled down at README width,
   so keep the window size compact (120 columns) and check the result at that
   width.
@@ -91,14 +105,14 @@ There is no npm key needed for the local mode. The `record:demo` script builds
   russmckendrick/terminal-svg#3) because the content background contrasts with
   the theme's window background.
 - `terminal-svg rec` has no `--timeout`; the take ends when the recorded
-  command exits — the script sends `Escape` + `ctrl+c` to quit the TUI.
+  command exits — the recorder sends `Escape` + `ctrl+c` to quit the TUI.
 - Never trim the head with `terminal-svg edit --cut`: the remaining events are
   screen deltas and cannot rebuild state (black holes). Trim at render time
-  with `--from` / `--to`; the script opens the animation at the TUI's first
+  with `--from` / `--to`; the recorder opens the animation at the TUI's first
   paint (home screen) and cuts at the alt-screen exit, so it neither starts on
   a blank, collapsing window nor ends on opencode's exit frame.
 - `rec` titles the cast with the recorded command (session id included); the
-  script rewrites the header title and passes `--title opencode`.
+  recorder rewrites the header title and passes `--title opencode`.
 - `--no-embed-source` is deliberate: the SVG does not carry the cast in its
   `<metadata>`; the `.cast` master is committed next to it.
 - Keep prompts short and tool-free so the turn finishes cleanly without

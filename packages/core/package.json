@@ -7,6 +7,7 @@
   "exports": {
     "./language": "./src/language.ts",
     "./harness": "./src/harness.ts",
+    "./record-demo": "./src/record-demo.ts",
     "./build": "./src/build.ts",
     "./pack": "./src/pack.ts"
   },
