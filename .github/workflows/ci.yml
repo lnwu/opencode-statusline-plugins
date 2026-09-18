@@ -73,38 +73,26 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
         run: bun run --filter opencode-go-statusline test
 
-      - name: Publish TUI frames to the job summary
+      - name: Stage TUI frames
         if: always()
         run: |
-          dir=packages/opencode-go-statusline/test/e2e/.artifacts
-          {
-            echo "## Go TUI frames"
-            echo
-            shopt -s nullglob
-            files=("$dir"/*.txt)
-            if (( ${#files[@]} == 0 )); then
-              echo "_No frames captured._"
-            fi
-            for file in "${files[@]}"; do
-              echo "### $(basename "$file" .txt)"
-              echo
-              echo '```text'
-              cat "$file"
-              echo '```'
-              echo
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p /tmp/tui-frames/opencode-go-statusline
+          shopt -s nullglob
+          files=(packages/opencode-go-statusline/test/e2e/.artifacts/*.txt)
+          if (( ${#files[@]} > 0 )); then
+            cp "${files[@]}" /tmp/tui-frames/opencode-go-statusline/
+          fi
 
-      - name: Upload TUI frames (go)
+      - name: Upload TUI frames
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: tui-frames-go
-          path: packages/opencode-go-statusline/test/e2e/.artifacts
+          # Both integration jobs merge into one artifact, each under its own
+          # package folder, so the frames stay grouped per statusline.
+          name: tui-frames
+          path: /tmp/tui-frames
           if-no-files-found: ignore
-          # The artifact directory is dot-prefixed, which upload-artifact treats
-          # as hidden and skips by default.
-          include-hidden-files: true
+          include-hidden-files: false
 
   copilot_integration:
     name: copilot (real TUI)
@@ -159,38 +147,26 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
         run: bun run --filter opencode-copilot-statusline test
 
-      - name: Publish TUI frames to the job summary
+      - name: Stage TUI frames
         if: always()
         run: |
-          dir=packages/opencode-copilot-statusline/test/e2e/.artifacts
-          {
-            echo "## Copilot TUI frames"
-            echo
-            shopt -s nullglob
-            files=("$dir"/*.txt)
-            if (( ${#files[@]} == 0 )); then
-              echo "_No frames captured._"
-            fi
-            for file in "${files[@]}"; do
-              echo "### $(basename "$file" .txt)"
-              echo
-              echo '```text'
-              cat "$file"
-              echo '```'
-              echo
-            done
-          } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p /tmp/tui-frames/opencode-copilot-statusline
+          shopt -s nullglob
+          files=(packages/opencode-copilot-statusline/test/e2e/.artifacts/*.txt)
+          if (( ${#files[@]} > 0 )); then
+            cp "${files[@]}" /tmp/tui-frames/opencode-copilot-statusline/
+          fi
 
-      - name: Upload TUI frames (copilot)
+      - name: Upload TUI frames
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: tui-frames-copilot
-          path: packages/opencode-copilot-statusline/test/e2e/.artifacts
+          # Both integration jobs merge into one artifact, each under its own
+          # package folder, so the frames stay grouped per statusline.
+          name: tui-frames
+          path: /tmp/tui-frames
           if-no-files-found: ignore
-          # The artifact directory is dot-prefixed, which upload-artifact treats
-          # as hidden and skips by default.
-          include-hidden-files: true
+          include-hidden-files: false
 
   # The `main-protection` ruleset requires a check named `ci`, so this fan-in
   # job stays named `ci` and fails unless every job above succeeded. It runs
@@ -213,3 +189,42 @@ jobs:
             echo "::error::one or more CI jobs did not succeed"
             exit 1
           fi
+
+      # Frames are published even when an integration job failed: they are the
+      # most useful artifact for debugging a failed case.
+      - name: Download TUI frames
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: tui-frames
+          path: frames
+
+      - name: Publish TUI frames to the job summary
+        if: always()
+        run: |
+          {
+            echo "## TUI frames"
+            echo
+            found=0
+            shopt -s nullglob
+            for dir in frames/*/; do
+              pkg="$(basename "$dir")"
+              files=("$dir"*.txt)
+              for file in "${files[@]}"; do
+                found=1
+                echo "<details>"
+                echo "<summary>${pkg} · $(basename "$file" .txt)</summary>"
+                echo
+                echo '```text'
+                cat "$file"
+                echo '```'
+                echo
+                echo "</details>"
+                echo
+              done
+            done
+            if (( ! found )); then
+              echo "_No frames captured._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

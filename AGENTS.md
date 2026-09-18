@@ -116,10 +116,12 @@ The harness recipe — how isolation, credentials, and plugin loading work, plus
 the `E2E_KEEP` / `E2E_ROOT_BASE` / `E2E_ARTIFACT_DIR` debugging knobs — is in
 `packages/core/AGENTS.md`.
 
-Frames land in `test/e2e/.artifacts/<case>.txt`, are rendered into the CI job
-summary (so they are readable without downloading), and are uploaded as
-per-package artifacts. Never upload OpenCode logs — they can contain the
-Authorization header.
+Frames land in `test/e2e/.artifacts/<case>.txt`; each integration job stages them
+under a per-package folder and uploads them to the merged `tui-frames` artifact,
+and the `ci` fan-in job renders them into its summary as one collapsible
+`<details>` block per case (so frames stay readable without downloading, and a
+failed run still publishes them). Never upload OpenCode logs — they can contain
+the Authorization header.
 
 ## Packaging smoke test
 
