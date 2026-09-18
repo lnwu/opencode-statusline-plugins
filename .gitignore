@@ -3,3 +3,5 @@ dist/
 *.tgz
 .DS_Store
 .artifacts/
+# Per-developer recorder defaults (model, prompt, ...); see the record-demo skill.
+packages/*/record-demo.config.json
