@@ -7,7 +7,7 @@
 
 Display your OpenCode Go subscription quota in the TUI footer statusline.
 
-![OpenCode Go quota in the footer statusline](./assets/usage.en.png)
+![Animated demo: OpenCode Go quota in the footer statusline](./assets/demo.en.svg)
 
 ## ✨ Features
 
