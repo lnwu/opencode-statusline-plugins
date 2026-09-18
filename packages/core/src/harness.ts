@@ -1,7 +1,7 @@
 // Integration-test harness factory: drives a real `opencode` TUI against a
 // plugin package's working tree and captures the rendered frame for assertions.
 //
-// Recipe verified against opencode 2.0.5:
+// Recipe verified against opencode > 2.0.0:
 //
 // - Credentials live in the server's SQLite database in V2, so `auth.json` is
 //   not usable. `opencode service set env <credentialEnv> <key>` registers an
@@ -99,7 +99,7 @@ const DEFAULT_TOOLS: readonly ToolCheck[] = [
 
 // Keep the test frame small and deterministic: no sidebar, no tab strip.
 // Written to the isolated cli.json — OPENCODE_CLI_CONFIG_CONTENT reaches the
-// TUI process but its settings do not take effect on opencode 2.0.5.
+// TUI process but its settings do not take effect on opencode > 2.0.0.
 const CLI_CONFIG = {
   $schema: "https://opencode.ai/v2/cli.json",
   session: { sidebar: "hide" },
