@@ -86,7 +86,8 @@ There is no npm key needed. Both `record:demo` scripts build `dist/` first.
   (home screen with the logo), the prompt typing, the finished reply, and the
   footer quota (go: `Go 5h … · Weekly … · Monthly …`, `周` / `月` for zh-CN;
   copilot: `Copilot NN% (…)`). Confirm the model line matches the take's model
-  and that no cursor block is rendered.
+  and that no cursor block is rendered, and grep the SVG for `U+FFFD` (a
+  corrupted glyph would show as a stray `?`).
 - Eyeball for secrets and personal paths; the prompt and the model's reply are
   recorded verbatim. The real local configuration is used — only the session
   and its project directory are throw-away.
@@ -129,6 +130,12 @@ There is no npm key needed. Both `record:demo` scripts build `dist/` first.
   frame (`Build · <model> <provider>`) after recording.
 - The cursor is hidden by default (`--cursor none`); pass `--cursor block` to
   record it.
+- **terminal-svg corrupts multi-byte glyphs at its 1024-byte read boundary**
+  (upstream bug): its PTY reader decodes each read as UTF-8 independently, so
+  a block glyph split across the boundary becomes `U+FFFD` plus a stray
+  continuation byte — visible as a `?`-looking cell in the logo. The recorder
+  repairs the cast after recording (`repairCast`, warned in the log); re-check
+  the logo after re-recording and report upstream if it ever changes shape.
 - `--no-embed-source` is deliberate: the SVG does not carry the cast in its
   `<metadata>`; the `.cast` master is committed next to it.
 - Keep prompts short and tool-free so the turn finishes cleanly without

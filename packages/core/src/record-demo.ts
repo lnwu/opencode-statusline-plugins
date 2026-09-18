@@ -20,6 +20,11 @@
 // the globally most-recent model in opencode's `model.json`, not the project
 // config, so each take temporarily pins its model there and restores the
 // original file when done.
+//
+// Casts are repaired after recording: terminal-svg's PTY reader decodes each
+// 1024-byte read as UTF-8 independently, corrupting a multi-byte glyph that
+// straddles the boundary into `U+FFFD` (visible as a stray replacement glyph
+// in the logo). `repairCast` restores the glyph and drops the stray byte.
 import { mkdir, realpath, rm, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
@@ -239,6 +244,8 @@ async function recordTake(
 
     // The cast ends with opencode restoring the primary screen; cut there so
     // the animation holds the finished conversation instead of the exit frame.
+    const repaired = await repairCast(castPath)
+    if (repaired > 0) console.warn(`repaired ${repaired} corrupted cast event(s) (terminal-svg chunk-boundary bug)`)
     const exitAt = await altScreenExitTime(castPath)
     if (exitAt === undefined) console.warn("no alt-screen exit found; rendering to the end of the cast")
     await retitleCast(castPath, WINDOW_TITLE)
@@ -280,6 +287,72 @@ async function recordTake(
     await rm(projectDir, { recursive: true, force: true })
     await restoreModel()
   }
+}
+
+/**
+ * Repair a terminal-svg cast corrupted at a 1024-byte read boundary: its PTY
+ * reader decodes each read as UTF-8 independently, so a multi-byte glyph
+ * split across the boundary becomes `U+FFFD` at the end of one output event
+ * plus a stray continuation byte (`U+FFFD`) at the start of the next — e.g.
+ * `\x1b[12;63H\uFFFD` / `\uFFFD\x1b[12;64H`. Both sit in the same cell (the
+ * continuation byte is never drawn), so the original glyph is the two
+ * replacement characters in event order; substituting a `▀` and dropping the
+ * leftover byte restores the screen. Returns the number of repaired pairs.
+ */
+async function repairCast(castPath: string): Promise<number> {
+  const text = await Bun.file(castPath).text()
+  const lines = text.split("\n")
+  const events = new Map<number, [number, string, string]>()
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i]
+    if (!line.trim() || !line.includes("\ufffd")) continue
+    try {
+      const event = JSON.parse(line) as [number, string, string]
+      if (event[1] === "o" && typeof event[2] === "string") events.set(i, event)
+    } catch {
+      // leave malformed lines untouched
+    }
+  }
+
+  let repaired = 0
+  const drop = new Set<number>()
+  const indexes = [...events.keys()].sort((a, b) => a - b)
+  const consumed = new Set<number>()
+  for (const index of indexes) {
+    if (consumed.has(index)) continue
+    const event = events.get(index)!
+    const data = event[2]
+    if (!data.includes("\ufffd")) continue
+    const nextIndex = index + 1
+    const next = events.get(nextIndex)
+    if (data.endsWith("\ufffd") && !data.endsWith("\ufffd\ufffd") && next && next[2].startsWith("\ufffd")) {
+      // The glyph split across two events: the trailing U+FFFD is its start,
+      // and the leading U+FFFD(s) of the next event are stray continuation
+      // bytes (the first pairs with the split, any further ones are orphans).
+      event[2] = data.replace(/\ufffd$/, "\u2580")
+      next[2] = next[2].replace(/^\ufffd+/, "")
+      consumed.add(nextIndex)
+      if (next[2] === "") {
+        drop.add(nextIndex)
+        events.delete(nextIndex)
+      } else {
+        lines[nextIndex] = JSON.stringify([next[0], next[1], next[2]])
+      }
+      repaired++
+    } else if (data.includes("\ufffd\ufffd")) {
+      // Both halves landed in one event.
+      event[2] = data.replaceAll("\ufffd\ufffd", "\u2580")
+      repaired++
+    } else {
+      continue
+    }
+    lines[index] = JSON.stringify([event[0], event[1], event[2]])
+  }
+  if (repaired > 0) {
+    const kept = lines.filter((_, index) => !drop.has(index))
+    await Bun.write(castPath, kept.join("\n"))
+  }
+  return repaired
 }
 
 /** Best effort: delete every session whose directory is the throw-away dir. */
