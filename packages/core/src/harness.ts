@@ -3,10 +3,13 @@
 //
 // Recipe verified against opencode > 2.0.0:
 //
-// - Credentials live in the server's SQLite database in V2, so `auth.json` is
-//   not usable. `opencode service set env <credentialEnv> <key>` registers an
-//   environment connection that the plugin resolves to a `key` credential, so
-//   the statusline renders live quota without an interactive `/connect`.
+// - Credentials live in the server's SQLite database in V2. `opencode service
+//   set env <name> <value>` registers an environment connection that the
+//   plugin resolves to a `key` credential, so the statusline renders live
+//   quota without an interactive `/connect`. The name must match an env method
+//   the integration declares (OpenCode Go: `OPENCODE_API_KEY`; GitHub Copilot:
+//   `GITHUB_TOKEN`), which is why `credentialName` can differ from the
+//   environment variable the tests read (`credentialEnv`).
 // - The plugin is loaded from the isolated *global* plugin directory
 //   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`). A project-scoped plugin
 //   renders but its RPC stays unreachable (`RPC is unavailable`), which leaves
@@ -58,6 +61,12 @@ export type HarnessConfig = {
   tuiEntry: string
   /** Environment variable holding the live credential, e.g. `OPENCODE_API_KEY`. */
   credentialEnv: string
+  /**
+   * Name registered as the service environment connection when it differs
+   * from `credentialEnv`. Must match an env method the integration declares;
+   * e.g. `github-copilot` reads `GITHUB_TOKEN`.
+   */
+  credentialName?: string
   /** Value registered for a `credential: "invalid"` case. */
   invalidCredential?: string
   /** Directory name under `plugins/`; defaults to `statusline`. */
@@ -116,6 +125,7 @@ export function createHarness(config: HarnessConfig): Harness {
   const pluginDir = config.pluginDir ?? "statusline"
   const invalidCredential = config.invalidCredential ?? "invalid-e2e-credential"
   const tools = config.tools ?? DEFAULT_TOOLS
+  const credentialName = config.credentialName ?? config.credentialEnv
 
   function requireCredential(): string {
     const key = process.env[config.credentialEnv]?.trim()
@@ -166,7 +176,7 @@ export function createHarness(config: HarnessConfig): Harness {
 
     const servicePort = freePort()
     await mustRun([OPENCODE, "service", "set", "port", String(servicePort)], { env })
-    await mustRun([OPENCODE, "service", "set", "env", config.credentialEnv, credential], { env })
+    await mustRun([OPENCODE, "service", "set", "env", credentialName, credential], { env })
 
     const projectDir = join(root, "p")
     await mkdir(projectDir, { recursive: true })
@@ -239,11 +249,36 @@ export function createHarness(config: HarnessConfig): Harness {
       })
       const outcome = parseJson<{ data?: { outcome?: string } }>(result.stdout, "session.get").data?.outcome
       if (outcome === "succeeded") return
-      if (outcome === "failed") throw new Error(`model request failed (session ${context.sessionID})`)
+      if (outcome === "failed") {
+        throw new Error(
+          `model request failed (session ${context.sessionID})${await failureDetail(context)}`,
+        )
+      }
       last = result.stdout
       await Bun.sleep(2_000)
     }
     throw new Error(`model request did not finish within ${timeoutMs}ms; last session state:\n${last}`)
+  }
+
+  /**
+   * Provider errors are not on the session document; the failed assistant
+   * message carries them (`{type, message, status}`). Those fields are safe to
+   * log, unlike the server logs, which can contain request headers.
+   */
+  async function failureDetail(context: CaseContext): Promise<string> {
+    try {
+      const result = await run([OPENCODE, "api", "get", `/api/session/${context.sessionID}/message`], {
+        env: context.env,
+        cwd: context.projectDir,
+        timeoutMs: 30_000,
+      })
+      const messages =
+        parseJson<{ data?: Array<{ type?: string; error?: unknown }> }>(result.stdout, "session.message").data ?? []
+      const error = messages.filter((message) => message.type === "assistant" && message.error).at(-1)?.error
+      return error ? `; provider error: ${JSON.stringify(error)}` : ""
+    } catch {
+      return ""
+    }
   }
 
   async function startTui(context: CaseContext): Promise<void> {

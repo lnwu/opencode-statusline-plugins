@@ -6,10 +6,11 @@ plus an internal shared `core` package (never published).
 ## Packages
 
 - `opencode-go-statusline` — OpenCode Go quota (rolling 5h / weekly / monthly).
-  Implemented; the only plugin with code and published releases.
+  Implemented; the only plugin with published releases.
+- `opencode-copilot-statusline` — GitHub Copilot quota (premium requests, with
+  a chat fallback for plans without a premium-request quota, e.g. Copilot Free).
+  Implemented; not yet published.
 - `opencode-kimi-code-statusline` — Kimi Code (Kimi For Coding) quota. Planned;
-  README-only, npm name reserved.
-- `opencode-copilot-statusline` — GitHub Copilot premium requests. Planned;
   README-only, npm name reserved.
 - `core` — internal shared package (not a plugin, never published): language
   resolution, the e2e harness, and the build helper. Plugin sources, build
@@ -42,6 +43,19 @@ plus an internal shared `core` package (never published).
 | `CHANGELOG.md` | Release history (English). Source of truth for the GitHub release body. |
 | `CHANGELOG.zh-CN.md` | Release history (Simplified Chinese); `bun run changelog:check` keeps the pair in sync. |
 
+### Package layout (`opencode-copilot-statusline`)
+
+| Path | Role |
+| --- | --- |
+| `src/index.ts` | Server plugin: resolves the `github-copilot` credential (OAuth or env `key`) via the integration API, fetches the quota, registers the RPC. Built to `dist/index.js`. |
+| `src/usage.ts` | Pure mapping from the `copilot_internal/user` response to the displayed usage (premium requests, `chat` fallback, unlimited, `has_quota: false`). |
+| `src/rpc.ts` | Shared RPC definition (`Rpc.define`). Built to `dist/rpc.js`. |
+| `src/tui.tsx` | TUI plugin: polls the RPC and renders `prompt.footer.status`. Built to `dist/tui.js`. |
+| `scripts/build.ts` | Dev-only wrapper around `core/build`. |
+| `test/usage.test.ts` | Unit tests for the quota mapping; no credential needed, runs in the package `test`. |
+| `test/e2e/tui.test.ts` | `bun test` cases: live quota with a real Haiku request, non-Copilot session hidden, `Copilot —` fallback; configures the `core` harness with `credentialName` (`GITHUB_TOKEN`). |
+| `test/pack.test.ts` | Packaging smoke test via `core/pack`: tarball contents, declared-import scan, install, entry imports. |
+
 The published entries must ship pre-compiled: OpenTUI's Solid transform skips
 `.tsx` under `node_modules`, so raw JSX from a published package loses reactive
 props and the statusline paints only once. `core/src/build.ts` reuses
@@ -61,11 +75,11 @@ see Release).
 - `bun run build` / `bun run typecheck` — all packages; root scripts use
   `--if-present`, so README-only packages are skipped.
 - `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
-- `bun run test` — all package tests (core unit tests + go integration
-  tests; see below).
+- `bun run test` — all package tests (core unit tests + go/copilot
+  integration tests; see below).
 - `bun run --filter core test` — core unit tests (language resolution); no
   credential needed, runs in CI before the integration tests.
-- `bun run --filter opencode-go-statusline test:pack` — packaging smoke test
+- `bun run --filter <pkg> test:pack` — packaging smoke test per package
   (`npm pack`, declared-import scan, install, entry imports); runs in CI.
 - Single package: `bun run --filter opencode-go-statusline build`.
 
@@ -75,13 +89,28 @@ see Release).
 asserts the footer statusline. The reusable harness lives in
 `packages/core/src/harness.ts`; each package configures it with its own built
 entries and credential env. Requirements: `opencode` on PATH, `tmux` on PATH
-(CI installs it), `OPENCODE_API_KEY` in the environment (the `OPENCODE_GO_API_KEY`
-repository secret in CI), and network access (models.dev + a real model call to
-`opencode-go/deepseek-v4.1-flash`). The package's `pretest` script rebuilds
-`dist/`, so the tests always exercise the built entries that ship.
+(CI installs it), network access (models.dev; the go tests additionally make a
+real model call), and the live credential:
+
+- `opencode-go-statusline`: `OPENCODE_API_KEY` (the `OPENCODE_GO_API_KEY`
+  repository secret in CI); makes a real call to `opencode-go/deepseek-v4.1-flash`.
+- `opencode-copilot-statusline`: `COPILOT_GITHUB_TOKEN` (the
+  `COPILOT_GITHUB_TOKEN` repository secret in CI; a device-flow GitHub token,
+  any Copilot-enabled account works including Copilot Free). The cases fetch
+  the real quota but intentionally send no model request: Copilot Free is
+  entitled to the legacy `gpt-4o-mini-2024-07-18` model only, and every current
+  model is rejected with `model_not_supported`. The harness registers the token
+  under the `GITHUB_TOKEN` env-connection name the Copilot integration declares
+  (`credentialName`), and the plugin accepts both that `key` connection and the
+  OAuth credential the device flow stores.
+
+The package's `pretest` script rebuilds `dist/`, so the tests always exercise
+the built entries that ship. The copilot package's `test` also runs
+`test/usage.test.ts`, a credential-free unit test for the quota mapping.
 
 ```sh
 OPENCODE_API_KEY=sk-... bun run --filter opencode-go-statusline test
+COPILOT_GITHUB_TOKEN=gho_... bun run --filter opencode-copilot-statusline test
 ```
 
 Run a single case with `bun test -t <case>`; `pretest` still rebuilds first.
@@ -89,10 +118,12 @@ The harness recipe — how isolation, credentials, and plugin loading work, plus
 the `E2E_KEEP` / `E2E_ROOT_BASE` / `E2E_ARTIFACT_DIR` debugging knobs — is in
 `packages/core/AGENTS.md`.
 
-Frames land in `test/e2e/.artifacts/<case>.txt`, are rendered into the CI job
-summary (so they are readable without downloading), and are uploaded as an
-artifact. Never upload OpenCode logs — they can contain the Authorization
-header.
+Frames land in `test/e2e/.artifacts/<case>.txt`; each integration job stages them
+under a per-package folder and uploads a per-package artifact (`tui-frames-go`,
+`tui-frames-copilot`), which the `ci` fan-in job downloads into matching folders
+and renders as one collapsible `<details>` block per case (so frames stay
+readable without downloading, and a failed run still publishes them). Never
+upload OpenCode logs — they can contain the Authorization header.
 
 ## Packaging smoke test
 
@@ -101,20 +132,22 @@ asserts the tarball ships the expected `dist/` entries, and scans every shipped
 bundle for bare imports that are not declared in `dependencies` or
 `peerDependencies` — this is what catches the private `core` package leaking
 into a bundle. It then installs the tarball with Bun and imports the server and
-RPC entries. No credential or tmux needed.
+RPC entries. No credential or tmux needed. Both implemented packages run it in
+CI.
 
 ## CI & branch policy
 
 - `main` is protected by the `main-protection` ruleset: changes land via pull
   request only, with the required check `ci`
-  (`.github/workflows/ci.yml` — install + typecheck + core unit tests +
-  changelog check + build + packaging smoke test + integration tests) on an
-  up-to-date branch. Merging is squash-only and the head branch is deleted on
-  merge.
-- The `ci` job's integration-test step needs the `OPENCODE_GO_API_KEY`
-  repository secret (a real OpenCode Go API key; CI exposes it to the tests as
-  `OPENCODE_API_KEY`). The live-usage cases make a small model request and read
-  live quota; there is no mock. Fork PRs get no secret, so they fail this step.
+  (`.github/workflows/ci.yml` — a `checks` job plus per-package real-TUI
+  integration jobs, all running in parallel, and the `ci` fan-in job that the
+  ruleset actually requires) on an up-to-date branch. Merging is squash-only
+  and the head branch is deleted on merge.
+- The integration jobs need the `OPENCODE_GO_API_KEY` and
+  `COPILOT_GITHUB_TOKEN` repository secrets (real credentials; CI exposes them
+  to the tests as `OPENCODE_API_KEY` and `COPILOT_GITHUB_TOKEN`). The live-usage
+  cases make a small model request and read live quota; there is no mock. Fork
+  PRs get no secrets, so they fail these jobs.
 - Renovate is the only auto-merging actor. Its config extends
   `:automergeMinor` and `:automergeDigest`, so non-major dependency and GitHub
   Actions updates carry `automerge` and Renovate enables the platform's native
@@ -135,13 +168,14 @@ RPC entries. No credential or tmux needed.
 
 - Plugin ids use the npm package name: the server plugin id is the package name
   (`opencode-go-statusline`), the TUI entry appends `.tui`, and the RPC id
-  matches the server plugin id. Follow this for the planned packages too.
+  matches the server plugin id. Follow this for every package.
 - The footer `language` option (`"auto"` default / `"en"` / `"zh-CN"`) resolves
   in the TUI entry with this priority: `cli.json` plugin options, then the
   server plugin's `options.language` relayed over the usage RPC, then the
   terminal locale (`LC_ALL` → `LC_MESSAGES` → `LANGUAGE` → `LANG`). The TUI
   plugin loader does not forward `opencode.json` plugin options to the `./tui`
-  entry, which is why the server relays them.
+  entry, which is why the server relays them. This is go-specific: the copilot
+  statusline has no localizable text and ships no such option.
 - Published packages ship `dist/` only: `files: ["dist"]` and every `exports`
   entry points at a built bundle. `src/` is dev-only. `core` is inlined into
   each plugin's bundles.

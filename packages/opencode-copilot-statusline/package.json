@@ -1,0 +1,64 @@
+{
+  "name": "opencode-copilot-statusline",
+  "version": "0.1.0",
+  "description": "OpenCode TUI plugin: display GitHub Copilot quota (premium requests, with a chat fallback for Copilot Free) in the footer statusline. V2-native, zero-config, no cookies.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lnwu/opencode-statusline-plugins.git",
+    "directory": "packages/opencode-copilot-statusline"
+  },
+  "homepage": "https://github.com/lnwu/opencode-statusline-plugins/tree/main/packages/opencode-copilot-statusline#readme",
+  "bugs": {
+    "url": "https://github.com/lnwu/opencode-statusline-plugins/issues"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "github-copilot",
+    "copilot",
+    "statusline",
+    "usage",
+    "quota"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./rpc": "./dist/rpc.js",
+    "./tui": "./dist/tui.js"
+  },
+  "scripts": {
+    "build": "bun run scripts/build.ts",
+    "typecheck": "tsc --noEmit",
+    "pretest": "bun run build",
+    "test": "bun test test/usage.test.ts test/e2e",
+    "test:pack": "bun test test/pack.test.ts",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "@opencode/plugin": ">2.0.0"
+  },
+  "peerDependencies": {
+    "@opencode/theme": ">2.0.0",
+    "@opentui/core": ">=0.5.10",
+    "@opentui/solid": ">=0.5.10",
+    "solid-js": ">=1.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@opencode/theme": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@opencode/theme": ">2.0.0",
+    "@opentui/core": "^0.5.11",
+    "@opentui/solid": "^0.5.11",
+    "bun-types": "^1.4.2",
+    "core": "*",
+    "solid-js": "^1.9.15",
+    "typescript": "^7.0.2"
+  }
+}

@@ -21,6 +21,14 @@ Verified against opencode > 2.0.0:
   and `opencode auth login` has no non-interactive key flag. The harness sets
   `opencode service set env <credentialEnv>`, an environment connection the
   plugin resolves to a `key` credential.
+- Env-connection names: `service set env <name> <value>` must use a name the
+  target integration declares (OpenCode Go: `OPENCODE_API_KEY`, GitHub Copilot:
+  `GITHUB_TOKEN`). Set `credentialName` when the environment variable the tests
+  read (`credentialEnv`) differs from the registered name; the copilot tests
+  read `COPILOT_GITHUB_TOKEN` and register `GITHUB_TOKEN`, so a developer's
+  unrelated `GITHUB_TOKEN` cannot be picked up by accident. The Copilot
+  provider accepts this env `key` connection for real model requests even
+  though its plugin only enables model syncing for OAuth credentials.
 - The plugin is loaded from the isolated *global* plugin directory
   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`) as re-export shims pointing
   at the built `dist/index.js` and `dist/tui.js`. A project-scoped plugin
