@@ -204,8 +204,8 @@ function releaseNotes(tag: string): string {
     "",
     "</details>",
     "",
+    `**Changelog**: Read [here](${file})`,
     `**Full Changelog**: ${compare}`,
-    `**Changelog**: ${file}`,
     "",
   ].join("\n")
 }
