@@ -16,7 +16,7 @@
     },
     "packages/opencode-copilot-statusline": {
       "name": "opencode-copilot-statusline",
-      "version": "0.2.0",
+      "version": "1.0.0",
       "dependencies": {
         "@opencode/plugin": ">2.0.0",
       },
