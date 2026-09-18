@@ -1,5 +1,6 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
+import type { RGBA } from "@opentui/core"
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createSignal, onCleanup, Show } from "solid-js"
 import { UsageRpc, type Usage } from "./rpc"
@@ -20,22 +21,14 @@ function countdown(resetsAt: string, now: number) {
   return `${mins}m`
 }
 
-function Segment(props: { usage: Usage; detailed: boolean }) {
-  const ctx = usePlugin()
-  const fg = () => {
-    const t = ctx.theme
-    if (props.usage.unlimited) return t.text.subdued
-    if (props.usage.usedPercent >= 90) return t.text.feedback.error.default
-    if (props.usage.usedPercent >= 70) return t.text.feedback.info.default
-    return t.text.subdued
-  }
+function Segment(props: { usage: Usage; color: () => RGBA; detailed: boolean }) {
   const text = () => {
     if (props.usage.unlimited) return "∞"
     const left = props.detailed && props.usage.resetsAt ? countdown(props.usage.resetsAt, Date.now()) : undefined
     return `${props.usage.usedPercent}%${left ? ` (${left})` : ""}`
   }
   return (
-    <text fg={fg()} wrapMode="none" flexShrink={1}>
+    <text fg={props.color()} wrapMode="none" flexShrink={1}>
       {text()}
     </text>
   )
@@ -45,11 +38,26 @@ function CopilotUsage(props: {
   sessionID: () => string | undefined
   showDetails: () => boolean
   usage: () => Usage | undefined
+  loaded: () => boolean
 }) {
   const ctx = usePlugin()
   const [isCopilot, setIsCopilot] = createSignal(false)
   const dims = useTerminalDimensions()
   const detailed = () => props.showDetails() || dims().width >= DETAILED_WIDTH
+
+  // One color for the whole segment, so the label follows the percentage.
+  // `loaded` separates "first fetch still running" (subdued) from "no data"
+  // (error): an unresolvable credential or a failing API is a failure, not a
+  // loading state.
+  const fg = () => {
+    const t = ctx.theme
+    const u = props.usage()
+    if (!u) return props.loaded() ? t.text.feedback.error.default : t.text.subdued
+    if (u.unlimited) return t.text.subdued
+    if (u.usedPercent >= 90) return t.text.feedback.error.default
+    if (u.usedPercent >= 70) return t.text.feedback.info.default
+    return t.text.subdued
+  }
 
   let generation = 0
   async function check(id: string | undefined) {
@@ -78,18 +86,18 @@ function CopilotUsage(props: {
   return (
     <Show when={isCopilot()}>
       <box flexDirection="row" flexShrink={1} minWidth={0}>
-        <text fg={ctx.theme.text.subdued} flexShrink={0}>
+        <text fg={fg()} flexShrink={0}>
           Copilot{" "}
         </text>
         <Show
           when={props.usage()}
           fallback={
-            <text fg={ctx.theme.text.subdued} flexShrink={0}>
+            <text fg={fg()} flexShrink={0}>
               —
             </text>
           }
         >
-          {(u) => <Segment usage={u()} detailed={detailed()} />}
+          {(u) => <Segment usage={u()} color={fg} detailed={detailed()} />}
         </Show>
       </box>
     </Show>
@@ -101,6 +109,7 @@ export default Plugin.define({
   setup(context) {
     const rpc = context.client.rpc(UsageRpc)
     const [usage, setUsage] = createSignal<Usage>()
+    const [loaded, setLoaded] = createSignal(false)
     let timer: ReturnType<typeof setInterval> | undefined
 
     async function refresh() {
@@ -109,6 +118,8 @@ export default Plugin.define({
         if (result?.usage) setUsage(result.usage)
       } catch {
         // keep the last known usage; retry on the next interval
+      } finally {
+        setLoaded(true)
       }
     }
 
@@ -122,6 +133,7 @@ export default Plugin.define({
           sessionID={() => input.sessionID}
           showDetails={() => input.showDetails}
           usage={usage}
+          loaded={loaded}
         />
       ),
     })
