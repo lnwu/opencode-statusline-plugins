@@ -15,7 +15,7 @@ runs:
       shell: bash
       run: bun install --frozen-lockfile
 
-    # tmux ships with the ubuntu-24.04 runner image (verified: 3.4). Installing
+    # tmux ships with the ubuntu-latest runner image (verified: 3.4). Installing
     # it unconditionally costs ~6s of `apt-get update` for nothing, so only
     # install it when a future image drops it.
     - name: Ensure tmux
