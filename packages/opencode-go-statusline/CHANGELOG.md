@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_None yet._
+### Changed
+
+- Re-record the README demo animation.
 
 ## 1.0.2 - 2026-09-19
 
