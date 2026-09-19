@@ -72,8 +72,9 @@ bun run changelog:check
 bun run typecheck
 ```
 
-`bun run test` only when `OPENCODE_API_KEY` is set — CI runs the integration
-tests on the PR with the repository secret.
+`bun run test` is credential-free (the unit tests). The real-TUI integration
+tests (`bun run --filter <pkg> test:e2e`) need the live credential; CI runs
+them on the merge to `main`, not on the PR.
 
 ## 3. Land the release PR
 

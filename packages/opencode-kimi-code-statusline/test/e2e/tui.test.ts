@@ -11,7 +11,7 @@
 // KIMI_API_KEY (e.g. a pay-as-you-go Moonshot key) cannot be picked up by
 // accident.
 //
-// Run: bun run build && KIMI_CODE_API_KEY=sk-... bun run test
+// Run: KIMI_CODE_API_KEY=sk-... bun run --filter opencode-kimi-code-statusline test:e2e
 import { join, resolve } from "node:path";
 import { runE2eCases } from "core/e2e";
 import { createHarness, type CaseSpec } from "core/harness";

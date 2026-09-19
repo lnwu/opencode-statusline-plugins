@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Manual run: exercises the real-TUI integration jobs without a main push.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -36,8 +38,8 @@ jobs:
       - name: Check formatting
         run: bun run fmt:check
 
-      - name: Core unit tests
-        run: bun run --filter core test
+      - name: Unit tests
+        run: bun run test
 
       - name: Check changelogs
         run: bun run changelog:check
@@ -48,8 +50,12 @@ jobs:
       - name: Packaging smoke test
         run: bun run --filter './packages/*' --if-present test:pack
 
+  # Real-TUI integration jobs: main pushes (and manual runs) only, never on
+  # pull requests. They need live credentials and network, and they are
+  # informational — the `ci` gate below only requires `checks`.
   go_integration:
     name: go (real TUI)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -74,6 +80,7 @@ jobs:
 
   copilot_integration:
     name: copilot (real TUI)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -99,6 +106,7 @@ jobs:
 
   kimi_integration:
     name: kimi (real TUI)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -123,8 +131,10 @@ jobs:
           include-hidden-files: false
 
   # The `main-protection` ruleset requires a check named `ci`, so this fan-in
-  # job stays named `ci` and fails unless every job above succeeded. It runs
-  # even when a dependency fails so the required check reports the failure.
+  # job stays named `ci` and fails unless `checks` succeeded. The integration
+  # jobs run on main only and stay informational: their results are echoed and
+  # their frames published, but they never gate a merge. The job runs even when
+  # a dependency fails so the required check reports the failure.
   ci:
     name: ci
     if: always()
@@ -132,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify all jobs succeeded
+      - name: Verify checks succeeded
         env:
           CHECKS: ${{ needs.checks.result }}
           GO: ${{ needs.go_integration.result }}
@@ -140,8 +150,8 @@ jobs:
           KIMI: ${{ needs.kimi_integration.result }}
         run: |
           echo "checks=$CHECKS go=$GO copilot=$COPILOT kimi=$KIMI"
-          if [[ "$CHECKS" != "success" || "$GO" != "success" || "$COPILOT" != "success" || "$KIMI" != "success" ]]; then
-            echo "::error::one or more CI jobs did not succeed"
+          if [[ "$CHECKS" != "success" ]]; then
+            echo "::error::the checks job did not succeed"
             exit 1
           fi
 
