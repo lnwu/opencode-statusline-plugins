@@ -140,13 +140,61 @@ jobs:
           if-no-files-found: ignore
           include-hidden-files: false
 
+  kimi_integration:
+    name: kimi (real TUI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install tmux
+        run: sudo apt-get update && sudo apt-get install -y tmux
+
+      # `--trust` runs the package postinstall that downloads the platform binary.
+      - name: Install OpenCode CLI
+        run: |
+          bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+          "$HOME/.bun/bin/opencode" --version
+
+      - name: Integration tests (Kimi, real TUI)
+        env:
+          # Repo secret name; the tests read it as KIMI_CODE_API_KEY and register
+          # it under the KIMI_API_KEY env-connection name the integration declares.
+          KIMI_CODE_API_KEY: ${{ secrets.KIMI_CODE_API_KEY }}
+        run: bun run --filter opencode-kimi-code-statusline test
+
+      - name: Stage TUI frames
+        if: always()
+        run: |
+          mkdir -p /tmp/tui-frames/opencode-kimi-code-statusline
+          shopt -s nullglob
+          files=(packages/opencode-kimi-code-statusline/test/e2e/.artifacts/*.txt)
+          if (( ${#files[@]} > 0 )); then
+            cp "${files[@]}" /tmp/tui-frames/opencode-kimi-code-statusline/
+          fi
+
+      - name: Upload TUI frames (kimi)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tui-frames-kimi
+          path: /tmp/tui-frames/opencode-kimi-code-statusline
+          if-no-files-found: ignore
+          include-hidden-files: false
+
   # The `main-protection` ruleset requires a check named `ci`, so this fan-in
   # job stays named `ci` and fails unless every job above succeeded. It runs
   # even when a dependency fails so the required check reports the failure.
   ci:
     name: ci
     if: always()
-    needs: [checks, go_integration, copilot_integration]
+    needs: [checks, go_integration, copilot_integration, kimi_integration]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -155,9 +203,10 @@ jobs:
           CHECKS: ${{ needs.checks.result }}
           GO: ${{ needs.go_integration.result }}
           COPILOT: ${{ needs.copilot_integration.result }}
+          KIMI: ${{ needs.kimi_integration.result }}
         run: |
-          echo "checks=$CHECKS go=$GO copilot=$COPILOT"
-          if [[ "$CHECKS" != "success" || "$GO" != "success" || "$COPILOT" != "success" ]]; then
+          echo "checks=$CHECKS go=$GO copilot=$COPILOT kimi=$KIMI"
+          if [[ "$CHECKS" != "success" || "$GO" != "success" || "$COPILOT" != "success" || "$KIMI" != "success" ]]; then
             echo "::error::one or more CI jobs did not succeed"
             exit 1
           fi

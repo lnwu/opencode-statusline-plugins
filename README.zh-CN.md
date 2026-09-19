@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | [`opencode-go-statusline`](packages/opencode-go-statusline) | OpenCode Go —— 滚动 5h / 周 / 月 | ✅ 可用 |
 | [`opencode-copilot-statusline`](packages/opencode-copilot-statusline) | GitHub Copilot —— premium requests / chat | ✅ 可用 |
-| [`opencode-kimi-code-statusline`](packages/opencode-kimi-code-statusline) | Kimi Code（Kimi For Coding） | 🚧 计划中 |
+| [`opencode-kimi-code-statusline`](packages/opencode-kimi-code-statusline) | Kimi Code（Kimi For Coding） | ✅ 可用 |
 
 ## 安装
 

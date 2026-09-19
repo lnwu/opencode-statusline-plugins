@@ -10,8 +10,8 @@ plus an internal shared `core` package (never published).
 - `opencode-copilot-statusline` — GitHub Copilot quota (premium requests, with
   a chat fallback for plans without a premium-request quota, e.g. Copilot Free).
   Implemented; not yet published.
-- `opencode-kimi-code-statusline` — Kimi Code (Kimi For Coding) quota. Planned;
-  README-only, npm name reserved.
+- `opencode-kimi-code-statusline` — Kimi For Coding (Kimi Code) quota (rolling
+  5h / weekly). Implemented; not yet published.
 - `core` — internal shared package (not a plugin, never published): language
   resolution, the e2e harness, the README demo recorder, and the build helper.
   Plugin sources, build scripts, and tests may import it; it is inlined into
@@ -60,6 +60,21 @@ plus an internal shared `core` package (never published).
 | `test/e2e/tui.test.ts` | `bun test` cases: live quota with a real Haiku request, non-Copilot session hidden, `Copilot —` fallback; configures the `core` harness with `credentialName` (`GITHUB_TOKEN`). |
 | `test/pack.test.ts` | Packaging smoke test via `core/pack`: tarball contents, declared-import scan, install, entry imports. |
 
+### Package layout (`opencode-kimi-code-statusline`)
+
+| Path | Role |
+| --- | --- |
+| `src/index.ts` | Server plugin: resolves the `kimi-code-plan-global` / `kimi-code-plan-cn` API-key credential via the integration API, fetches the quota, registers the RPC. Built to `dist/index.js`. |
+| `src/usage.ts` | Pure mapping from the `coding/v1/usages` response to the displayed usage (rolling 5h and weekly windows; prefers the precise `usages.limit_5h` / `limit_7d` ratios and falls back to the absolute `limits[].detail` / `usage` numbers). |
+| `src/rpc.ts` | Shared RPC definition (`Rpc.define`). Built to `dist/rpc.js`. |
+| `src/tui.tsx` | TUI plugin: polls the RPC and renders `prompt.footer.status`. Built to `dist/tui.js`. |
+| `scripts/build.ts` | Dev-only wrapper around `core/build`. |
+| `scripts/record-demo.ts` | Dev-only thin wrapper around `core/record-demo`: builds two takes (en, zh-CN) with the `LANG` override each locale needs, rendered to `assets/demo.{en,zh-CN}.svg` (plus `.cast` masters). The demo assets are not recorded yet; runbook: the `record-demo` skill. |
+| `assets/` | README media (to be recorded): animated demo SVGs and their `.cast` masters. Repo-only (kept out of the tarball by `files: ["dist"]`); referenced by relative paths from the README. |
+| `test/usage.test.ts` | Unit tests for the quota mapping; no credential needed, runs in the package `test`. |
+| `test/e2e/tui.test.ts` | `bun test` cases: live quota with a real model request, locale labels, non-Kimi session hidden, `Kimi —` fallback; configures the `core` harness with `credentialName` (`KIMI_API_KEY`). |
+| `test/pack.test.ts` | Packaging smoke test via `core/pack`: tarball contents, declared-import scan, install, entry imports. |
+
 The published entries must ship pre-compiled: OpenTUI's Solid transform skips
 `.tsx` under `node_modules`, so raw JSX from a published package loses reactive
 props and the statusline paints only once. `core/src/build.ts` reuses
@@ -79,7 +94,7 @@ see Release).
 - `bun run build` / `bun run typecheck` — all packages; root scripts use
   `--if-present`, so README-only packages are skipped.
 - `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
-- `bun run test` — all package tests (core unit tests + go/copilot
+- `bun run test` — all package tests (core unit tests + go/copilot/kimi
   integration tests; see below).
 - `bun run --filter core test` — core unit tests (language resolution); no
   credential needed, runs in CI before the integration tests.
@@ -99,8 +114,8 @@ see Release).
 asserts the footer statusline. The reusable harness lives in
 `packages/core/src/harness.ts`; each package configures it with its own built
 entries and credential env. Requirements: `opencode` on PATH, `tmux` on PATH
-(CI installs it), network access (models.dev; the go tests additionally make a
-real model call), and the live credential:
+(CI installs it), network access (models.dev; the go and kimi tests additionally
+make a real model call), and the live credential:
 
 - `opencode-go-statusline`: `OPENCODE_API_KEY` (the `OPENCODE_GO_API_KEY`
   repository secret in CI); makes a real call to `opencode-go/deepseek-v4.1-flash`.
@@ -113,14 +128,21 @@ real model call), and the live credential:
   under the `GITHUB_TOKEN` env-connection name the Copilot integration declares
   (`credentialName`), and the plugin accepts both that `key` connection and the
   OAuth credential the device flow stores.
+- `opencode-kimi-code-statusline`: `KIMI_CODE_API_KEY` (the
+  `KIMI_CODE_API_KEY` repository secret in CI); makes a real call to
+  `kimi-code-plan-global/kimi-for-coding`. The harness registers the key under
+  the `KIMI_API_KEY` env-connection name both Kimi For Coding integrations
+  declare (`credentialName`), so an unrelated developer `KIMI_API_KEY` (e.g. a
+  pay-as-you-go Moonshot key) cannot be picked up by accident.
 
 The package's `pretest` script rebuilds `dist/`, so the tests always exercise
-the built entries that ship. The copilot package's `test` also runs
-`test/usage.test.ts`, a credential-free unit test for the quota mapping.
+the built entries that ship. The copilot and kimi packages' `test` also run
+`test/usage.test.ts`, credential-free unit tests for the quota mappings.
 
 ```sh
 OPENCODE_API_KEY=sk-... bun run --filter opencode-go-statusline test
 COPILOT_GITHUB_TOKEN=gho_... bun run --filter opencode-copilot-statusline test
+KIMI_CODE_API_KEY=sk-... bun run --filter opencode-kimi-code-statusline test
 ```
 
 Run a single case with `bun test -t <case>`; `pretest` still rebuilds first.
@@ -130,10 +152,10 @@ the `E2E_KEEP` / `E2E_ROOT_BASE` / `E2E_ARTIFACT_DIR` debugging knobs — is in
 
 Frames land in `test/e2e/.artifacts/<case>.txt`; each integration job stages them
 under a per-package folder and uploads a per-package artifact (`tui-frames-go`,
-`tui-frames-copilot`), which the `ci` fan-in job downloads into matching folders
-and renders as one collapsible `<details>` block per case (so frames stay
-readable without downloading, and a failed run still publishes them). Never
-upload OpenCode logs — they can contain the Authorization header.
+`tui-frames-copilot`, `tui-frames-kimi`), which the `ci` fan-in job downloads
+into matching folders and renders as one collapsible `<details>` block per case
+(so frames stay readable without downloading, and a failed run still publishes
+them). Never upload OpenCode logs — they can contain the Authorization header.
 
 ## Packaging smoke test
 
@@ -142,7 +164,7 @@ asserts the tarball ships the expected `dist/` entries, and scans every shipped
 bundle for bare imports that are not declared in `dependencies` or
 `peerDependencies` — this is what catches the private `core` package leaking
 into a bundle. It then installs the tarball with Bun and imports the server and
-RPC entries. No credential or tmux needed. Both implemented packages run it in
+RPC entries. No credential or tmux needed. All implemented packages run it in
 CI.
 
 ## CI & branch policy
@@ -153,11 +175,12 @@ CI.
   integration jobs, all running in parallel, and the `ci` fan-in job that the
   ruleset actually requires) on an up-to-date branch. Merging is squash-only
   and the head branch is deleted on merge.
-- The integration jobs need the `OPENCODE_GO_API_KEY` and
-  `COPILOT_GITHUB_TOKEN` repository secrets (real credentials; CI exposes them
-  to the tests as `OPENCODE_API_KEY` and `COPILOT_GITHUB_TOKEN`). The live-usage
-  cases make a small model request and read live quota; there is no mock. Fork
-  PRs get no secrets, so they fail these jobs.
+- The integration jobs need the `OPENCODE_GO_API_KEY`, `COPILOT_GITHUB_TOKEN`,
+  and `KIMI_CODE_API_KEY` repository secrets (real credentials; CI exposes them
+  to the tests as `OPENCODE_API_KEY`, `COPILOT_GITHUB_TOKEN`, and
+  `KIMI_CODE_API_KEY`). The live-usage cases make a small model request and read
+  live quota; there is no mock. Fork PRs get no secrets, so they fail these
+  jobs.
 - Renovate is the only auto-merging actor. Its config extends
   `:automergeMinor` and `:automergeDigest`, so non-major dependency and GitHub
   Actions updates carry `automerge` and Renovate enables the platform's native
@@ -184,8 +207,9 @@ CI.
   server plugin's `options.language` relayed over the usage RPC, then the
   terminal locale (`LC_ALL` → `LC_MESSAGES` → `LANGUAGE` → `LANG`). The TUI
   plugin loader does not forward `opencode.json` plugin options to the `./tui`
-  entry, which is why the server relays them. This is go-specific: the copilot
-  statusline has no localizable text and ships no such option.
+  entry, which is why the server relays them. This applies to the go and kimi
+  statuslines: the copilot statusline has no localizable text and ships no such
+  option.
 - Published packages ship `dist/` only: `files: ["dist"]` and every `exports`
   entry points at a built bundle. `src/` is dev-only. `core` is inlined into
   each plugin's bundles.

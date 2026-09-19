@@ -64,6 +64,31 @@
         "@opencode/theme",
       ],
     },
+    "packages/opencode-kimi-code-statusline": {
+      "name": "opencode-kimi-code-statusline",
+      "version": "0.1.0",
+      "dependencies": {
+        "@opencode/plugin": ">2.0.0",
+      },
+      "devDependencies": {
+        "@opencode/theme": ">2.0.0",
+        "@opentui/core": "^0.5.11",
+        "@opentui/solid": "^0.5.11",
+        "bun-types": "^1.4.2",
+        "core": "*",
+        "solid-js": "^1.9.15",
+        "typescript": "^7.0.2",
+      },
+      "peerDependencies": {
+        "@opencode/theme": ">2.0.0",
+        "@opentui/core": ">=0.5.10",
+        "@opentui/solid": ">=0.5.10",
+        "solid-js": ">=1.9.0",
+      },
+      "optionalPeers": [
+        "@opencode/theme",
+      ],
+    },
   },
   "packages": {
     "@ai-sdk/provider": ["@ai-sdk/provider@3.0.8", "", { "dependencies": { "json-schema": "^0.4.0" } }, "sha512-oGMAgGoQdBXbZqNG0Ze56CHjDZ1IDYOwGYxYjO5KLSlz5HiNQ9udIXsPZ61VWaHGZ5XW/jyjmr6t2xz2jGVwbQ=="],
@@ -669,6 +694,8 @@
     "opencode-copilot-statusline": ["opencode-copilot-statusline@workspace:packages/opencode-copilot-statusline"],
 
     "opencode-go-statusline": ["opencode-go-statusline@workspace:packages/opencode-go-statusline"],
+
+    "opencode-kimi-code-statusline": ["opencode-kimi-code-statusline@workspace:packages/opencode-kimi-code-statusline"],
 
     "p-limit": ["p-limit@2.3.0", "", { "dependencies": { "p-try": "^2.0.0" } }, "sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w=="],
 
