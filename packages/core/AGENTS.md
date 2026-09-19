@@ -31,17 +31,14 @@ Verified against opencode > 2.0.0:
   though its plugin only enables model syncing for OAuth credentials.
 - The plugin is loaded from the isolated *global* plugin directory
   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`) as re-export shims pointing
-  at the built `dist/index.js` and `dist/tui.js`. A project-scoped plugin
-  (`.opencode/plugins/`) renders but its RPC stays unreachable
-  (`RPC is unavailable`), leaving the statusline at its fallback; `opencode.json`
-  `plugins: ["/abs/path"]` entries that rely on a package's `exports` do not
-  load either — that loader only looks for `<dir>/index.ts`.
+  at the built `dist/index.js` and `dist/tui.js`; project-scoped and
+  absolute-path `opencode.json` plugins do not work in the harness today
+  (see #67).
 - The test TUI writes an isolated `cli.json` that hides the sidebar and the tab
   strip (`session.sidebar: "hide"`, `tabs.enabled: false`), so the frame has no
   session-dependent panels and the footer has room for the full statusline at
-  160 columns. Inline `OPENCODE_CLI_CONFIG_CONTENT` reaches the TUI process but
-  its settings do not take effect on opencode > 2.0.0, so the harness writes the
-  file.
+  160 columns. Inline `OPENCODE_CLI_CONFIG_CONTENT` does not take effect on
+  opencode > 2.0.0 (see #66), so the harness writes the file.
 - Model readiness: models from the models.dev catalog register asynchronously
   after a fresh service starts, and a prompt sent before its model is
   registered fails with `ModelUnavailableError` (and no provider error on the

@@ -22,9 +22,9 @@ plus an internal shared `core` package (never published).
 | Path | Role |
 | --- | --- |
 | `src/language.ts` | Terminal language detection and `language` option resolution for statusline labels. |
-| `src/theme.ts` | Theme token compatibility: reads the pre- and post-2.0.9 text token names (`subdued`/`muted`, `feedback.*.default`/`base`) so statusline colors survive the rename. |
+| `src/theme.ts` | Theme token compatibility: reads the pre- and post-2.0.9 text token names so statusline colors survive the rename; removal condition in #63. |
 | `src/harness.ts` | `createHarness`: isolated OpenCode env, real TUI in tmux, frame capture; parameterized per package. |
-| `src/record-demo.ts` | `recordDemo`: local-mode README demo recorder (real TUI in tmux, wrapped in `terminal-svg rec`, rendered to an animated SVG); takes a list of takes (prompt, model, env, output name) so it carries no locale/label knowledge, plus a gitignored per-package `record-demo.config.json` for per-developer defaults. Hides the cursor by default, pins each take's model in opencode's `model.json` (home-screen model selection) while recording, verifies it against the local `/api/model` catalog so a stale integration fails loudly instead of recording the fallback model, hands an optional TUI theme (`tuiTheme`) to the recorded process as inline CLI settings, seals terminal-svg's tiled background rects against scaling seams (russmckendrick/terminal-svg#3), and repairs its chunk-boundary glyph corruption (#4). Runbook: the `record-demo` skill. |
+| `src/record-demo.ts` | `recordDemo`: local-mode README demo recorder (real TUI in tmux, wrapped in `terminal-svg rec`, rendered to an animated SVG); takes a list of takes (prompt, model, env, output name) so it carries no locale/label knowledge, plus a gitignored per-package `record-demo.config.json` for per-developer defaults. Hides the cursor by default, pins each take's model in opencode's `model.json` (home-screen model selection) while recording, verifies it against the local `/api/model` catalog so a stale integration fails loudly instead of recording the fallback model, hands an optional TUI theme (`tuiTheme`) to the recorded process as inline CLI settings, and carries terminal-svg workarounds tracked in #64 and #65. Runbook: the `record-demo` skill. |
 | `src/build.ts` | `buildPlugin`: compiles a package's `src/{index,rpc,tui}` entries with the Solid universal transform. |
 | `src/pack.ts` | `checkPackedPackage`: packaging smoke test (tarball contents, declared imports, install, entry imports). |
 | `test/language.test.ts`, `test/theme.test.ts` | Unit tests; run in CI before the integration tests. |
@@ -93,7 +93,7 @@ see Release).
 
 - `bun install` — lockfile is `bun.lock`; use Bun, not npm/pnpm.
 - `bun run fmt` / `bun run fmt:check` — format (or verify) the workspace with
-  Oxfmt; Markdown is excluded, see Conventions. `fmt:check` runs in CI.
+  Oxfmt; Markdown is excluded (see #62). `fmt:check` runs in CI.
 - `bun run build` / `bun run typecheck` — all packages; root scripts use
   `--if-present`, so README-only packages are skipped.
 - `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
@@ -216,11 +216,13 @@ CI.
   entry points at a built bundle. `src/` is dev-only. `core` is inlined into
   each plugin's bundles.
 - Formatting is Oxfmt with its default options (`.oxfmtrc.json` at the repo
-  root); run `bun run fmt` before opening a PR. Markdown
-  (`.md`/`.mdx`/`.markdown`) is deliberately excluded: Oxfmt still formats it
-  through bundled Prettier, and its native Rust formatter is not wired into
-  Oxfmt yet (oxc-project/oxc#24607). Drop the `ignorePatterns` entry only when
-  that integration lands and the resulting diff is reviewed.
+  root); run `bun run fmt` before opening a PR. Markdown is deliberately
+  excluded — see #62 for the reason and the removal condition.
+- Upstream bugs and limitations: apply a local workaround instead of blocking
+  on upstream, then open a tracking issue in this repo (search for an existing
+  one first). The issue records the upstream link, where the workaround lives,
+  and the removal condition; the workaround's code comment or doc points back
+  to it. File upstream only when asked. Examples: #63–#68.
 - User-visible changes (features, behavior changes, fixes, breaking changes)
   land with entries under `## Unreleased` in both changelogs, in the same PR as
   the change; a `core` change that alters a plugin's behavior is recorded in
