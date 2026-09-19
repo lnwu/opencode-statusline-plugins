@@ -1,6 +1,6 @@
 ---
 name: Release
-description: Cut a release of a package in this monorepo — promote the bilingual changelog, bump the version, merge the release PR, tag main, create the GitHub release, and verify the npm publish. Use when the user asks to release, ship, or publish a package (发布 / 发版).
+description: Cut a release of one or more packages in this monorepo — promote the bilingual changelogs, bump the versions, merge the release PR, tag main, create the GitHub releases, and verify the npm publishes. Use when the user asks to release, ship, or publish a package (发布 / 发版).
 ---
 
 # Release a package
@@ -9,11 +9,16 @@ One release = one changelog section = one GitHub release. The changelog is the
 source of truth for the release body; `publish.yml` publishes to npm when the
 release is published. Invariants live in `AGENTS.md` → Release / Conventions.
 
+One release PR can carry several packages: promote each package's changelog and
+bump each version in a single commit, then tag every package on the same merge
+commit. Each package still gets its own tag and GitHub release.
+
 ## 0. Decide the release
 
-1. Confirm the package (`packages/<pkg>/`) and read `## Unreleased` in both
+1. Confirm the package(s) (`packages/<pkg>/`) and read `## Unreleased` in both
    `CHANGELOG.md` and `CHANGELOG.zh-CN.md` — those entries are what ships.
-2. Propose the version and get explicit approval before changing files:
+2. Propose the version for every package and get explicit approval before
+   changing files:
    - pre-1.0: breaking changes or features → minor; fixes only → patch
    - 1.0+: breaking → major; features → minor; fixes → patch
    - nothing user-visible under `## Unreleased` (the placeholder counts as
@@ -30,7 +35,10 @@ git switch main && git pull
 git switch -c release/<pkg>-<version>
 ```
 
-In **both** language files of the package:
+For several packages, use one combined branch (e.g.
+`release/<pkg-1>-<v1>-<pkg-2>-<v2>`, or the date).
+
+In **both** language files of every package in the release:
 
 - Rename `## Unreleased` to `## <version> - <YYYY-MM-DD>` (`date +%F`).
 - Add a fresh `## Unreleased` at the top of the version list with the
@@ -39,8 +47,8 @@ In **both** language files of the package:
 - Do not add link-reference footers: `release-notes.ts` computes the compare
   and changelog links when it prints the release body.
 
-Bump `version` in `packages/<pkg>/package.json` (hand-edit, or
-`bun pm version <version> --no-git-tag-version` from the package directory).
+Bump `version` in each `packages/<pkg>/package.json` (hand-edit, or
+`bun pm version <version> --no-git-tag-version` from each package directory).
 Then run `bun install` and include `bun.lock` in the release commit if its
 workspace version entry changed — only `bun install` syncs it, `bun pm version`
 does not (oven-sh/bun#28935).
@@ -70,15 +78,15 @@ tests on the PR with the repository secret.
 ## 3. Land the release PR
 
 ```sh
-git add packages/<pkg> bun.lock
-git commit -m "Release <pkg> <version>"
+git add packages/<pkg> bun.lock                  # repeat for every package
+git commit -m "Release <pkg-1> <v1>[, <pkg-2> <v2> ...]"
 git push -u origin HEAD
-gh pr create --title "Release <pkg> <version>" --body "<what ships>"
+gh pr create --title "Release <pkg-1> <v1>[, <pkg-2> <v2> ...]" --body "<what ships>"
 gh pr checks --watch
 ```
 
 Ask the user to merge, or run `gh pr merge --squash` only with explicit
-approval. Then `git switch main && git pull` and confirm the version landed:
+approval. Then `git switch main && git pull` and confirm every version landed:
 `node -p "require('./packages/<pkg>/package.json').version"` must equal
 `<version>`.
 
@@ -94,13 +102,14 @@ bun scripts/release-notes.ts <pkg>@<version> | gh release create "<pkg>@<version
 ```
 
 The body must contain the English section, the collapsed Chinese section, and
-the compare + changelog links — exactly what the script prints. The published
-release event triggers `publish.yml`.
+the compare + changelog links — exactly what the script prints. Repeat for
+every package; in a multi-package release, every tag points at the same merge
+commit. The published release event triggers `publish.yml`.
 
 ## 5. Verify the npm publish
 
 ```sh
-gh run list --workflow publish.yml --limit 1
+gh run list --workflow publish.yml --limit 5   # one run per released package
 gh run watch <run-id>
 ```
 

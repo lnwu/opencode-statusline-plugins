@@ -240,6 +240,10 @@ CI.
   tagged `<package>@<version>` triggers `publish.yml`; the tag must match that
   package's `package.json`. The workflow runs build + typecheck, then publishes
   via npm OIDC trusted publishing. Don't run `npm publish` locally.
+- One release PR can carry several packages: promote each package's changelog
+  and bump each version in the same commit, then tag every package on the
+  resulting merge commit, one GitHub release each. The per-package invariant
+  above is unchanged.
 - The step-by-step runbook is the `release` skill
   (`.opencode/skills/release/SKILL.md`); follow it when asked to release. Its
   `reference/first-release.md` documents the one-time npm bootstrap for a
