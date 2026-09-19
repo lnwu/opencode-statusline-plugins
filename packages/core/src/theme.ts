@@ -3,8 +3,9 @@
 // OpenCode 2.0.9 renamed the resolved text theme tokens: `text.subdued` became
 // `text.muted`, and `text.feedback.<kind>.default` became
 // `text.feedback.<kind>.base`. The plugins read both names so a released
-// statusline keeps its colors on either runtime. A token that resolves to
-// neither is left undefined, which renders in the terminal's default color.
+// statusline keeps its colors on either runtime (tracked in #63); a token that
+// resolves to neither is left undefined, which renders in the terminal's
+// default color.
 export type StatusColors<T> = {
   /** Ordinary text (`text.muted` on 2.0.9+, `text.subdued` before). */
   muted?: T;

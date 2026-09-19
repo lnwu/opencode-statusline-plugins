@@ -13,13 +13,14 @@
 // - The plugin is loaded from the isolated *global* plugin directory
 //   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`). A project-scoped plugin
 //   renders but its RPC stays unreachable (`RPC is unavailable`), which leaves
-//   the statusline at its "no usage" fallback.
+//   the statusline at its "no usage" fallback (tracked in #67).
 // - The managed background service binds a fixed default port (49374). Each
 //   case sets its own port so tests stay isolated and do not collide with a
 //   developer's running service.
 // - The TUI runs with an isolated cli.json that hides the sidebar and the tab
-//   strip, and the case root lives under a short `/tmp` path so the footer
-//   keeps its directory indicator short.
+//   strip (inline `OPENCODE_CLI_CONFIG_CONTENT` does not take effect on
+//   opencode > 2.0.0; tracked in #66), and the case root lives under a short
+//   `/tmp` path so the footer keeps its directory indicator short.
 // - Models from the models.dev catalog register asynchronously after a fresh
 //   service starts. A prompt sent before its model is registered fails with a
 //   `ModelUnavailableError` and no assistant message, so `sendPrompt` waits for
@@ -112,7 +113,8 @@ const DEFAULT_TOOLS: readonly ToolCheck[] = [
 
 // Keep the test frame small and deterministic: no sidebar, no tab strip.
 // Written to the isolated cli.json — OPENCODE_CLI_CONFIG_CONTENT reaches the
-// TUI process but its settings do not take effect on opencode > 2.0.0.
+// TUI process but its settings do not take effect on opencode > 2.0.0
+// (tracked in #66).
 const CLI_CONFIG = {
   $schema: "https://opencode.ai/v2/cli.json",
   session: { sidebar: "hide" },
