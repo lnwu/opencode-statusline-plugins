@@ -51,19 +51,11 @@ First release of a package with no changelog yet: create the pair (English +
 
 A package that does not exist on npm yet cannot have a trusted publisher
 configured (npm requires the package to exist), so OIDC cannot publish the
-initial version. Bootstrap it once before tagging:
-
-1. `npm login`, then publish a minimal `0.0.0` name-reservation stub from a
-   temporary directory with `--tag trusted-publisher-claim`: only a
-   `package.json` with name, version, license, and repository — no source. The
-   tag keeps `latest` from pointing at the stub.
-2. Configure the trusted publisher on npmjs.com → the package's Settings →
-   Trusted publishing → GitHub Actions: owner `lnwu`, repository
-   `opencode-statusline-plugins`, workflow `publish.yml`, allowed action
-   `npm publish`. With npm >= 11.15.0 the equivalent is
-   `npm trust github <pkg> --repo lnwu/opencode-statusline-plugins --file publish.yml --allow-publish`.
-3. Continue with the normal OIDC release below; deprecate the `0.0.0`
-   placeholder later if desired.
+initial version. Run the one-time bootstrap in `reference/first-release.md`
+once first — it checks the npm login, publishes the `0.0.0` placeholder, and
+configures the trusted publisher, driving npm's interactive 2FA and handing the
+auth links to the user — then continue here. Do not repeat the bootstrap on
+later releases.
 
 ## 2. Verify locally
 
