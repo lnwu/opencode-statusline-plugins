@@ -218,6 +218,11 @@ CI.
 - Formatting is Oxfmt with its default options (`.oxfmtrc.json` at the repo
   root); run `bun run fmt` before opening a PR. Markdown is deliberately
   excluded — see #62 for the reason and the removal condition.
+- Upstream bugs and limitations: apply a local workaround instead of blocking
+  on upstream, then open a tracking issue in this repo (search for an existing
+  one first). The issue records the upstream link, where the workaround lives,
+  and the removal condition; the workaround's code comment or doc points back
+  to it. File upstream only when asked. Examples: #63–#68.
 - User-visible changes (features, behavior changes, fixes, breaking changes)
   land with entries under `## Unreleased` in both changelogs, in the same PR as
   the change; a `core` change that alters a plugin's behavior is recorded in
