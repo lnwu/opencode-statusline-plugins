@@ -41,7 +41,7 @@
     },
     "packages/opencode-go-statusline": {
       "name": "opencode-go-statusline",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@opencode/plugin": ">2.0.0",
       },
