@@ -41,7 +41,8 @@
 import { mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import { run, type Env, type ModelRef } from "./harness";
+import { run, type Env } from "./run";
+import type { ModelRef } from "./harness";
 
 const COLS = 120;
 const ROWS = 28;

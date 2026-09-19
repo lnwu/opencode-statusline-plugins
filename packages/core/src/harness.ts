@@ -26,13 +26,15 @@
 //   the model to appear in `/api/model` first.
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { mustRun, run } from "./run";
+import type { Env, RunOptions, RunResult } from "./run";
+
+export { run } from "./run";
+export type { Env, RunOptions, RunResult } from "./run";
 
 const OPENCODE = "opencode";
 
 export type ModelRef = { providerID: string; id: string };
-export type Env = Record<string, string | undefined>;
-export type RunResult = { code: number; stdout: string; stderr: string };
-export type RunOptions = { env?: Env; cwd?: string; timeoutMs?: number };
 export type ToolCheck = { name: string; args: string[] };
 
 export type CaseSpec = {
@@ -165,6 +167,24 @@ export function createHarness(config: HarnessConfig): Harness {
 
     const root = await shortRoot(rootBase, spec.name);
     const env = isolate(root);
+    try {
+      return await prepareIsolatedCase(spec, root, env, credential);
+    } catch (error) {
+      // A failure before the case is running must not leak the throw-away
+      // service or root: the caller only registers contexts that prepared.
+      await stopService(env);
+      await removeRoot(root);
+      throw error;
+    }
+  }
+
+  /** Prepare a case inside its isolated root; `prepareCase` cleans up on failure. */
+  async function prepareIsolatedCase(
+    spec: CaseSpec,
+    root: string,
+    env: Env,
+    credential: string,
+  ): Promise<CaseContext> {
     for (const dir of [
       "home",
       `config/opencode/plugins/${pluginDir}`,
@@ -382,11 +402,16 @@ export function createHarness(config: HarnessConfig): Harness {
     let frame = "";
     while (Date.now() < deadline) {
       frame = await context.capture();
-      if (frame && pattern.test(frame)) break;
+      if (frame && pattern.test(frame)) {
+        await Bun.sleep((context.spec.settleSeconds ?? 3) * 1_000);
+        return await context.capture();
+      }
       await Bun.sleep(2_000);
     }
-    await Bun.sleep((context.spec.settleSeconds ?? 3) * 1_000);
-    return await context.capture();
+    throw new Error(
+      `[${context.spec.name}] the frame never matched ${pattern} within ${timeoutMs}ms; ` +
+        `last frame:\n${frame}`,
+    );
   }
 
   async function writeArtifacts(context: CaseContext, frame: string): Promise<void> {
@@ -394,10 +419,18 @@ export function createHarness(config: HarnessConfig): Harness {
     await writeFile(`${context.artifactBase}.txt`, frame);
   }
 
+  async function stopService(env: Env): Promise<void> {
+    await run([OPENCODE, "service", "stop"], { env, timeoutMs: 30_000 });
+  }
+
+  async function removeRoot(root: string): Promise<void> {
+    if (!keepRoot) await rm(root, { recursive: true, force: true });
+  }
+
   async function cleanupCase(context: CaseContext): Promise<void> {
     await run(["tmux", "-L", context.tmuxSocket, "kill-server"], { env: context.env });
-    await run([OPENCODE, "service", "stop"], { env: context.env, timeoutMs: 30_000 });
-    if (!keepRoot) await rm(context.root, { recursive: true, force: true });
+    await stopService(context.env);
+    await removeRoot(context.root);
   }
 
   return {
@@ -411,40 +444,6 @@ export function createHarness(config: HarnessConfig): Harness {
     writeArtifacts,
     cleanupCase,
   };
-}
-
-export async function run(
-  cmd: string[],
-  options: { env?: Env; cwd?: string; timeoutMs?: number } = {},
-): Promise<RunResult> {
-  const proc = Bun.spawn(cmd, {
-    env: { ...process.env, ...options.env },
-    cwd: options.cwd,
-    stdin: "ignore",
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const timer = options.timeoutMs ? setTimeout(() => proc.kill(), options.timeoutMs) : undefined;
-  const [stdout, stderr] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-  ]);
-  const code = await proc.exited;
-  if (timer) clearTimeout(timer);
-  return { code, stdout, stderr };
-}
-
-async function mustRun(
-  cmd: string[],
-  options: { env?: Env; cwd?: string; timeoutMs?: number },
-): Promise<RunResult> {
-  const result = await run(cmd, options);
-  if (result.code !== 0) {
-    throw new Error(
-      `${cmd.join(" ")} exited with ${result.code}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
-    );
-  }
-  return result;
 }
 
 function freePort(): number {

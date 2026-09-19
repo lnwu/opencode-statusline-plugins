@@ -1,14 +1,19 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
-import { useTerminalDimensions } from "@opentui/solid";
-import { createEffect, createSignal, onCleanup, Show } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { resolveLanguage, type Language } from "core/language";
+import {
+  countdown,
+  createProviderGate,
+  quotaColor,
+  Separator,
+  startPolling,
+  useDetailed,
+} from "core/statusline";
 import { statusColors } from "core/theme";
 import { UsageRpc, type Usage, type UsageWindow } from "./rpc";
 
-const INTERVAL_MS = 60000;
-const DETAILED_WIDTH = 125;
 const GO_PROVIDER_ID = "opencode-go";
 
 const LABELS = {
@@ -18,27 +23,10 @@ const LABELS = {
 
 type Labels = (typeof LABELS)[Language];
 
-function countdown(resetsAt: string, now: number) {
-  const ms = new Date(resetsAt).getTime() - now;
-  if (!Number.isFinite(ms) || ms <= 0) return undefined;
-  const minutes = Math.ceil(ms / 60000);
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const mins = minutes % 60;
-  if (days > 0) return `${days}d${hours}h`;
-  if (hours > 0) return `${hours}h${mins}m`;
-  return `${mins}m`;
-}
-
 function Segment(props: { label: string; win: UsageWindow; detailed: boolean }) {
   const ctx = usePlugin();
-  const fg = () => {
-    const colors = statusColors<RGBA>(ctx.theme);
-    if (props.win.status && props.win.status !== "ok") return colors.error;
-    if (props.win.percent >= 90) return colors.error;
-    if (props.win.percent >= 70) return colors.info;
-    return colors.muted;
-  };
+  const fg = () =>
+    quotaColor(ctx.theme, props.win.percent, !props.win.status || props.win.status === "ok");
   const text = () => {
     const left = props.detailed ? countdown(props.win.resetsAt, Date.now()) : undefined;
     return `${props.label} ${props.win.percent}%${left ? ` (${left})` : ""}`;
@@ -50,15 +38,6 @@ function Segment(props: { label: string; win: UsageWindow; detailed: boolean }) 
   );
 }
 
-function Separator() {
-  const ctx = usePlugin();
-  return (
-    <text fg={statusColors<RGBA>(ctx.theme).muted} flexShrink={0}>
-      {" · "}
-    </text>
-  );
-}
-
 function GoUsage(props: {
   sessionID: () => string | undefined;
   showDetails: () => boolean;
@@ -66,33 +45,8 @@ function GoUsage(props: {
   labels: Labels;
 }) {
   const ctx = usePlugin();
-  const [isGo, setIsGo] = createSignal(false);
-  const dims = useTerminalDimensions();
-  const detailed = () => props.showDetails() || dims().width >= DETAILED_WIDTH;
-
-  let generation = 0;
-  async function check(id: string | undefined) {
-    const current = ++generation;
-    setIsGo(false);
-    if (!id) return;
-    try {
-      await ctx.data.session.sync(id);
-      if (current !== generation) return;
-      setIsGo(ctx.data.session.get(id)?.model?.providerID === GO_PROVIDER_ID);
-    } catch {
-      if (current === generation) setIsGo(false);
-    }
-  }
-
-  createEffect(() => {
-    void check(props.sessionID());
-  });
-
-  onCleanup(
-    ctx.data.on("session.model.selected", (event) => {
-      if (event.data.sessionID === props.sessionID()) void check(props.sessionID());
-    }),
-  );
+  const isGo = createProviderGate(props.sessionID, (providerID) => providerID === GO_PROVIDER_ID);
+  const detailed = useDetailed(props.showDetails);
 
   return (
     <Show when={isGo()}>
@@ -130,20 +84,13 @@ export default Plugin.define({
     const [usage, setUsage] = createSignal<Usage>();
     const [serverLanguage, setServerLanguage] = createSignal<unknown>();
     const labels = () => LABELS[resolveLanguage(context.options.language, serverLanguage())];
-    let timer: ReturnType<typeof setInterval> | undefined;
 
-    async function refresh() {
-      try {
-        const result = (await rpc.get({})) as { usage?: Usage; language?: string };
-        if (result?.usage) setUsage(result.usage);
-        if (typeof result?.language === "string") setServerLanguage(result.language);
-      } catch {
-        // keep the last known usage; retry on the next interval
-      }
-    }
-
-    void refresh();
-    timer = setInterval(() => void refresh(), INTERVAL_MS);
+    // A failing fetch keeps the last known usage; the next tick retries.
+    const stopPolling = startPolling(async () => {
+      const result = (await rpc.get({})) as { usage?: Usage; language?: string };
+      if (result?.usage) setUsage(result.usage);
+      if (typeof result?.language === "string") setServerLanguage(result.language);
+    });
 
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
@@ -158,7 +105,7 @@ export default Plugin.define({
     });
 
     return () => {
-      if (timer) clearInterval(timer);
+      stopPolling();
       unregister();
     };
   },

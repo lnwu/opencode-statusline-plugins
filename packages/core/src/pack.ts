@@ -12,6 +12,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { run } from "./run";
 
 export type PackedPackageOptions = {
   /** Package directory containing the package.json to pack. */
@@ -155,27 +156,4 @@ async function installAndImport(
       `importing ${imports.join(", ")} failed:\n${imported.stdout}\n${imported.stderr}`,
     );
   }
-}
-
-type RunResult = { code: number; stdout: string; stderr: string };
-
-async function run(
-  cmd: string[],
-  options: { cwd?: string; timeoutMs?: number } = {},
-): Promise<RunResult> {
-  const proc = Bun.spawn(cmd, {
-    env: process.env,
-    cwd: options.cwd,
-    stdin: "ignore",
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const timer = options.timeoutMs ? setTimeout(() => proc.kill(), options.timeoutMs) : undefined;
-  const [stdout, stderr] = await Promise.all([
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
-  ]);
-  const code = await proc.exited;
-  if (timer) clearTimeout(timer);
-  return { code, stdout, stderr };
 }
