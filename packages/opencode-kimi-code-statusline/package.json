@@ -1,6 +1,6 @@
 {
   "name": "opencode-kimi-code-statusline",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenCode TUI plugin: display Kimi For Coding (Kimi Code) subscription quota (rolling 5h / weekly) in the footer statusline. V2-native, zero-config, no cookies.",
   "type": "module",
   "license": "MIT",
