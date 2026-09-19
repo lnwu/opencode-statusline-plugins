@@ -140,16 +140,15 @@ passing the flag every time:
 
 - **Dark themes only** for assets whose content paints its own dark
   background. Light themes (`--theme-light github-light`) expose hairline
-  seams between the tiled background rects (upstream:
-  russmckendrick/terminal-svg#3) because the content background contrasts with
-  the theme's window background.
+  seams between the tiled background rects (see #65).
 - `terminal-svg rec` has no `--timeout`; the take ends when the recorded
   command exits — the recorder sends `Escape` + `ctrl+c` to quit the TUI.
 - Never trim the head with `terminal-svg edit --cut`: the remaining events are
   screen deltas and cannot rebuild state (black holes). Trim at render time
   with `--from` / `--to`; the recorder opens the animation at the TUI's first
   paint (home screen) and cuts at the alt-screen exit, so it neither starts on
-  a blank, collapsing window nor ends on opencode's exit frame.
+  a blank, collapsing window nor ends on opencode's exit frame. Both gaps are
+  tracked in #68.
 - `rec` titles the cast with the recorded command (session id included); the
   recorder rewrites the header title and passes `--title opencode`.
 - **The home screen's model comes from `model.json`, not the project config**:
@@ -164,19 +163,16 @@ passing the flag every time:
   default; verify the model line in the frame (`Build · <model> <provider>`)
   after recording.
 - Tiled background rects are sealed with `shape-rendering="crispEdges"` after
-  rendering (terminal-svg#3): their shared edges otherwise show the window
-  background as a hairline seam once the SVG is displayed at a fractional
-  scale (README width, browser zoom, HiDPI). The rounded window body stays
-  smooth; remove the seal once upstream fixes it.
+  rendering: their shared edges otherwise show the window background as a
+  hairline seam once the SVG is displayed at a fractional scale (README width,
+  browser zoom, HiDPI). The rounded window body stays smooth; see #65 to remove
+  the seal.
 - The cursor is hidden by default (`--cursor none`); pass `--cursor block` to
   record it.
 - **terminal-svg corrupts multi-byte glyphs at its 1024-byte read boundary**
-  (upstream: russmckendrick/terminal-svg#4): its PTY reader decodes each read
-  as UTF-8 independently, so a block glyph split across the boundary becomes
-  `U+FFFD` plus a stray continuation byte — visible as a `?`-looking cell in
-  the logo. The recorder repairs the cast after recording (`repairCast`,
-  warned in the log); remove the repair once the upstream fix lands. Re-check
-  the logo after re-recording and report upstream if it ever changes shape.
+  (see #64): the recorder repairs the cast after recording (`repairCast`,
+  warned in the log). Re-check the logo after re-recording and report upstream
+  if it ever changes shape.
 - `--no-embed-source` is deliberate: the SVG does not carry the cast in its
   `<metadata>`; the `.cast` master is committed next to it.
 - Keep prompts short and tool-free so the turn finishes cleanly without
