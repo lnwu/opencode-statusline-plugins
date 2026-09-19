@@ -33,7 +33,14 @@ runs:
     # The credential comes from the calling job's step env (see ci.yml).
     - name: Integration tests (${{ inputs.package }}, real TUI)
       shell: bash
-      run: bun run --filter "${{ inputs.package }}" test:e2e
+      # Run from the package directory, not through `bun run --filter`: filter
+      # mode prefixes every line with "<package> <script>: ", and the runner
+      # only parses a workflow command at the start of a line — the prefix
+      # turned Bun's `::group::` groups and `::error` failure annotations into
+      # plain text. This is the same working directory `--filter` would use.
+      run: |
+        cd "packages/${{ inputs.package }}"
+        bun run test:e2e
 
     # Frames are staged even when the tests failed: they are the most useful
     # artifact for debugging a failed case.

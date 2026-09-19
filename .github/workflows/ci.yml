@@ -39,7 +39,19 @@ jobs:
         run: bun run fmt:check
 
       - name: Unit tests
-        run: bun run test
+        run: |
+          # Run each package's script in its own directory instead of
+          # `bun run --filter`: filter mode prefixes every output line with
+          # "<package> <script>: ", and the runner only parses a workflow
+          # command when the line starts with `::` — the prefix buried Bun's
+          # `::group::` test groups in plain text, so the UI never collapsed
+          # them. Packages without the script are skipped, like `--if-present`.
+          for dir in packages/*/; do
+            pkg="$dir/package.json"
+            if [[ -f "$pkg" ]] && grep -q '"test":' "$pkg"; then
+              (cd "$dir" && bun run test)
+            fi
+          done
 
       - name: Check changelogs
         run: bun run changelog:check
@@ -48,7 +60,16 @@ jobs:
         run: bun run build
 
       - name: Packaging smoke test
-        run: bun run --filter './packages/*' --if-present test:pack
+        run: |
+          # Same in-place loop as the unit tests: `bun run --filter` would
+          # prefix each line and keep the runner from parsing Bun's
+          # `::group::` commands.
+          for dir in packages/*/; do
+            pkg="$dir/package.json"
+            if [[ -f "$pkg" ]] && grep -q '"test:pack":' "$pkg"; then
+              (cd "$dir" && bun run test:pack)
+            fi
+          done
 
   # Real-TUI integration jobs: main pushes (and manual runs) only, never on
   # pull requests. They need live credentials and network, and they are
