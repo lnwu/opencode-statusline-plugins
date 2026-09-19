@@ -42,6 +42,11 @@ Verified against opencode > 2.0.0:
   160 columns. Inline `OPENCODE_CLI_CONFIG_CONTENT` reaches the TUI process but
   its settings do not take effect on opencode > 2.0.0, so the harness writes the
   file.
+- Model readiness: models from the models.dev catalog register asynchronously
+  after a fresh service starts, and a prompt sent before its model is
+  registered fails with `ModelUnavailableError` (and no provider error on the
+  session). `sendPrompt` polls `/api/model` until the case's model appears, so
+  prompt-based cases cannot race the catalog sync on a slow network.
 - The per-case root lives under `/tmp` to keep the footer directory indicator
   short. Assertions stay pattern-based rather than column-exact, and language
   coverage uses the locale path because `cli.json` plugin options do not reach a

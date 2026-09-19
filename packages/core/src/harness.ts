@@ -20,6 +20,10 @@
 // - The TUI runs with an isolated cli.json that hides the sidebar and the tab
 //   strip, and the case root lives under a short `/tmp` path so the footer
 //   keeps its directory indicator short.
+// - Models from the models.dev catalog register asynchronously after a fresh
+//   service starts. A prompt sent before its model is registered fails with a
+//   `ModelUnavailableError` and no assistant message, so `sendPrompt` waits for
+//   the model to appear in `/api/model` first.
 import { mkdir, rm, writeFile } from "node:fs/promises"
 import { join, resolve } from "node:path"
 
@@ -226,7 +230,35 @@ export function createHarness(config: HarnessConfig): Harness {
     }
   }
 
+  /**
+   * Models from the models.dev catalog register asynchronously after a fresh
+   * service starts; a prompt sent before its model is registered fails with a
+   * `ModelUnavailableError` and leaves no provider error on the session. Wait
+   * for the model to show up in `/api/model` before prompting.
+   */
+  async function waitForModel(context: CaseContext, timeoutMs = 120_000): Promise<void> {
+    const { providerID, id } = context.spec.model
+    const deadline = Date.now() + timeoutMs
+    let last = ""
+    while (Date.now() < deadline) {
+      const result = await run([OPENCODE, "api", "get", "/api/model"], {
+        env: context.env,
+        cwd: context.projectDir,
+        timeoutMs: 30_000,
+      })
+      const models =
+        parseJson<{ data?: Array<{ providerID?: string; modelID?: string }> }>(result.stdout, "model.list").data ?? []
+      if (models.some((model) => model.providerID === providerID && model.modelID === id)) return
+      last = result.stdout
+      await Bun.sleep(2_000)
+    }
+    throw new Error(
+      `model ${providerID}/${id} was not registered within ${timeoutMs}ms; last /api/model response:\n${last}`,
+    )
+  }
+
   async function sendPrompt(context: CaseContext, text: string, timeoutMs = 120_000): Promise<void> {
+    await waitForModel(context)
     await mustRun(
       [
         OPENCODE,
