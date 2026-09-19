@@ -2,7 +2,7 @@
   "name": "core",
   "version": "0.0.0",
   "private": true,
-  "description": "Internal shared code for the statusline plugins: language and theme resolution, shared statusline TUI helpers, the e2e harness, and the dev-only build/pack/record helpers. Never published.",
+  "description": "Internal shared code for the statusline plugins: language and theme resolution, shared statusline TUI helpers, the e2e harness and footer test helper, and the dev-only build/pack/record helpers. Never published.",
   "type": "module",
   "exports": {
     "./language": "./src/language.ts",
@@ -10,6 +10,7 @@
     "./statusline": "./src/statusline.tsx",
     "./harness": "./src/harness.ts",
     "./e2e": "./src/e2e.ts",
+    "./test-footer": "./src/test-footer.ts",
     "./run": "./src/run.ts",
     "./record-demo": "./src/record-demo.ts",
     "./record-demo-cli": "./src/record-demo-cli.ts",

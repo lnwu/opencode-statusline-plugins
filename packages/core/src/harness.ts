@@ -138,7 +138,7 @@ export function createHarness(config: HarnessConfig): Harness {
     if (!key) {
       throw new Error(
         `${config.credentialEnv} is required for the integration tests (see AGENTS.md). ` +
-          `Example: ${config.credentialEnv}=sk-... bun run test`,
+          `Example: ${config.credentialEnv}=sk-... bun run test:e2e`,
       );
     }
     return key;

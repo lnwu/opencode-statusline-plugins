@@ -11,7 +11,7 @@
 // GITHUB_TOKEN cannot be picked up by accident. The plugin accepts both that
 // `key` connection and the OAuth credential the device flow stores.
 //
-// Run: bun run build && COPILOT_GITHUB_TOKEN=... bun run test
+// Run: COPILOT_GITHUB_TOKEN=... bun run --filter opencode-copilot-statusline test:e2e
 import { join, resolve } from "node:path";
 import { runE2eCases } from "core/e2e";
 import { createHarness, type CaseSpec } from "core/harness";

@@ -5,7 +5,7 @@
 // Requires the OpenCode CLI and tmux on PATH and OPENCODE_API_KEY (see
 // AGENTS.md).
 //
-// Run: bun run build && OPENCODE_API_KEY=... bun run test
+// Run: OPENCODE_API_KEY=... bun run --filter opencode-go-statusline test:e2e
 import { join, resolve } from "node:path";
 import { runE2eCases } from "core/e2e";
 import { createHarness, type CaseSpec } from "core/harness";
