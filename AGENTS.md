@@ -6,12 +6,12 @@ plus an internal shared `core` package (never published).
 ## Packages
 
 - `opencode-go-statusline` — OpenCode Go quota (rolling 5h / weekly / monthly).
-  Implemented; the only plugin with published releases.
+  Implemented; published.
 - `opencode-copilot-statusline` — GitHub Copilot quota (premium requests, with
   a chat fallback for plans without a premium-request quota, e.g. Copilot Free).
-  Implemented; not yet published.
+  Implemented; published.
 - `opencode-kimi-code-statusline` — Kimi For Coding (Kimi Code) quota (rolling
-  5h / weekly). Implemented; not yet published.
+  5h / weekly). Implemented; published.
 - `core` — internal shared package (not a plugin, never published): language
   resolution, the e2e harness, the README demo recorder, and the build helper.
   Plugin sources, build scripts, and tests may import it; it is inlined into
@@ -241,7 +241,11 @@ CI.
   package's `package.json`. The workflow runs build + typecheck, then publishes
   via npm OIDC trusted publishing. Don't run `npm publish` locally.
 - The step-by-step runbook is the `release` skill
-  (`.opencode/skills/release/SKILL.md`); follow it when asked to release.
+  (`.opencode/skills/release/SKILL.md`); follow it when asked to release. Its
+  `reference/first-release.md` documents the one-time npm bootstrap for a
+  package that does not exist on npm yet: login check, `0.0.0` placeholder
+  publish, and trusted-publisher setup, driving npm's interactive 2FA by handing
+  the auth links to the user.
 - Verify a publish through the `publish.yml` run: green, with the Publish log
   printing `+ <package>@<version>` and a signed provenance statement. Don't
   block on `npm view` — a registry 404 right after a green run is normal; check
