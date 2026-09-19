@@ -48,6 +48,7 @@ type Options = {
   prompt: string
   model: ModelRef
   theme: string
+  tuiTheme?: string
   cursor: CursorStyle
   from?: number
   replyTimeoutMs?: number
@@ -61,6 +62,8 @@ function usage(): string {
     "  --prompt <text>         Prompt to type (default: \"Reply with exactly: ok\")",
     "  --model <provider/id>   Model to record with (default: github-copilot/gpt-5-mini)",
     "  --theme <name>          terminal-svg theme (default: github-dark)",
+    "  --tui-theme <name>      OpenCode TUI theme for the recording (inline CLI settings;",
+    "                          default: your own theme)",
     "  --cursor <style>        Cursor shape in the SVG: block|bar|underline|none",
     "                          (default: none)",
     "  --from <seconds>        Start the animation here instead of the first paint",
@@ -96,6 +99,7 @@ function parseOptions(config: DemoConfig, argv: string[]): Options {
     prompt: config.prompt ?? DEFAULT_PROMPT,
     model: config.model ? parseModel(config.model) : DEFAULT_MODEL,
     theme: config.theme ?? "github-dark",
+    tuiTheme: config.tuiTheme,
     cursor: config.cursor ?? "none",
     replyTimeoutMs: config.replyTimeout,
     dir: config.dir ? expandHome(config.dir) : undefined,
@@ -113,6 +117,10 @@ function parseOptions(config: DemoConfig, argv: string[]): Options {
         break
       case "--theme":
         options.theme = need(argv, i, flag)
+        i++
+        break
+      case "--tui-theme":
+        options.tuiTheme = need(argv, i, flag)
         i++
         break
       case "--cursor": {
@@ -155,6 +163,7 @@ await recordDemo({
   packageRoot: PACKAGE_ROOT,
   takes: [{ name: "demo", outputBasename: "demo", model: options.model, prompt: options.prompt }],
   theme: options.theme,
+  tuiTheme: options.tuiTheme,
   cursor: options.cursor,
   from: options.from,
   replyTimeoutMs: options.replyTimeoutMs,
