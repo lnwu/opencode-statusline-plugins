@@ -1,6 +1,7 @@
 // End-to-end integration tests: boot a real `opencode` TUI against the built
 // `dist/` entries and assert the footer statusline. The reusable harness lives
-// in `core/src/harness.ts`; this file configures it and declares the cases.
+// in `core/src/harness.ts`, the shared runner in `core/src/e2e.ts`; this file
+// only configures the harness and declares the cases.
 // Requires the OpenCode CLI and tmux on PATH and KIMI_CODE_API_KEY (see
 // AGENTS.md).
 //
@@ -12,11 +13,10 @@
 //
 // Run: bun run build && KIMI_CODE_API_KEY=sk-... bun run test
 import { join, resolve } from "node:path";
-import { afterAll, beforeAll, expect, test } from "bun:test";
-import { createHarness, type CaseContext, type CaseSpec } from "core/harness";
+import { runE2eCases } from "core/e2e";
+import { createHarness, type CaseSpec } from "core/harness";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..", "..");
-const CASE_TIMEOUT_MS = 240_000;
 
 const harness = createHarness({
   packageRoot: PACKAGE_ROOT,
@@ -82,50 +82,4 @@ const CASES: CaseSpec[] = [
   },
 ];
 
-beforeAll(async () => {
-  harness.requireCredential();
-  await harness.assertTools();
-}, 60_000);
-
-const contexts: CaseContext[] = [];
-
-afterAll(async () => {
-  for (const context of contexts) await harness.cleanupCase(context);
-}, 120_000);
-
-for (const spec of CASES) {
-  test(
-    spec.name,
-    async () => {
-      const context = await harness.prepareCase(spec);
-      contexts.push(context);
-      let frame = "";
-      try {
-        console.log(`[${spec.name}] session=${context.sessionID} service=:${context.servicePort}`);
-
-        if (spec.prompt) {
-          await harness.sendPrompt(context, spec.prompt);
-          console.log(`[${spec.name}] model request succeeded`);
-        }
-
-        await harness.startTui(context);
-        frame = await harness.waitForFrame(context, spec.expect[0]!);
-
-        for (const pattern of spec.expect) {
-          expect(frame, `expected ${pattern} in ${spec.name} frame`).toMatch(pattern);
-        }
-        for (const pattern of spec.reject ?? []) {
-          expect(frame, `did not expect ${pattern} in ${spec.name} frame`).not.toMatch(pattern);
-        }
-      } catch (error) {
-        const captured = frame || (await context.capture().catch(() => ""));
-        if (!frame && captured) frame = captured;
-        console.error(`[${spec.name}] captured frame:\n${captured}`);
-        throw error;
-      } finally {
-        if (frame) await harness.writeArtifacts(context, frame);
-      }
-    },
-    CASE_TIMEOUT_MS,
-  );
-}
+runE2eCases(harness, CASES);

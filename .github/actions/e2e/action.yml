@@ -1,0 +1,46 @@
+name: E2E setup and run
+description: Install dependencies, tmux, and the pinned OpenCode CLI, run a package's real-TUI integration tests, and stage the captured frames.
+
+inputs:
+  package:
+    description: Plugin package name (workspace filter and frame folder).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: oven-sh/setup-bun@v2
+
+    - name: Install dependencies
+      shell: bash
+      run: bun install --frozen-lockfile
+
+    - name: Install tmux
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y tmux
+
+    # `--trust` runs the package postinstall that downloads the platform binary.
+    - name: Install OpenCode CLI
+      shell: bash
+      run: |
+        bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
+        echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+        "$HOME/.bun/bin/opencode" --version
+
+    # The credential comes from the calling job's step env (see ci.yml).
+    - name: Integration tests (${{ inputs.package }}, real TUI)
+      shell: bash
+      run: bun run --filter "${{ inputs.package }}" test
+
+    # Frames are staged even when the tests failed: they are the most useful
+    # artifact for debugging a failed case.
+    - name: Stage TUI frames
+      if: always()
+      shell: bash
+      run: |
+        mkdir -p /tmp/tui-frames/${{ inputs.package }}
+        shopt -s nullglob
+        files=(packages/${{ inputs.package }}/test/e2e/.artifacts/*.txt)
+        if (( ${#files[@]} > 0 )); then
+          cp "${files[@]}" /tmp/tui-frames/${{ inputs.package }}/
+        fi

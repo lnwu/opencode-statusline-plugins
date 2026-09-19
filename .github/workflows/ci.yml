@@ -55,36 +55,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install tmux
-        run: sudo apt-get update && sudo apt-get install -y tmux
-
-      # `--trust` runs the package postinstall that downloads the platform binary.
-      - name: Install OpenCode CLI
-        run: |
-          bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
-          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
-          "$HOME/.bun/bin/opencode" --version
-
-      - name: Integration tests (Go, real TUI)
+      - name: Test opencode-go-statusline (real TUI)
+        uses: ./.github/actions/e2e
+        with:
+          package: opencode-go-statusline
         env:
           # Repo secret name; the tests read it as OPENCODE_API_KEY.
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_GO_API_KEY }}
-        run: bun run --filter opencode-go-statusline test
-
-      - name: Stage TUI frames
-        if: always()
-        run: |
-          mkdir -p /tmp/tui-frames/opencode-go-statusline
-          shopt -s nullglob
-          files=(packages/opencode-go-statusline/test/e2e/.artifacts/*.txt)
-          if (( ${#files[@]} > 0 )); then
-            cp "${files[@]}" /tmp/tui-frames/opencode-go-statusline/
-          fi
 
       - name: Upload TUI frames (go)
         if: always()
@@ -102,37 +79,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install tmux
-        run: sudo apt-get update && sudo apt-get install -y tmux
-
-      # `--trust` runs the package postinstall that downloads the platform binary.
-      - name: Install OpenCode CLI
-        run: |
-          bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
-          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
-          "$HOME/.bun/bin/opencode" --version
-
-      - name: Integration tests (Copilot, real TUI)
+      - name: Test opencode-copilot-statusline (real TUI)
+        uses: ./.github/actions/e2e
+        with:
+          package: opencode-copilot-statusline
         env:
           # Repo secret name; the tests read it as COPILOT_GITHUB_TOKEN. Any
           # Copilot-enabled account works, including Copilot Free.
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
-        run: bun run --filter opencode-copilot-statusline test
-
-      - name: Stage TUI frames
-        if: always()
-        run: |
-          mkdir -p /tmp/tui-frames/opencode-copilot-statusline
-          shopt -s nullglob
-          files=(packages/opencode-copilot-statusline/test/e2e/.artifacts/*.txt)
-          if (( ${#files[@]} > 0 )); then
-            cp "${files[@]}" /tmp/tui-frames/opencode-copilot-statusline/
-          fi
 
       - name: Upload TUI frames (copilot)
         if: always()
@@ -150,37 +104,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Install tmux
-        run: sudo apt-get update && sudo apt-get install -y tmux
-
-      # `--trust` runs the package postinstall that downloads the platform binary.
-      - name: Install OpenCode CLI
-        run: |
-          bun add -g --trust "@opencode/cli@$OPENCODE_VERSION"
-          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
-          "$HOME/.bun/bin/opencode" --version
-
-      - name: Integration tests (Kimi, real TUI)
+      - name: Test opencode-kimi-code-statusline (real TUI)
+        uses: ./.github/actions/e2e
+        with:
+          package: opencode-kimi-code-statusline
         env:
           # Repo secret name; the tests read it as KIMI_CODE_API_KEY and register
           # it under the KIMI_API_KEY env-connection name the integration declares.
           KIMI_CODE_API_KEY: ${{ secrets.KIMI_CODE_API_KEY }}
-        run: bun run --filter opencode-kimi-code-statusline test
-
-      - name: Stage TUI frames
-        if: always()
-        run: |
-          mkdir -p /tmp/tui-frames/opencode-kimi-code-statusline
-          shopt -s nullglob
-          files=(packages/opencode-kimi-code-statusline/test/e2e/.artifacts/*.txt)
-          if (( ${#files[@]} > 0 )); then
-            cp "${files[@]}" /tmp/tui-frames/opencode-kimi-code-statusline/
-          fi
 
       - name: Upload TUI frames (kimi)
         if: always()

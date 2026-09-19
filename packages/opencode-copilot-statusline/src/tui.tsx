@@ -1,34 +1,23 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
-import { useTerminalDimensions } from "@opentui/solid";
-import { createEffect, createSignal, onCleanup, Show } from "solid-js";
+import { createSignal, Show } from "solid-js";
+import {
+  countdown,
+  createProviderGate,
+  quotaColor,
+  startPolling,
+  useDetailed,
+} from "core/statusline";
 import { statusColors } from "core/theme";
 import { UsageRpc, type Usage } from "./rpc";
 
-const INTERVAL_MS = 60000;
-const DETAILED_WIDTH = 125;
 const COPILOT_PROVIDER_ID = "github-copilot";
-
-function countdown(resetsAt: string, now: number) {
-  const ms = new Date(resetsAt).getTime() - now;
-  if (!Number.isFinite(ms) || ms <= 0) return undefined;
-  const minutes = Math.ceil(ms / 60000);
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const mins = minutes % 60;
-  if (days > 0) return `${days}d${hours}h`;
-  if (hours > 0) return `${hours}h${mins}m`;
-  return `${mins}m`;
-}
 
 function Segment(props: { usage: Usage; color: () => RGBA | undefined; detailed: boolean }) {
   const text = () => {
     if (props.usage.unlimited) return "∞";
-    const left =
-      props.detailed && props.usage.resetsAt
-        ? countdown(props.usage.resetsAt, Date.now())
-        : undefined;
+    const left = props.detailed ? countdown(props.usage.resetsAt, Date.now()) : undefined;
     return `${props.usage.usedPercent}%${left ? ` (${left})` : ""}`;
   };
   return (
@@ -45,9 +34,11 @@ function CopilotUsage(props: {
   loaded: () => boolean;
 }) {
   const ctx = usePlugin();
-  const [isCopilot, setIsCopilot] = createSignal(false);
-  const dims = useTerminalDimensions();
-  const detailed = () => props.showDetails() || dims().width >= DETAILED_WIDTH;
+  const isCopilot = createProviderGate(
+    props.sessionID,
+    (providerID) => providerID === COPILOT_PROVIDER_ID,
+  );
+  const detailed = useDetailed(props.showDetails);
 
   // One color for the whole segment, so the label follows the percentage.
   // `loaded` separates "first fetch still running" (subdued) from "no data"
@@ -58,34 +49,8 @@ function CopilotUsage(props: {
     const u = props.usage();
     if (!u) return props.loaded() ? colors.error : colors.muted;
     if (u.unlimited) return colors.muted;
-    if (u.usedPercent >= 90) return colors.error;
-    if (u.usedPercent >= 70) return colors.info;
-    return colors.muted;
+    return quotaColor(ctx.theme, u.usedPercent);
   };
-
-  let generation = 0;
-  async function check(id: string | undefined) {
-    const current = ++generation;
-    setIsCopilot(false);
-    if (!id) return;
-    try {
-      await ctx.data.session.sync(id);
-      if (current !== generation) return;
-      setIsCopilot(ctx.data.session.get(id)?.model?.providerID === COPILOT_PROVIDER_ID);
-    } catch {
-      if (current === generation) setIsCopilot(false);
-    }
-  }
-
-  createEffect(() => {
-    void check(props.sessionID());
-  });
-
-  onCleanup(
-    ctx.data.on("session.model.selected", (event) => {
-      if (event.data.sessionID === props.sessionID()) void check(props.sessionID());
-    }),
-  );
 
   return (
     <Show when={isCopilot()}>
@@ -114,21 +79,16 @@ export default Plugin.define({
     const rpc = context.client.rpc(UsageRpc);
     const [usage, setUsage] = createSignal<Usage>();
     const [loaded, setLoaded] = createSignal(false);
-    let timer: ReturnType<typeof setInterval> | undefined;
 
-    async function refresh() {
+    // A failing fetch keeps the last known usage; the next tick retries.
+    const stopPolling = startPolling(async () => {
       try {
         const result = (await rpc.get({})) as { usage?: Usage };
         if (result?.usage) setUsage(result.usage);
-      } catch {
-        // keep the last known usage; retry on the next interval
       } finally {
         setLoaded(true);
       }
-    }
-
-    void refresh();
-    timer = setInterval(() => void refresh(), INTERVAL_MS);
+    });
 
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
@@ -143,7 +103,7 @@ export default Plugin.define({
     });
 
     return () => {
-      if (timer) clearInterval(timer);
+      stopPolling();
       unregister();
     };
   },

@@ -23,9 +23,13 @@ plus an internal shared `core` package (never published).
 | --- | --- |
 | `src/language.ts` | Terminal language detection and `language` option resolution for statusline labels. |
 | `src/theme.ts` | Theme token compatibility: reads the pre- and post-2.0.9 text token names so statusline colors survive the rename; removal condition in #63. |
+| `src/statusline.tsx` | Shared TUI pieces for the statusline plugins: usage polling (`startPolling`), quota colors (`quotaColor`), the reset `countdown`, `Separator`, `useDetailed`, and `createProviderGate` (hides the statusline for sessions on another provider). Inlined into each package's `dist/tui.js`. |
 | `src/harness.ts` | `createHarness`: isolated OpenCode env, real TUI in tmux, frame capture; parameterized per package. |
+| `src/e2e.ts` | `runE2eCases`: registers a package's `CaseSpec[]` as `bun test` cases (credential/tool checks, cleanup, artifact writing, failure output); per-package `test/e2e/tui.test.ts` files carry only their harness config and cases. |
+| `src/run.ts` | `run`/`mustRun` subprocess helper shared by the harness, packaging smoke test, and demo recorder. |
 | `src/record-demo.ts` | `recordDemo`: local-mode README demo recorder (real TUI in tmux, wrapped in `terminal-svg rec`, rendered to an animated SVG); takes a list of takes (prompt, model, env, output name) so it carries no locale/label knowledge, plus a gitignored per-package `record-demo.config.json` for per-developer defaults. Hides the cursor by default, pins each take's model in opencode's `model.json` (home-screen model selection) while recording, verifies it against the local `/api/model` catalog so a stale integration fails loudly instead of recording the fallback model, hands an optional TUI theme (`tuiTheme`) to the recorded process as inline CLI settings, and carries terminal-svg workarounds tracked in #64 and #65. Runbook: the `record-demo` skill. |
 | `src/build.ts` | `buildPlugin`: compiles a package's `src/{index,rpc,tui}` entries with the Solid universal transform. |
+| `src/record-demo-cli.ts` | Shared CLI front end for the per-package `scripts/record-demo.ts` wrappers: flag parsing, `--help`, and config-file merging; each wrapper declares only its default model and takes. |
 | `src/pack.ts` | `checkPackedPackage`: packaging smoke test (tarball contents, declared imports, install, entry imports). |
 | `test/language.test.ts`, `test/theme.test.ts` | Unit tests; run in CI before the integration tests. |
 | `AGENTS.md` | Harness recipe and integration-test notes; loaded automatically when working in `core`. |
@@ -114,10 +118,12 @@ see Release).
 
 `test/e2e/tui.test.ts` boots the real OpenCode TUI against the working tree and
 asserts the footer statusline. The reusable harness lives in
-`packages/core/src/harness.ts`; each package configures it with its own built
-entries and credential env. Requirements: `opencode` on PATH, `tmux` on PATH
-(CI installs it), network access (models.dev; the go and kimi tests additionally
-make a real model call), and the live credential:
+`packages/core/src/harness.ts` and the shared runner in
+`packages/core/src/e2e.ts`; each package configures the harness with its own
+built entries and credential env, and only declares its cases. Requirements:
+`opencode` on PATH, `tmux` on PATH (CI installs it), network access (models.dev;
+the go and kimi tests additionally make a real model call), and the live
+credential:
 
 - `opencode-go-statusline`: `OPENCODE_API_KEY` (the `OPENCODE_GO_API_KEY`
   repository secret in CI); makes a real call to `opencode-go/deepseek-v4.1-flash`.

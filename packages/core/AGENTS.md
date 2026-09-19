@@ -1,15 +1,17 @@
 # core — development notes
 
-Internal shared package for the statusline plugins: language resolution, the e2e
-harness, the build helper, and the packaging smoke test. Never published; its
-code is inlined into each plugin's `dist/` bundles at build time. Repo-wide
-rules, commands, and conventions live in the root `AGENTS.md`.
+Internal shared package for the statusline plugins: language and theme
+resolution, shared statusline TUI helpers, the e2e harness and runner, and the
+dev-only build/pack/record helpers. Never published; its code is inlined into
+each plugin's `dist/` bundles at build time. Repo-wide rules, commands, and
+conventions live in the root `AGENTS.md`.
 
 ## Harness recipe
 
 `src/harness.ts` (`createHarness`) drives a real OpenCode TUI in tmux against a
-plugin package's built entries and captures the rendered frame. Each package
-parameterizes it with its own entries and credential env;
+plugin package's built entries and captures the rendered frame; `src/e2e.ts`
+(`runE2eCases`) registers a package's cases as `bun test` tests around it. Each
+package parameterizes the harness with its own entries and credential env;
 `packages/opencode-go-statusline/test/e2e/tui.test.ts` is the reference.
 
 Verified against opencode > 2.0.0:

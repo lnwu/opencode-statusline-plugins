@@ -2,13 +2,17 @@
   "name": "core",
   "version": "0.0.0",
   "private": true,
-  "description": "Internal shared code for the statusline plugins: language resolution, the e2e harness, and the build helper. Never published.",
+  "description": "Internal shared code for the statusline plugins: language and theme resolution, shared statusline TUI helpers, the e2e harness, and the dev-only build/pack/record helpers. Never published.",
   "type": "module",
   "exports": {
     "./language": "./src/language.ts",
     "./theme": "./src/theme.ts",
+    "./statusline": "./src/statusline.tsx",
     "./harness": "./src/harness.ts",
+    "./e2e": "./src/e2e.ts",
+    "./run": "./src/run.ts",
     "./record-demo": "./src/record-demo.ts",
+    "./record-demo-cli": "./src/record-demo-cli.ts",
     "./build": "./src/build.ts",
     "./pack": "./src/pack.ts"
   },
@@ -17,8 +21,11 @@
     "test": "bun test"
   },
   "devDependencies": {
+    "@opencode/plugin": ">2.0.0",
+    "@opentui/core": "^0.5.11",
     "@opentui/solid": "^0.5.11",
     "bun-types": "^1.4.2",
+    "solid-js": "^1.9.15",
     "typescript": "^7.0.2"
   }
 }
