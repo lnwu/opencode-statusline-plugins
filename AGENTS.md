@@ -121,7 +121,8 @@ asserts the footer statusline. The reusable harness lives in
 `packages/core/src/harness.ts` and the shared runner in
 `packages/core/src/e2e.ts`; each package configures the harness with its own
 built entries and credential env, and only declares its cases. Requirements:
-`opencode` on PATH, `tmux` on PATH (CI installs it), network access (models.dev;
+`opencode` on PATH, `tmux` on PATH (the ubuntu-24.04 CI runner image ships it;
+the e2e action installs it only when missing), network access (models.dev;
 the go and kimi tests additionally make a real model call), and the live
 credential:
 

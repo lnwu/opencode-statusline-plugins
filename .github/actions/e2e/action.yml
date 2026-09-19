@@ -1,5 +1,5 @@
 name: E2E setup and run
-description: Install dependencies, tmux, and the pinned OpenCode CLI, run a package's real-TUI integration tests, and stage the captured frames.
+description: Install dependencies and the pinned OpenCode CLI, ensure tmux, run a package's real-TUI integration tests, and stage the captured frames.
 
 inputs:
   package:
@@ -15,9 +15,12 @@ runs:
       shell: bash
       run: bun install --frozen-lockfile
 
-    - name: Install tmux
+    # tmux ships with the ubuntu-24.04 runner image (verified: 3.4). Installing
+    # it unconditionally costs ~6s of `apt-get update` for nothing, so only
+    # install it when a future image drops it.
+    - name: Ensure tmux
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y tmux
+      run: command -v tmux || { sudo apt-get update && sudo apt-get install -y tmux; }
 
     # `--trust` runs the package postinstall that downloads the platform binary.
     - name: Install OpenCode CLI
