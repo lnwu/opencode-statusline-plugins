@@ -13,13 +13,12 @@
 // - The plugin is loaded from the isolated *global* plugin directory
 //   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`). A project-scoped plugin
 //   renders but its RPC stays unreachable (`RPC is unavailable`), which leaves
-//   the statusline at its "no usage" fallback (tracked in #67).
+//   the statusline at its "no usage" fallback (tracked in #66).
 // - The managed background service binds a fixed default port (49374). Each
 //   case sets its own port so tests stay isolated and do not collide with a
 //   developer's running service.
-// - The TUI runs with an isolated cli.json that hides the sidebar and the tab
-//   strip (inline `OPENCODE_CLI_CONFIG_CONTENT` does not take effect on
-//   opencode > 2.0.0; tracked in #66), and the case root lives under a short
+// - The TUI receives inline CLI settings (`OPENCODE_CLI_CONFIG_CONTENT`) that
+//   hide the sidebar and the tab strip, and the case root lives under a short
 //   `/tmp` path so the footer keeps its directory indicator short.
 // - Models from the models.dev catalog register asynchronously after a fresh
 //   service starts. A prompt sent before its model is registered fails with a
@@ -112,9 +111,7 @@ const DEFAULT_TOOLS: readonly ToolCheck[] = [
 ];
 
 // Keep the test frame small and deterministic: no sidebar, no tab strip.
-// Written to the isolated cli.json — OPENCODE_CLI_CONFIG_CONTENT reaches the
-// TUI process but its settings do not take effect on opencode > 2.0.0
-// (tracked in #66).
+// Handed to the TUI process inline as OPENCODE_CLI_CONFIG_CONTENT.
 const CLI_CONFIG = {
   $schema: "https://opencode.ai/v2/cli.json",
   session: { sidebar: "hide" },
@@ -186,10 +183,6 @@ export function createHarness(config: HarnessConfig): Harness {
     await writeFile(
       join(root, `config/opencode/plugins/${pluginDir}/tui.tsx`),
       `export { default } from "file://${tuiEntry}"\n`,
-    );
-    await writeFile(
-      join(root, "config/opencode/cli.json"),
-      JSON.stringify(CLI_CONFIG, null, 2) + "\n",
     );
 
     const servicePort = freePort();
@@ -353,6 +346,7 @@ export function createHarness(config: HarnessConfig): Harness {
     const { spec } = context;
     const tuiEnv: Env = {
       ...context.env,
+      OPENCODE_CLI_CONFIG_CONTENT: JSON.stringify(CLI_CONFIG),
       ...(spec.language === "zh-CN" ? { LANG: "zh_CN.UTF-8", LC_ALL: "zh_CN.UTF-8" } : {}),
     };
     await mustRun(
