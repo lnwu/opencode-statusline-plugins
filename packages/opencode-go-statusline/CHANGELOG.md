@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 1.0.2 - 2026-09-19
+
 ### Fixed
 
 - Restore the statusline colors after OpenCode 2.0.9 renamed its resolved theme tokens.
