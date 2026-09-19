@@ -4,7 +4,13 @@
 
 ## Unreleased
 
-_None yet._
+### Added
+
+- Add animated README demos of the footer statusline (English and Simplified Chinese).
+
+### Fixed
+
+- Restore the statusline colors after OpenCode 2.0.9 renamed its resolved theme tokens.
 
 ## 0.1.0 - 2026-09-19
 

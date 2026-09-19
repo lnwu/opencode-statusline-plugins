@@ -7,6 +7,8 @@
 
 Display your Kimi For Coding (Kimi Code) subscription quota in the OpenCode TUI footer statusline.
 
+![Animated demo: Kimi For Coding quota in the footer statusline](./assets/demo.en.svg)
+
 ## ✨ Features
 
 - Live **rolling 5h / weekly** usage percentages in the prompt footer (`Kimi 5h 63% · Weekly 18%`)

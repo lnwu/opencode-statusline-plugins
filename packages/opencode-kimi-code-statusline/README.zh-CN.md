@@ -7,6 +7,8 @@
 
 在 OpenCode TUI 底栏显示 Kimi For Coding（Kimi Code）订阅配额用量。
 
+![动态演示：OpenCode 底栏中的 Kimi For Coding 配额用量](./assets/demo.zh-CN.svg)
+
 ## ✨ 功能
 
 - 在输入框底栏实时显示 **滚动 5 小时 / 每周** 用量百分比（`Kimi 5h 63% · Weekly 18%`）
