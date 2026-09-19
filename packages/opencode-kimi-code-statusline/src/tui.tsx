@@ -1,8 +1,10 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui"
+import type { RGBA } from "@opentui/core"
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createSignal, onCleanup, Show } from "solid-js"
 import { resolveLanguage, type Language } from "core/language"
+import { statusColors } from "core/theme"
 import { UsageRpc, type Usage, type UsageWindow } from "./rpc"
 
 const INTERVAL_MS = 60000
@@ -31,10 +33,10 @@ function countdown(resetsAt: string, now: number) {
 function Segment(props: { label: string; win: UsageWindow; detailed: boolean }) {
   const ctx = usePlugin()
   const fg = () => {
-    const t = ctx.theme
-    if (props.win.percent >= 90) return t.text.feedback.error.default
-    if (props.win.percent >= 70) return t.text.feedback.info.default
-    return t.text.subdued
+    const colors = statusColors<RGBA>(ctx.theme)
+    if (props.win.percent >= 90) return colors.error
+    if (props.win.percent >= 70) return colors.info
+    return colors.muted
   }
   const text = () => {
     const left = props.detailed && props.win.resetsAt ? countdown(props.win.resetsAt, Date.now()) : undefined
@@ -50,7 +52,7 @@ function Segment(props: { label: string; win: UsageWindow; detailed: boolean }) 
 function Separator() {
   const ctx = usePlugin()
   return (
-    <text fg={ctx.theme.text.subdued} flexShrink={0}>
+    <text fg={statusColors<RGBA>(ctx.theme).muted} flexShrink={0}>
       {" · "}
     </text>
   )
@@ -95,13 +97,13 @@ function KimiUsage(props: {
   return (
     <Show when={isKimi()}>
       <box flexDirection="row" flexShrink={1} minWidth={0}>
-        <text fg={ctx.theme.text.subdued} flexShrink={0}>
+        <text fg={statusColors<RGBA>(ctx.theme).muted} flexShrink={0}>
           Kimi{" "}
         </text>
         <Show
           when={props.usage()}
           fallback={
-            <text fg={ctx.theme.text.subdued} flexShrink={0}>
+            <text fg={statusColors<RGBA>(ctx.theme).muted} flexShrink={0}>
               —
             </text>
           }

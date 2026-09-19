@@ -13,20 +13,21 @@ plus an internal shared `core` package (never published).
 - `opencode-kimi-code-statusline` — Kimi For Coding (Kimi Code) quota (rolling
   5h / weekly). Implemented; published.
 - `core` — internal shared package (not a plugin, never published): language
-  resolution, the e2e harness, the README demo recorder, and the build helper.
-  Plugin sources, build scripts, and tests may import it; it is inlined into
-  the published `dist/` entries at build time.
+  and theme-token resolution, the e2e harness, the README demo recorder, and
+  the build helper. Plugin sources, build scripts, and tests may import it; it
+  is inlined into the published `dist/` entries at build time.
 
 ### Package layout (`core`)
 
 | Path | Role |
 | --- | --- |
 | `src/language.ts` | Terminal language detection and `language` option resolution for statusline labels. |
+| `src/theme.ts` | Theme token compatibility: reads the pre- and post-2.0.9 text token names (`subdued`/`muted`, `feedback.*.default`/`base`) so statusline colors survive the rename. |
 | `src/harness.ts` | `createHarness`: isolated OpenCode env, real TUI in tmux, frame capture; parameterized per package. |
 | `src/record-demo.ts` | `recordDemo`: local-mode README demo recorder (real TUI in tmux, wrapped in `terminal-svg rec`, rendered to an animated SVG); takes a list of takes (prompt, model, env, output name) so it carries no locale/label knowledge, plus a gitignored per-package `record-demo.config.json` for per-developer defaults. Hides the cursor by default, pins each take's model in opencode's `model.json` (home-screen model selection) while recording, and repairs terminal-svg's chunk-boundary glyph corruption (russmckendrick/terminal-svg#4). Runbook: the `record-demo` skill. |
 | `src/build.ts` | `buildPlugin`: compiles a package's `src/{index,rpc,tui}` entries with the Solid universal transform. |
 | `src/pack.ts` | `checkPackedPackage`: packaging smoke test (tarball contents, declared imports, install, entry imports). |
-| `test/language.test.ts` | Unit tests; run in CI before the integration tests. |
+| `test/language.test.ts`, `test/theme.test.ts` | Unit tests; run in CI before the integration tests. |
 | `AGENTS.md` | Harness recipe and integration-test notes; loaded automatically when working in `core`. |
 
 ### Package layout (`opencode-go-statusline`)
@@ -69,8 +70,8 @@ plus an internal shared `core` package (never published).
 | `src/rpc.ts` | Shared RPC definition (`Rpc.define`). Built to `dist/rpc.js`. |
 | `src/tui.tsx` | TUI plugin: polls the RPC and renders `prompt.footer.status`. Built to `dist/tui.js`. |
 | `scripts/build.ts` | Dev-only wrapper around `core/build`. |
-| `scripts/record-demo.ts` | Dev-only thin wrapper around `core/record-demo`: builds two takes (en, zh-CN) with the `LANG` override each locale needs, rendered to `assets/demo.{en,zh-CN}.svg` (plus `.cast` masters). The demo assets are not recorded yet; runbook: the `record-demo` skill. |
-| `assets/` | README media (to be recorded): animated demo SVGs and their `.cast` masters. Repo-only (kept out of the tarball by `files: ["dist"]`); referenced by relative paths from the README. |
+| `scripts/record-demo.ts` | Dev-only thin wrapper around `core/record-demo`: builds two takes (en, zh-CN) with the `LANG` override each locale needs, rendered to `assets/demo.{en,zh-CN}.svg` (plus `.cast` masters). Runbook: the `record-demo` skill. |
+| `assets/` | README media: animated demo SVGs and their `.cast` masters. Repo-only (kept out of the tarball by `files: ["dist"]`); referenced by relative paths from the README. |
 | `test/usage.test.ts` | Unit tests for the quota mapping; no credential needed, runs in the package `test`. |
 | `test/e2e/tui.test.ts` | `bun test` cases: live quota with a real model request, locale labels, non-Kimi session hidden, `Kimi —` fallback; configures the `core` harness with `credentialName` (`KIMI_API_KEY`). |
 | `test/pack.test.ts` | Packaging smoke test via `core/pack`: tarball contents, declared-import scan, install, entry imports. |

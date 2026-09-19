@@ -3,6 +3,7 @@ import { Plugin, usePlugin } from "@opencode/plugin/tui"
 import type { RGBA } from "@opentui/core"
 import { useTerminalDimensions } from "@opentui/solid"
 import { createEffect, createSignal, onCleanup, Show } from "solid-js"
+import { statusColors } from "core/theme"
 import { UsageRpc, type Usage } from "./rpc"
 
 const INTERVAL_MS = 60000
@@ -21,7 +22,7 @@ function countdown(resetsAt: string, now: number) {
   return `${mins}m`
 }
 
-function Segment(props: { usage: Usage; color: () => RGBA; detailed: boolean }) {
+function Segment(props: { usage: Usage; color: () => RGBA | undefined; detailed: boolean }) {
   const text = () => {
     if (props.usage.unlimited) return "∞"
     const left = props.detailed && props.usage.resetsAt ? countdown(props.usage.resetsAt, Date.now()) : undefined
@@ -50,13 +51,13 @@ function CopilotUsage(props: {
   // (error): an unresolvable credential or a failing API is a failure, not a
   // loading state.
   const fg = () => {
-    const t = ctx.theme
+    const colors = statusColors<RGBA>(ctx.theme)
     const u = props.usage()
-    if (!u) return props.loaded() ? t.text.feedback.error.default : t.text.subdued
-    if (u.unlimited) return t.text.subdued
-    if (u.usedPercent >= 90) return t.text.feedback.error.default
-    if (u.usedPercent >= 70) return t.text.feedback.info.default
-    return t.text.subdued
+    if (!u) return props.loaded() ? colors.error : colors.muted
+    if (u.unlimited) return colors.muted
+    if (u.usedPercent >= 90) return colors.error
+    if (u.usedPercent >= 70) return colors.info
+    return colors.muted
   }
 
   let generation = 0
