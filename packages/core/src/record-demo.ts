@@ -19,16 +19,24 @@
 // The home screen's model (and therefore which statusline renders) follows
 // the globally most-recent model in opencode's `model.json`, not the project
 // config, so each take temporarily pins its model there and restores the
-// original file when done. A take can likewise pin the TUI theme
-// (`tuiTheme`): CLI settings like `theme.name` have no project-local file, so
-// the recorder hands the theme to the recorded TUI as inline CLI settings
+// original file when done. Before the first take, each unique take model is
+// verified against the local `/api/model` catalog: when the pinned entry
+// names a provider/model the instance does not have, opencode silently falls
+// back to the next recent model, and the check fails loudly instead. A take
+// can likewise pin the TUI theme (`tuiTheme`): CLI settings like
+// `theme.name` have no project-local file, so the recorder hands the theme
+// to the recorded TUI as inline CLI settings
 // (`OPENCODE_CLI_CONFIG_CONTENT`) in the throw-away pane; the developer's own
 // global `cli.json` is never touched.
 //
 // Casts are repaired after recording: terminal-svg's PTY reader decodes each
 // 1024-byte read as UTF-8 independently, corrupting a multi-byte glyph that
 // straddles the boundary into `U+FFFD` (visible as a stray replacement glyph
-// in the logo). `repairCast` restores the glyph and drops the stray byte.
+// in the logo). `repairCast` restores the glyph and drops the stray byte. The
+// rendered SVG is sealed against scaling seams: `sealTiledRects` adds
+// `shape-rendering="crispEdges"` to the tiled background rects, whose shared
+// edges would otherwise expose the window background as a hairline seam at
+// fractional display scales (terminal-svg#3).
 import { mkdir, realpath, rm, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
 import { join, resolve } from "node:path"
@@ -185,10 +193,55 @@ export async function recordDemo(options: RecordDemoOptions): Promise<void> {
   const replyTimeoutMs = options.replyTimeoutMs ?? DEFAULT_REPLY_TIMEOUT_MS
   const dir = resolve(options.dir ?? join(homedir(), "oc-demo"))
 
+  await assertModelsAvailable(options.takes.map((take) => take.model))
   await mkdir(assetsDir, { recursive: true })
   for (const take of options.takes) {
     console.log(`\n=== ${take.name} ===`)
     await recordTake(take, { assetsDir, theme, tuiTheme: options.tuiTheme, cursor, from: options.from, replyTimeoutMs, dir })
+  }
+}
+
+/**
+ * Fail before recording when a take's model is not registered in the local
+ * OpenCode instance. The home screen follows `model.json`'s most-recent entry,
+ * and when that entry names a provider/model the instance does not have (e.g.
+ * a stale integration name) opencode silently falls back to the next recent
+ * model — recording a demo of the wrong statusline. The catalog registers
+ * asynchronously after a service start, so poll briefly before giving up.
+ */
+async function assertModelsAvailable(models: ModelRef[], timeoutMs = 60_000): Promise<void> {
+  const missing = new Map(models.map((model) => [`${model.providerID}/${model.id}`, model]))
+  const deadline = Date.now() + timeoutMs
+  let sawList = false
+  for (;;) {
+    const listed = await run(["opencode", "api", "get", "/api/model"], { timeoutMs: 30_000 })
+    if (listed.code === 0) {
+      try {
+        const data =
+          (JSON.parse(listed.stdout) as { data?: Array<{ providerID?: string; modelID?: string }> }).data ?? []
+        sawList = true
+        for (const [key, model] of missing) {
+          if (data.some((entry) => entry.providerID === model.providerID && entry.modelID === model.id)) {
+            missing.delete(key)
+          }
+        }
+        if (missing.size === 0) return
+      } catch {
+        // Unparseable response; retry until the deadline.
+      }
+    }
+    if (Date.now() >= deadline) {
+      if (!sawList) {
+        console.warn("could not verify model availability (no /api/model response); continuing")
+        return
+      }
+      throw new Error(
+        `model ${[...missing.keys()].join(", ")} is not available in this OpenCode instance; ` +
+          `the home screen would silently fall back to another recent model. Check the integration/credential, ` +
+          `or override the model in record-demo.config.json.`,
+      )
+    }
+    await Bun.sleep(2_000)
   }
 }
 
@@ -361,6 +414,8 @@ async function recordTake(
     if (exitAt !== undefined) render.push("--to", String(exitAt))
     const rendered = await run(render)
     if (rendered.code !== 0) throw new Error(`terminal-svg failed:\n${rendered.stderr || rendered.stdout}`)
+    const sealed = await sealTiledRects(svgPath)
+    if (sealed > 0) console.log(`sealed ${sealed} tiled background rect(s) for seam-free scaling (terminal-svg#3)`)
 
     console.log(`wrote ${svgPath}\n      ${castPath}`)
   } catch (error) {
@@ -510,4 +565,25 @@ async function retitleCast(castPath: string, title: string): Promise<void> {
   const header = JSON.parse(text.slice(0, newline)) as { title?: string }
   header.title = title
   await Bun.write(castPath, JSON.stringify(header) + text.slice(newline))
+}
+
+/**
+ * Add `shape-rendering="crispEdges"` to the tiled background rects: their
+ * shared edges sit at fractional coordinates, so with independent
+ * antialiasing the window background shows through as a hairline seam once
+ * the SVG is displayed at a fractional scale (e.g. scaled down in a README,
+ * or on a HiDPI screen). Rects with `rx` (the rounded window body) keep their
+ * smooth corners. Upstream: russmckendrick/terminal-svg#3 (remove this once
+ * fixed). Returns the number of rects patched.
+ */
+async function sealTiledRects(svgPath: string): Promise<number> {
+  const svg = await Bun.file(svgPath).text()
+  let patched = 0
+  const sealed = svg.replace(/<rect\b[^>]*>/g, (tag) => {
+    if (tag.includes("rx=") || tag.includes("shape-rendering=")) return tag
+    patched++
+    return tag.replace("<rect", `<rect shape-rendering="crispEdges"`)
+  })
+  if (patched > 0) await Bun.write(svgPath, sealed)
+  return patched
 }

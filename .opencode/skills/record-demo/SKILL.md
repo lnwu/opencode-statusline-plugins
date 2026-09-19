@@ -156,8 +156,18 @@ passing the flag every time:
   opencode's home screen shows the globally most-recent model, so a stale
   entry (e.g. a Go model from an unrelated session) silently records the wrong
   statusline. The recorder pins the take's model there for the duration of the
-  take and restores the original file afterwards; verify the model line in the
-  frame (`Build · <model> <provider>`) after recording.
+  take and restores the original file afterwards, and it verifies each take's
+  model against the local `/api/model` catalog before recording — a provider
+  the instance does not have (e.g. `kimi-code-plan-global` on a CN
+  integration) fails loudly instead of falling back. Override the model in
+  `record-demo.config.json` when your integration differs from the wrapper
+  default; verify the model line in the frame (`Build · <model> <provider>`)
+  after recording.
+- Tiled background rects are sealed with `shape-rendering="crispEdges"` after
+  rendering (terminal-svg#3): their shared edges otherwise show the window
+  background as a hairline seam once the SVG is displayed at a fractional
+  scale (README width, browser zoom, HiDPI). The rounded window body stays
+  smooth; remove the seal once upstream fixes it.
 - The cursor is hidden by default (`--cursor none`); pass `--cursor block` to
   record it.
 - **terminal-svg corrupts multi-byte glyphs at its 1024-byte read boundary**
