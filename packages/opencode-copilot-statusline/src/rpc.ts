@@ -1,6 +1,6 @@
-import { Rpc } from "@opencode/plugin/rpc"
+import { Rpc } from "@opencode/plugin/rpc";
 
-export type { Usage } from "./usage"
+export type { Usage } from "./usage";
 
 const usageSchema = {
   type: "object",
@@ -13,7 +13,7 @@ const usageSchema = {
   },
   required: ["usedPercent", "remaining", "entitlement", "unlimited"],
   additionalProperties: false,
-}
+};
 
 export const UsageRpc = Rpc.define({
   id: "opencode-copilot-statusline",
@@ -28,4 +28,4 @@ export const UsageRpc = Rpc.define({
     },
   },
   events: {},
-})
+});

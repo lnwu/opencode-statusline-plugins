@@ -1,6 +1,6 @@
-import { Plugin } from "@opencode/plugin"
-import { UsageRpc, type Usage } from "./rpc"
-import { parseUsage } from "./usage"
+import { Plugin } from "@opencode/plugin";
+import { UsageRpc, type Usage } from "./rpc";
+import { parseUsage } from "./usage";
 
 // Kimi For Coding ships as two integrations (and matching provider ids) that
 // declare the same `KIMI_API_KEY` env method but live on different hosts:
@@ -10,43 +10,43 @@ import { parseUsage } from "./usage"
 const INTEGRATIONS = [
   { id: "kimi-code-plan-global", base: "https://api.kimi.ai" },
   { id: "kimi-code-plan-cn", base: "https://api.kimi.com" },
-] as const
-const FETCH_TIMEOUT_MS = 10000
+] as const;
+const FETCH_TIMEOUT_MS = 10000;
 
 export default Plugin.define({
   id: "opencode-kimi-code-statusline",
   async setup(ctx) {
-    const language = ctx.options.language
+    const language = ctx.options.language;
 
     async function fetchUsage(): Promise<Usage | undefined> {
       try {
         for (const integration of INTEGRATIONS) {
-          const connection = await ctx.integration.connection.active(integration.id)
-          if (!connection) continue
-          const credential = await ctx.integration.connection.resolve(connection)
-          if (credential?.type !== "key" || !credential.key) continue
+          const connection = await ctx.integration.connection.active(integration.id);
+          if (!connection) continue;
+          const credential = await ctx.integration.connection.resolve(connection);
+          if (credential?.type !== "key" || !credential.key) continue;
           const res = await fetch(`${integration.base}/coding/v1/usages`, {
             headers: { Authorization: `Bearer ${credential.key}`, Accept: "application/json" },
             signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-          })
-          if (!res.ok) continue
-          const usage = parseUsage(await res.json())
-          if (usage) return usage
+          });
+          if (!res.ok) continue;
+          const usage = parseUsage(await res.json());
+          if (usage) return usage;
         }
-        return undefined
+        return undefined;
       } catch {
-        return undefined
+        return undefined;
       }
     }
 
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
-        const usage = await fetchUsage()
+        const usage = await fetchUsage();
         return {
           ...(usage ? { usage } : {}),
           ...(typeof language === "string" ? { language } : {}),
-        }
+        };
       },
-    })
+    });
   },
-})
+});

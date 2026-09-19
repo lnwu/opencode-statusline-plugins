@@ -3,6 +3,6 @@
 // required and what stays external).
 //
 // Run from the package root: `bun run build` (bun run scripts/build.ts).
-import { buildPlugin } from "core/build"
+import { buildPlugin } from "core/build";
 
-await buildPlugin()
+await buildPlugin();

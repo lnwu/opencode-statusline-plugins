@@ -15,12 +15,14 @@
 //
 // Run from the package root: `bun run build` (bun run scripts/build.ts).
 // Entry points resolve relative to the working directory.
-import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
+import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin";
 
-const DEFAULT_ENTRYPOINTS = ["src/index.ts", "src/rpc.ts", "src/tui.tsx"]
-const EXTERNAL = ["@opencode/plugin", "@opencode/plugin/*", "@opentui/*", "solid-js", "solid-js/*"]
+const DEFAULT_ENTRYPOINTS = ["src/index.ts", "src/rpc.ts", "src/tui.tsx"];
+const EXTERNAL = ["@opencode/plugin", "@opencode/plugin/*", "@opentui/*", "solid-js", "solid-js/*"];
 
-export async function buildPlugin(options: { entrypoints?: string[]; outdir?: string } = {}): Promise<void> {
+export async function buildPlugin(
+  options: { entrypoints?: string[]; outdir?: string } = {},
+): Promise<void> {
   const result = await Bun.build({
     entrypoints: options.entrypoints ?? DEFAULT_ENTRYPOINTS,
     outdir: options.outdir ?? "dist",
@@ -28,12 +30,12 @@ export async function buildPlugin(options: { entrypoints?: string[]; outdir?: st
     format: "esm",
     plugins: [createSolidTransformPlugin({ moduleName: "@opentui/solid" })],
     external: EXTERNAL,
-  })
+  });
 
   if (!result.success) {
-    for (const log of result.logs) console.error(log)
-    process.exit(1)
+    for (const log of result.logs) console.error(log);
+    process.exit(1);
   }
 
-  for (const output of result.outputs) console.log(`built ${output.path}`)
+  for (const output of result.outputs) console.log(`built ${output.path}`);
 }

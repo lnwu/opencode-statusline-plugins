@@ -1,20 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":automergeMinor",
-    ":automergeDigest"
-  ],
+  "extends": ["config:recommended", ":automergeMinor", ":automergeDigest"],
   "customManagers": [
     {
       "customType": "regex",
       "description": "Track the pinned OpenCode CLI used by the integration tests",
-      "fileMatch": [
-        "^\\.github/workflows/ci\\.yml$"
-      ],
-      "matchStrings": [
-        "OPENCODE_VERSION:\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
-      ],
+      "fileMatch": ["^\\.github/workflows/ci\\.yml$"],
+      "matchStrings": ["OPENCODE_VERSION:\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""],
       "datasourceTemplate": "npm",
       "depNameTemplate": "@opencode/cli",
       "versioningTemplate": "npm"

@@ -1,6 +1,6 @@
-import { Rpc } from "@opencode/plugin/rpc"
+import { Rpc } from "@opencode/plugin/rpc";
 
-export type { Usage, UsageWindow } from "./usage"
+export type { Usage, UsageWindow } from "./usage";
 
 const windowSchema = {
   type: "object",
@@ -10,7 +10,7 @@ const windowSchema = {
   },
   required: ["percent"],
   additionalProperties: false,
-}
+};
 
 const usageSchema = {
   type: "object",
@@ -20,7 +20,7 @@ const usageSchema = {
   },
   required: ["rolling", "weekly"],
   additionalProperties: false,
-}
+};
 
 export const UsageRpc = Rpc.define({
   id: "opencode-kimi-code-statusline",
@@ -35,4 +35,4 @@ export const UsageRpc = Rpc.define({
     },
   },
   events: {},
-})
+});

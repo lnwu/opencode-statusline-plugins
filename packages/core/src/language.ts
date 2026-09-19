@@ -1,15 +1,15 @@
 /** Languages the statusline plugins ship labels for. */
-export const LANGUAGES = ["en", "zh-CN"] as const
+export const LANGUAGES = ["en", "zh-CN"] as const;
 
-export type Language = (typeof LANGUAGES)[number]
+export type Language = (typeof LANGUAGES)[number];
 
 /**
  * Resolve the display language from the terminal locale:
  * `LC_ALL` → `LC_MESSAGES` → `LANGUAGE` → `LANG`; `zh*` locales map to `zh-CN`.
  */
 export function detectLanguage(env: Record<string, string | undefined> = process.env): Language {
-  const locale = env.LC_ALL || env.LC_MESSAGES || env.LANGUAGE || env.LANG || ""
-  return /^zh([_.-]|$)/i.test(locale) ? "zh-CN" : "en"
+  const locale = env.LC_ALL || env.LC_MESSAGES || env.LANGUAGE || env.LANG || "";
+  return /^zh([_.-]|$)/i.test(locale) ? "zh-CN" : "en";
 }
 
 /**
@@ -21,8 +21,8 @@ export function detectLanguage(env: Record<string, string | undefined> = process
  */
 export function resolveLanguage(...options: unknown[]): Language {
   for (const option of options) {
-    if (option === "en") return "en"
-    if (option === "zh" || option === "zh-CN") return "zh-CN"
+    if (option === "en") return "en";
+    if (option === "zh" || option === "zh-CN") return "zh-CN";
   }
-  return detectLanguage()
+  return detectLanguage();
 }

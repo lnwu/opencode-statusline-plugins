@@ -11,12 +11,12 @@
 // accident.
 //
 // Run: bun run build && KIMI_CODE_API_KEY=sk-... bun run test
-import { join, resolve } from "node:path"
-import { afterAll, beforeAll, expect, test } from "bun:test"
-import { createHarness, type CaseContext, type CaseSpec } from "core/harness"
+import { join, resolve } from "node:path";
+import { afterAll, beforeAll, expect, test } from "bun:test";
+import { createHarness, type CaseContext, type CaseSpec } from "core/harness";
 
-const PACKAGE_ROOT = resolve(import.meta.dir, "..", "..")
-const CASE_TIMEOUT_MS = 240_000
+const PACKAGE_ROOT = resolve(import.meta.dir, "..", "..");
+const CASE_TIMEOUT_MS = 240_000;
 
 const harness = createHarness({
   packageRoot: PACKAGE_ROOT,
@@ -28,7 +28,7 @@ const harness = createHarness({
   // while the tests read it from KIMI_CODE_API_KEY.
   credentialName: "KIMI_API_KEY",
   invalidCredential: "sk-e2e-invalid",
-})
+});
 
 // One object per scenario. `expect` patterns must all match the captured frame,
 // `reject` patterns must not. Cases with `prompt` send a real model request
@@ -80,52 +80,52 @@ const CASES: CaseSpec[] = [
     credential: "invalid",
     expect: [/Kimi —/],
   },
-]
+];
 
 beforeAll(async () => {
-  harness.requireCredential()
-  await harness.assertTools()
-}, 60_000)
+  harness.requireCredential();
+  await harness.assertTools();
+}, 60_000);
 
-const contexts: CaseContext[] = []
+const contexts: CaseContext[] = [];
 
 afterAll(async () => {
-  for (const context of contexts) await harness.cleanupCase(context)
-}, 120_000)
+  for (const context of contexts) await harness.cleanupCase(context);
+}, 120_000);
 
 for (const spec of CASES) {
   test(
     spec.name,
     async () => {
-      const context = await harness.prepareCase(spec)
-      contexts.push(context)
-      let frame = ""
+      const context = await harness.prepareCase(spec);
+      contexts.push(context);
+      let frame = "";
       try {
-        console.log(`[${spec.name}] session=${context.sessionID} service=:${context.servicePort}`)
+        console.log(`[${spec.name}] session=${context.sessionID} service=:${context.servicePort}`);
 
         if (spec.prompt) {
-          await harness.sendPrompt(context, spec.prompt)
-          console.log(`[${spec.name}] model request succeeded`)
+          await harness.sendPrompt(context, spec.prompt);
+          console.log(`[${spec.name}] model request succeeded`);
         }
 
-        await harness.startTui(context)
-        frame = await harness.waitForFrame(context, spec.expect[0]!)
+        await harness.startTui(context);
+        frame = await harness.waitForFrame(context, spec.expect[0]!);
 
         for (const pattern of spec.expect) {
-          expect(frame, `expected ${pattern} in ${spec.name} frame`).toMatch(pattern)
+          expect(frame, `expected ${pattern} in ${spec.name} frame`).toMatch(pattern);
         }
         for (const pattern of spec.reject ?? []) {
-          expect(frame, `did not expect ${pattern} in ${spec.name} frame`).not.toMatch(pattern)
+          expect(frame, `did not expect ${pattern} in ${spec.name} frame`).not.toMatch(pattern);
         }
       } catch (error) {
-        const captured = frame || (await context.capture().catch(() => ""))
-        if (!frame && captured) frame = captured
-        console.error(`[${spec.name}] captured frame:\n${captured}`)
-        throw error
+        const captured = frame || (await context.capture().catch(() => ""));
+        if (!frame && captured) frame = captured;
+        console.error(`[${spec.name}] captured frame:\n${captured}`);
+        throw error;
       } finally {
-        if (frame) await harness.writeArtifacts(context, frame)
+        if (frame) await harness.writeArtifacts(context, frame);
       }
     },
     CASE_TIMEOUT_MS,
-  )
+  );
 }

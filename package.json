@@ -1,15 +1,20 @@
 {
   "name": "opencode-statusline-plugins",
   "private": true,
-  "type": "module",
   "license": "MIT",
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
   "scripts": {
     "build": "bun run --filter './packages/*' --if-present build",
     "typecheck": "bun run --filter './packages/*' --if-present typecheck",
     "changelog:check": "bun scripts/release-notes.ts --check",
-    "test": "bun run --filter './packages/*' --if-present test"
+    "test": "bun run --filter './packages/*' --if-present test",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.68.0"
   }
 }
