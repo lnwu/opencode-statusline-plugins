@@ -6,12 +6,12 @@ plus an internal shared `core` package (never published).
 ## Packages
 
 - `opencode-go-statusline` — OpenCode Go quota (rolling 5h / weekly / monthly).
-  Implemented; the only plugin with published releases.
+  Implemented; published.
 - `opencode-copilot-statusline` — GitHub Copilot quota (premium requests, with
   a chat fallback for plans without a premium-request quota, e.g. Copilot Free).
-  Implemented; not yet published.
+  Implemented; published.
 - `opencode-kimi-code-statusline` — Kimi For Coding (Kimi Code) quota (rolling
-  5h / weekly). Implemented; not yet published.
+  5h / weekly). Implemented; published.
 - `core` — internal shared package (not a plugin, never published): language
   resolution, the e2e harness, the README demo recorder, and the build helper.
   Plugin sources, build scripts, and tests may import it; it is inlined into
