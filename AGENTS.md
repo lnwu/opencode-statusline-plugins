@@ -92,6 +92,8 @@ see Release).
 ## Commands
 
 - `bun install` — lockfile is `bun.lock`; use Bun, not npm/pnpm.
+- `bun run fmt` / `bun run fmt:check` — format (or verify) the workspace with
+  Oxfmt; Markdown is excluded, see Conventions. `fmt:check` runs in CI.
 - `bun run build` / `bun run typecheck` — all packages; root scripts use
   `--if-present`, so README-only packages are skipped.
 - `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
@@ -213,6 +215,12 @@ CI.
 - Published packages ship `dist/` only: `files: ["dist"]` and every `exports`
   entry points at a built bundle. `src/` is dev-only. `core` is inlined into
   each plugin's bundles.
+- Formatting is Oxfmt with its default options (`.oxfmtrc.json` at the repo
+  root); run `bun run fmt` before opening a PR. Markdown
+  (`.md`/`.mdx`/`.markdown`) is deliberately excluded: Oxfmt still formats it
+  through bundled Prettier, and its native Rust formatter is not wired into
+  Oxfmt yet (oxc-project/oxc#24607). Drop the `ignorePatterns` entry only when
+  that integration lands and the resulting diff is reviewed.
 - User-visible changes (features, behavior changes, fixes, breaking changes)
   land with entries under `## Unreleased` in both changelogs, in the same PR as
   the change; a `core` change that alters a plugin's behavior is recorded in

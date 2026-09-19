@@ -1,7 +1,7 @@
-import { Rpc } from "@opencode/plugin/rpc"
+import { Rpc } from "@opencode/plugin/rpc";
 
-export type UsageWindow = { status: string; percent: number; resetsAt: string }
-export type Usage = { rolling: UsageWindow; weekly: UsageWindow; monthly: UsageWindow }
+export type UsageWindow = { status: string; percent: number; resetsAt: string };
+export type Usage = { rolling: UsageWindow; weekly: UsageWindow; monthly: UsageWindow };
 
 const windowSchema = {
   type: "object",
@@ -12,7 +12,7 @@ const windowSchema = {
   },
   required: ["status", "percent", "resetsAt"],
   additionalProperties: false,
-}
+};
 
 const usageSchema = {
   type: "object",
@@ -23,7 +23,7 @@ const usageSchema = {
   },
   required: ["rolling", "weekly", "monthly"],
   additionalProperties: false,
-}
+};
 
 export const UsageRpc = Rpc.define({
   id: "opencode-go-statusline",
@@ -38,4 +38,4 @@ export const UsageRpc = Rpc.define({
     },
   },
   events: {},
-})
+});

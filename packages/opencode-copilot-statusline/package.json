@@ -2,29 +2,29 @@
   "name": "opencode-copilot-statusline",
   "version": "1.0.2",
   "description": "OpenCode TUI plugin: display GitHub Copilot quota (premium requests, with a chat fallback for Copilot Free) in the footer statusline. V2-native, zero-config, no cookies.",
-  "type": "module",
+  "keywords": [
+    "copilot",
+    "github-copilot",
+    "opencode",
+    "opencode-plugin",
+    "quota",
+    "statusline",
+    "usage"
+  ],
+  "homepage": "https://github.com/lnwu/opencode-statusline-plugins/tree/main/packages/opencode-copilot-statusline#readme",
+  "bugs": {
+    "url": "https://github.com/lnwu/opencode-statusline-plugins/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lnwu/opencode-statusline-plugins.git",
     "directory": "packages/opencode-copilot-statusline"
   },
-  "homepage": "https://github.com/lnwu/opencode-statusline-plugins/tree/main/packages/opencode-copilot-statusline#readme",
-  "bugs": {
-    "url": "https://github.com/lnwu/opencode-statusline-plugins/issues"
-  },
-  "keywords": [
-    "opencode",
-    "opencode-plugin",
-    "github-copilot",
-    "copilot",
-    "statusline",
-    "usage",
-    "quota"
-  ],
   "files": [
     "dist"
   ],
+  "type": "module",
   "exports": {
     ".": "./dist/index.js",
     "./rpc": "./dist/rpc.js",
@@ -42,6 +42,15 @@
   "dependencies": {
     "@opencode/plugin": ">2.0.0"
   },
+  "devDependencies": {
+    "@opencode/theme": ">2.0.0",
+    "@opentui/core": "^0.5.11",
+    "@opentui/solid": "^0.5.11",
+    "bun-types": "^1.4.2",
+    "core": "*",
+    "solid-js": "^1.9.15",
+    "typescript": "^7.0.2"
+  },
   "peerDependencies": {
     "@opencode/theme": ">2.0.0",
     "@opentui/core": ">=0.5.10",
@@ -52,14 +61,5 @@
     "@opencode/theme": {
       "optional": true
     }
-  },
-  "devDependencies": {
-    "@opencode/theme": ">2.0.0",
-    "@opentui/core": "^0.5.11",
-    "@opentui/solid": "^0.5.11",
-    "bun-types": "^1.4.2",
-    "core": "*",
-    "solid-js": "^1.9.15",
-    "typescript": "^7.0.2"
   }
 }

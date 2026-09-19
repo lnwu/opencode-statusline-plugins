@@ -2,8 +2,8 @@
   "name": "core",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "Internal shared code for the statusline plugins: language resolution, the e2e harness, and the build helper. Never published.",
+  "type": "module",
   "exports": {
     "./language": "./src/language.ts",
     "./theme": "./src/theme.ts",
