@@ -37,7 +37,8 @@ runs:
       # mode prefixes every line with "<package> <script>: ", and the runner
       # only parses a workflow command at the start of a line — the prefix
       # turned Bun's `::group::` groups and `::error` failure annotations into
-      # plain text. This is the same working directory `--filter` would use.
+      # plain text (bun#43484, tracked in #79). This is the same working
+      # directory `--filter` would use.
       run: |
         cd "packages/${{ inputs.package }}"
         bun run test:e2e
