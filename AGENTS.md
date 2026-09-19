@@ -257,7 +257,7 @@ CI.
   resulting merge commit, one GitHub release each. The per-package invariant
   above is unchanged.
 - The step-by-step runbook is the `release` skill
-  (`.opencode/skills/release/SKILL.md`); follow it when asked to release. Its
+  (`.agents/skills/release/SKILL.md`); follow it when asked to release. Its
   `reference/first-release.md` documents the one-time npm bootstrap for a
   package that does not exist on npm yet: login check, `0.0.0` placeholder
   publish, and trusted-publisher setup, driving npm's interactive 2FA by handing
