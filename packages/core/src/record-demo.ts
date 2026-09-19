@@ -19,7 +19,11 @@
 // The home screen's model (and therefore which statusline renders) follows
 // the globally most-recent model in opencode's `model.json`, not the project
 // config, so each take temporarily pins its model there and restores the
-// original file when done.
+// original file when done. A take can likewise pin the TUI theme
+// (`tuiTheme`): CLI settings like `theme.name` have no project-local file, so
+// the recorder hands the theme to the recorded TUI as inline CLI settings
+// (`OPENCODE_CLI_CONFIG_CONTENT`) in the throw-away pane; the developer's own
+// global `cli.json` is never touched.
 //
 // Casts are repaired after recording: terminal-svg's PTY reader decodes each
 // 1024-byte read as UTF-8 independently, corrupting a multi-byte glyph that
@@ -71,6 +75,8 @@ export type DemoConfig = {
   prompt?: string
   cursor?: CursorStyle
   theme?: string
+  /** OpenCode TUI theme handed to the recorded TUI as inline CLI settings (e.g. "aura"); defaults to the developer's own theme. */
+  tuiTheme?: string
   /** How long to wait for a finished turn, in ms. */
   replyTimeout?: number
   /** Throw-away project directory; defaults to `~/oc-demo`. */
@@ -120,6 +126,10 @@ export async function loadDemoConfig(packageRoot: string): Promise<DemoConfig> {
     if (typeof raw.theme !== "string" || raw.theme === "") throw new Error(`${path}: "theme" must be a non-empty string`)
     config.theme = raw.theme
   }
+  if (raw.tuiTheme !== undefined) {
+    if (typeof raw.tuiTheme !== "string" || raw.tuiTheme === "") throw new Error(`${path}: "tuiTheme" must be a non-empty string`)
+    config.tuiTheme = raw.tuiTheme
+  }
   if (raw.replyTimeout !== undefined) {
     if (typeof raw.replyTimeout !== "number" || !Number.isFinite(raw.replyTimeout) || raw.replyTimeout <= 0) {
       throw new Error(`${path}: "replyTimeout" must be a positive number of milliseconds`)
@@ -138,6 +148,8 @@ export type RecordDemoOptions = {
   packageRoot: string
   takes: DemoTake[]
   theme?: string
+  /** OpenCode TUI theme for the recording, passed as inline CLI settings; defaults to the developer's own theme. */
+  tuiTheme?: string
   /** Cursor shape in the rendered SVG; defaults to `none` for a clean README image. */
   cursor?: CursorStyle
   /** Start the animation here instead of the TUI's first paint. */
@@ -176,7 +188,7 @@ export async function recordDemo(options: RecordDemoOptions): Promise<void> {
   await mkdir(assetsDir, { recursive: true })
   for (const take of options.takes) {
     console.log(`\n=== ${take.name} ===`)
-    await recordTake(take, { assetsDir, theme, cursor, from: options.from, replyTimeoutMs, dir })
+    await recordTake(take, { assetsDir, theme, tuiTheme: options.tuiTheme, cursor, from: options.from, replyTimeoutMs, dir })
   }
 }
 
@@ -212,7 +224,7 @@ async function pinRecentModel(model: ModelRef): Promise<() => Promise<void>> {
 
 async function recordTake(
   take: DemoTake,
-  ctx: { assetsDir: string; theme: string; cursor: CursorStyle; from?: number; replyTimeoutMs: number; dir: string },
+  ctx: { assetsDir: string; theme: string; tuiTheme?: string; cursor: CursorStyle; from?: number; replyTimeoutMs: number; dir: string },
 ): Promise<void> {
   const projectDir = ctx.dir
   await rm(projectDir, { recursive: true, force: true })
@@ -261,16 +273,20 @@ async function recordTake(
     await rm(castPath, { force: true })
 
     // Plain `opencode` starts on the home screen (logo + composer); the
-    // session is created by the first prompt and deleted in cleanup.
-    await writeFile(
-      paneScript,
-      [
-        "#!/usr/bin/env bash",
-        `exec ${process.env.TERMINAL_SVG ?? "terminal-svg"} rec -c ${COLS} -r ${ROWS} ` +
-          `-o ${shq(rawSvgPath)} --cast ${shq(castPath)} -- opencode`,
-        "",
-      ].join("\n"),
+    // session is created by the first prompt and deleted in cleanup. CLI
+    // settings (like the TUI theme) have no project-local file, so a themed
+    // take is handed to the TUI as inline CLI settings in this throw-away
+    // script — the developer's own global `cli.json` stays untouched.
+    const paneLines = ["#!/usr/bin/env bash"]
+    if (ctx.tuiTheme) {
+      paneLines.push(`export OPENCODE_CLI_CONFIG_CONTENT=${shq(JSON.stringify({ theme: { name: ctx.tuiTheme } }))}`)
+    }
+    paneLines.push(
+      `exec ${process.env.TERMINAL_SVG ?? "terminal-svg"} rec -c ${COLS} -r ${ROWS} ` +
+        `-o ${shq(rawSvgPath)} --cast ${shq(castPath)} -- opencode`,
+      "",
     )
+    await writeFile(paneScript, paneLines.join("\n"))
 
     await mustTmux(
       "new-session",
