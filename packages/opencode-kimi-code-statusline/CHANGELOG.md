@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 0.1.1 - 2026-09-19
+
 ### Added
 
 - Add animated README demos of the footer statusline (English and Simplified Chinese).
