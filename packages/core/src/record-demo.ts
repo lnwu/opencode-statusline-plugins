@@ -32,11 +32,12 @@
 // Casts are repaired after recording: terminal-svg's PTY reader decodes each
 // 1024-byte read as UTF-8 independently, corrupting a multi-byte glyph that
 // straddles the boundary into `U+FFFD` (visible as a stray replacement glyph
-// in the logo). `repairCast` restores the glyph and drops the stray byte. The
-// rendered SVG is sealed against scaling seams: `sealTiledRects` adds
-// `shape-rendering="crispEdges"` to the tiled background rects, whose shared
-// edges would otherwise expose the window background as a hairline seam at
-// fractional display scales (terminal-svg#3).
+// in the logo). `repairCast` restores the glyph and drops the stray byte
+// (terminal-svg#4, tracked in #64). The rendered SVG is sealed against scaling
+// seams: `sealTiledRects` adds `shape-rendering="crispEdges"` to the tiled
+// background rects, whose shared edges would otherwise expose the window
+// background as a hairline seam at fractional display scales (terminal-svg#3,
+// tracked in #65).
 import { mkdir, realpath, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
@@ -493,7 +494,8 @@ async function recordTake(
  * continuation byte is never drawn), so the original glyph is the two
  * replacement characters in event order; substituting a `▀` and dropping the
  * leftover byte restores the screen. Upstream: russmckendrick/terminal-svg#4
- * (remove this once fixed). Returns the number of repaired pairs.
+ * (remove this once fixed; tracked in #64). Returns the number of repaired
+ * pairs.
  */
 async function repairCast(castPath: string): Promise<number> {
   const text = await Bun.file(castPath).text();
@@ -634,7 +636,7 @@ async function retitleCast(castPath: string, title: string): Promise<void> {
  * the SVG is displayed at a fractional scale (e.g. scaled down in a README,
  * or on a HiDPI screen). Rects with `rx` (the rounded window body) keep their
  * smooth corners. Upstream: russmckendrick/terminal-svg#3 (remove this once
- * fixed). Returns the number of rects patched.
+ * fixed; tracked in #65). Returns the number of rects patched.
  */
 async function sealTiledRects(svgPath: string): Promise<number> {
   const svg = await Bun.file(svgPath).text();
