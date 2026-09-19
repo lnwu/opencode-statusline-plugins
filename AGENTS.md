@@ -102,11 +102,10 @@ see Release).
 - `bun run --filter <pkg> test:pack` — packaging smoke test per package
   (`npm pack`, declared-import scan, install, entry imports); runs in CI.
 - `bun run --filter opencode-go-statusline record:demo` — dev-only: rebuilds
-  and records the README demo animation. Local mode (default) reuses the
-  developer's OpenCode config in a throw-away `~/oc-demo`; `--isolated`
-  records the built `dist/` entries from `OPENCODE_API_KEY`. Needs
-  `terminal-svg` (`brew install russmckendrick/tap/terminal-svg`). See the
-  `record-demo` skill.
+  and records the README demo animation from the developer's own OpenCode
+  config in a throw-away `~/oc-demo`. Needs `terminal-svg`
+  (`brew install russmckendrick/tap/terminal-svg`). See the `record-demo`
+  skill.
 - Single package: `bun run --filter opencode-go-statusline build`.
 
 ## Integration tests
