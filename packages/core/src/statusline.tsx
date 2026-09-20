@@ -1,7 +1,7 @@
 /** @jsxImportSource @opentui/solid */
-// Shared TUI pieces for the statusline plugins: usage polling, quota colors,
-// the reset countdown, and the provider gate that hides the statusline for
-// sessions on another provider.
+// Shared TUI pieces for the statusline plugins: the statusline frame and its
+// quota segments, usage polling, quota colors, the reset countdown, and the
+// provider gate that hides the statusline for sessions on another provider.
 //
 // Like the rest of `core`, this module is inlined into each package's built
 // `tui.js`, so the JSX still goes through the Solid transform and the runtime
@@ -9,7 +9,7 @@
 import { usePlugin } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/solid";
-import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
+import { createEffect, createSignal, onCleanup, Show, type Accessor, type JSX } from "solid-js";
 import { statusColors } from "./theme";
 
 /** Usage refresh interval, in milliseconds. */
@@ -54,6 +54,38 @@ export function quotaColor(theme: unknown, percent: number, ok = true): RGBA | u
   return colors.muted;
 }
 
+/** A quota window rendered by {@link QuotaSegment}. */
+export type QuotaWindow = {
+  /** Used percentage of the window, 0-100. */
+  percent: number;
+  /** Window reset time (ISO 8601); rendered as a countdown in detailed mode. */
+  resetsAt?: string;
+  /**
+   * Window status as reported by the API, when it reports one. Anything other
+   * than `ok` (and the empty string) renders like a critical percentage.
+   */
+  status?: string;
+};
+
+/**
+ * One quota segment (`5h 3%`, `Weekly 12% (4h5m)`), colored by usage; the
+ * countdown is appended when `detailed`.
+ */
+export function QuotaSegment(props: { label: string; win: QuotaWindow; detailed: boolean }) {
+  const ctx = usePlugin();
+  const fg = () =>
+    quotaColor(ctx.theme, props.win.percent, !props.win.status || props.win.status === "ok");
+  const text = () => {
+    const left = props.detailed ? countdown(props.win.resetsAt, Date.now()) : undefined;
+    return `${props.label} ${props.win.percent}%${left ? ` (${left})` : ""}`;
+  };
+  return (
+    <text fg={fg()} wrapMode="none" flexShrink={1}>
+      {text()}
+    </text>
+  );
+}
+
 /** The ` · ` between quota segments. */
 export function Separator() {
   const ctx = usePlugin();
@@ -61,6 +93,46 @@ export function Separator() {
     <text fg={statusColors<RGBA>(ctx.theme).muted} flexShrink={0}>
       {" · "}
     </text>
+  );
+}
+
+/**
+ * A quota statusline: the provider title followed by the usage segments, or a
+ * `—` fallback while the first fetch is pending. Hidden unless `enabled` (see
+ * `createProviderGate`). `children` renders the segments from the current
+ * usage and receives whether the detailed (countdown) layout is on.
+ */
+export function QuotaStatusline<T>(props: {
+  enabled: Accessor<boolean>;
+  title: string;
+  color: Accessor<RGBA | undefined>;
+  usage: Accessor<T | undefined>;
+  showDetails: () => boolean;
+  children: (usage: Accessor<NonNullable<T>>, detailed: boolean) => JSX.Element;
+}) {
+  const detailed = useDetailed(props.showDetails);
+  return (
+    <Show when={props.enabled()}>
+      <box flexDirection="row" flexShrink={1} minWidth={0}>
+        <text fg={props.color()} flexShrink={0}>
+          {props.title}{" "}
+        </text>
+        <Show
+          when={props.usage()}
+          fallback={
+            <text fg={props.color()} flexShrink={0}>
+              —
+            </text>
+          }
+        >
+          {(usage) => (
+            <box flexDirection="row" flexShrink={1} minWidth={0}>
+              {props.children(usage, detailed())}
+            </box>
+          )}
+        </Show>
+      </box>
+    </Show>
   );
 }
 

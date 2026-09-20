@@ -24,7 +24,7 @@ plus an internal shared `core` package (never published).
 | --- | --- |
 | `src/language.ts` | Terminal language detection and `language` option resolution for statusline labels. |
 | `src/theme.ts` | Theme token compatibility: reads the pre- and post-2.0.9 text token names so statusline colors survive the rename; removal condition in #63. |
-| `src/statusline.tsx` | Shared TUI pieces for the statusline plugins: usage polling (`startPolling`), quota colors (`quotaColor`), the reset `countdown`, `Separator`, `useDetailed`, and `createProviderGate` (hides the statusline for sessions on another provider). Inlined into each package's `dist/tui.js`. |
+| `src/statusline.tsx` | Shared TUI pieces for the statusline plugins: the statusline frame (`QuotaStatusline`) and its quota segments (`QuotaSegment`), usage polling (`startPolling`), quota colors (`quotaColor`), the reset `countdown`, `Separator`, `useDetailed`, and `createProviderGate` (hides the statusline for sessions on another provider). Inlined into each package's `dist/tui.js`. |
 | `src/harness.ts` | `createHarness`: isolated OpenCode env, real TUI in tmux, frame capture; parameterized per package. |
 | `src/e2e.ts` | `runE2eCases`: registers a package's `CaseSpec[]` as `bun test` cases (credential/tool checks, cleanup, artifact writing, failure output); per-package `test/e2e/tui.test.ts` files carry only their harness config and cases. |
 | `src/test-footer.ts` | `setupFooterTest`: renders a package's built `dist/tui.js` in the OpenTUI test renderer with a mocked plugin context (usage RPC, session provider, options, theme) and captures the footer frame. Requires `--conditions=browser` (see the file header). |
