@@ -22,7 +22,7 @@
     },
     "packages/opencode-copilot-statusline": {
       "name": "opencode-copilot-statusline",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@opencode/plugin": ">2.0.0",
       },
@@ -42,7 +42,7 @@
     },
     "packages/opencode-go-statusline": {
       "name": "opencode-go-statusline",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "dependencies": {
         "@opencode/plugin": ">2.0.0",
       },
@@ -62,7 +62,7 @@
     },
     "packages/opencode-kimi-code-statusline": {
       "name": "opencode-kimi-code-statusline",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@opencode/plugin": ">2.0.0",
       },
