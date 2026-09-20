@@ -1,13 +1,13 @@
 /** @jsxImportSource @opentui/solid */
 import { Plugin, usePlugin } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
-import { createSignal, Show } from "solid-js";
+import { createSignal } from "solid-js";
 import {
   countdown,
   createProviderGate,
   quotaColor,
+  QuotaStatusline,
   startPolling,
-  useDetailed,
 } from "core/statusline";
 import { statusColors } from "core/theme";
 import { UsageRpc, type Usage } from "./rpc";
@@ -38,7 +38,6 @@ function CopilotUsage(props: {
     props.sessionID,
     (providerID) => providerID === COPILOT_PROVIDER_ID,
   );
-  const detailed = useDetailed(props.showDetails);
 
   // One color for the whole segment, so the label follows the percentage.
   // `loaded` separates "first fetch still running" (subdued) from "no data"
@@ -53,23 +52,15 @@ function CopilotUsage(props: {
   };
 
   return (
-    <Show when={isCopilot()}>
-      <box flexDirection="row" flexShrink={1} minWidth={0}>
-        <text fg={fg()} flexShrink={0}>
-          Copilot{" "}
-        </text>
-        <Show
-          when={props.usage()}
-          fallback={
-            <text fg={fg()} flexShrink={0}>
-              —
-            </text>
-          }
-        >
-          {(u) => <Segment usage={u()} color={fg} detailed={detailed()} />}
-        </Show>
-      </box>
-    </Show>
+    <QuotaStatusline
+      enabled={isCopilot}
+      title="Copilot"
+      color={fg}
+      usage={props.usage}
+      showDetails={props.showDetails}
+    >
+      {(u, detailed) => <Segment usage={u()} color={fg} detailed={detailed} />}
+    </QuotaStatusline>
   );
 }
 
