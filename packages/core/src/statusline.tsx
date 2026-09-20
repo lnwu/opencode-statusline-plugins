@@ -42,7 +42,7 @@ export function useDetailed(showDetails: () => boolean): Accessor<boolean> {
 }
 
 /**
- * Quota color: error at ≥90% (or a non-`ok` window status), info at ≥70%,
+ * Quota color: error at ≥90% (or a non-`ok` window status), warning at ≥70%,
  * muted otherwise. Tokens that resolve to neither name render in the
  * terminal's default color (see `core/src/theme.ts`).
  */
@@ -50,7 +50,7 @@ export function quotaColor(theme: unknown, percent: number, ok = true): RGBA | u
   const colors = statusColors<RGBA>(theme);
   if (!ok) return colors.error;
   if (percent >= 90) return colors.error;
-  if (percent >= 70) return colors.info;
+  if (percent >= 70) return colors.warning;
   return colors.muted;
 }
 

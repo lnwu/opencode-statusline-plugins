@@ -7,7 +7,11 @@ const OLD = {
   text: {
     default: "old-default",
     subdued: "old-subdued",
-    feedback: { error: { default: "old-error" }, info: { default: "old-info" } },
+    feedback: {
+      error: { default: "old-error" },
+      warning: { default: "old-warning" },
+      info: { default: "old-info" },
+    },
   },
 };
 
@@ -17,6 +21,7 @@ const NEW = {
     muted: "new-muted",
     feedback: {
       error: { base: "new-error", muted: "new-error-muted" },
+      warning: { base: "new-warning" },
       info: { base: "new-info" },
     },
   },
@@ -26,6 +31,7 @@ test("reads the 2.0.9 token names", () => {
   expect(statusColors<string>(NEW)).toEqual({
     muted: "new-muted",
     error: "new-error",
+    warning: "new-warning",
     info: "new-info",
   });
 });
@@ -34,6 +40,7 @@ test("falls back to the pre-2.0.9 token names", () => {
   expect(statusColors<string>(OLD)).toEqual({
     muted: "old-subdued",
     error: "old-error",
+    warning: "old-warning",
     info: "old-info",
   });
 });
@@ -45,6 +52,7 @@ test("prefers the 2.0.9 names when both are present", () => {
       ...NEW.text,
       feedback: {
         error: { default: "old-error", base: "new-error" },
+        warning: { default: "old-warning", base: "new-warning" },
         info: { default: "old-info", base: "new-info" },
       },
     },
@@ -52,6 +60,7 @@ test("prefers the 2.0.9 names when both are present", () => {
   expect(statusColors<string>(both)).toEqual({
     muted: "new-muted",
     error: "new-error",
+    warning: "new-warning",
     info: "new-info",
   });
 });
@@ -60,16 +69,19 @@ test("leaves tokens undefined when neither name exists", () => {
   expect(statusColors<string>({ text: {} })).toEqual({
     muted: undefined,
     error: undefined,
+    warning: undefined,
     info: undefined,
   });
   expect(statusColors<string>({ text: { feedback: {} } })).toEqual({
     muted: undefined,
     error: undefined,
+    warning: undefined,
     info: undefined,
   });
   expect(statusColors<string>(undefined)).toEqual({
     muted: undefined,
     error: undefined,
+    warning: undefined,
     info: undefined,
   });
 });

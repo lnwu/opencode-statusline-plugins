@@ -13,7 +13,7 @@ Display your Kimi For Coding (Kimi Code) subscription quota in the OpenCode TUI 
 
 - Live **rolling 5h / weekly** usage percentages in the prompt footer (`Kimi 5h 63% · Weekly 18%`)
 - Reset countdowns when the footer details are expanded (or the terminal is wide enough)
-- Color feedback on each segment: subdued normally, info at ≥70%, error at ≥90%
+- Color feedback on each segment: subdued normally, warning at ≥70%, error at ≥90%
 - Only appears for sessions whose model provider is `kimi-code-plan-global` or `kimi-code-plan-cn`
 - Usage refreshes about once per minute
 - Labels follow your terminal locale (`5h / Weekly` or `5h / 周`), overridable with the `language` option

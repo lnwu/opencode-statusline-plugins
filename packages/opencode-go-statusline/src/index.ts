@@ -1,5 +1,7 @@
 import { Plugin } from "@opencode/plugin";
-import { UsageRpc, type Usage } from "./rpc";
+import { createUsageCache } from "core/usage-cache";
+import { UsageRpc } from "./rpc";
+import { parseUsage, type Usage } from "./usage";
 
 const USAGE_URL = "https://opencode.ai/zen/go/v1/usage";
 const INTEGRATION_ID = "opencode-go";
@@ -21,18 +23,17 @@ export default Plugin.define({
           signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
         if (!res.ok) return undefined;
-        const body = (await res.json()) as { usage?: Usage };
-        const usage = body?.usage;
-        if (!usage?.rolling || !usage?.weekly || !usage?.monthly) return undefined;
-        return usage;
+        return parseUsage(await res.json());
       } catch {
         return undefined;
       }
     }
 
+    const getUsage = createUsageCache(fetchUsage);
+
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
-        const usage = await fetchUsage();
+        const usage = await getUsage();
         return {
           ...(usage ? { usage } : {}),
           ...(typeof language === "string" ? { language } : {}),

@@ -11,6 +11,8 @@ export type StatusColors<T> = {
   muted?: T;
   /** Error feedback (`text.feedback.error.base`, or `.default` before 2.0.9). */
   error?: T;
+  /** Warning feedback (`text.feedback.warning.base`, or `.default` before 2.0.9). */
+  warning?: T;
   /** Info feedback (`text.feedback.info.base`, or `.default` before 2.0.9). */
   info?: T;
 };
@@ -30,6 +32,7 @@ export function statusColors<T>(theme: unknown): StatusColors<T> {
   return {
     muted: (text?.muted ?? text?.subdued) as T | undefined,
     error: feedback("error") as T | undefined,
+    warning: feedback("warning") as T | undefined,
     info: feedback("info") as T | undefined,
   };
 }
