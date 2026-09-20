@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 1.0.4 - 2026-09-20
+
 ### Changed
 
 - Color the ≥70% quota band with the warning token instead of info.
