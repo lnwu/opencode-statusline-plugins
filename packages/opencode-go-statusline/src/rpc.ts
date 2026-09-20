@@ -1,7 +1,6 @@
 import { Rpc } from "@opencode/plugin/rpc";
 
-export type UsageWindow = { status: string; percent: number; resetsAt: string };
-export type Usage = { rolling: UsageWindow; weekly: UsageWindow; monthly: UsageWindow };
+export type { Usage, UsageWindow } from "./usage";
 
 const windowSchema = {
   type: "object",

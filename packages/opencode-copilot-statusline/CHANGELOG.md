@@ -4,7 +4,10 @@
 
 ## Unreleased
 
-_None yet._
+### Changed
+
+- Color the ≥70% quota band with the warning token instead of info.
+- Cache quota lookups briefly so several TUI clients share one upstream request.
 
 ## 1.0.2 - 2026-09-19
 

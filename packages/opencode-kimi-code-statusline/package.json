@@ -37,7 +37,7 @@
     "record:demo": "bun run build && bun scripts/record-demo.ts",
     "typecheck": "tsc --noEmit",
     "pretest": "bun run build",
-    "test": "bun test --conditions=browser test/footer.test.ts",
+    "test": "bun test --conditions=browser test/footer.test.ts test/usage.test.ts",
     "test:e2e": "bun run build && bun test test/e2e",
     "test:pack": "bun test test/pack.test.ts",
     "prepack": "bun run build"

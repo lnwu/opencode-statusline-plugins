@@ -1,4 +1,5 @@
 import { Plugin } from "@opencode/plugin";
+import { createUsageCache } from "core/usage-cache";
 import { UsageRpc, type Usage } from "./rpc";
 import { parseUsage } from "./usage";
 
@@ -39,9 +40,11 @@ export default Plugin.define({
       }
     }
 
+    const getUsage = createUsageCache(fetchUsage);
+
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
-        const usage = await fetchUsage();
+        const usage = await getUsage();
         return {
           ...(usage ? { usage } : {}),
           ...(typeof language === "string" ? { language } : {}),

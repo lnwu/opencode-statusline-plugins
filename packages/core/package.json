@@ -12,6 +12,7 @@
     "./e2e": "./src/e2e.ts",
     "./test-footer": "./src/test-footer.ts",
     "./run": "./src/run.ts",
+    "./usage-cache": "./src/usage-cache.ts",
     "./record-demo": "./src/record-demo.ts",
     "./record-demo-cli": "./src/record-demo-cli.ts",
     "./build": "./src/build.ts",
