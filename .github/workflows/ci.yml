@@ -17,7 +17,7 @@ concurrency:
 env:
   # Pinned on purpose: the integration harness depends on opencode's TUI
   # plugin loading and managed-service behavior. Renovate tracks this value.
-  OPENCODE_VERSION: "2.0.15"
+  OPENCODE_VERSION: "2.0.16"
 
 jobs:
   checks:
