@@ -1,5 +1,5 @@
 ---
-name: Record demo
+name: record-demo
 description: Record or refresh the animated README demo for a statusline package — a real OpenCode TUI in a fixed-size tmux pane, recorded with terminal-svg and rendered to an SVG. Use when the user asks to record, re-record, or update the demo animation (录制 / 更新演示动图).
 ---
 

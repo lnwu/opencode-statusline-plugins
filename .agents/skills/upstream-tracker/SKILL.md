@@ -1,5 +1,5 @@
 ---
-name: Upstream tracker
+name: upstream-tracker
 description: Check the workaround-tracking issues labeled `upstream` for upstream progress and report which ones are ready to unwind. Use when the user asks to check for upstream updates (检查上游问题有没有更新 / 上游 issue 有没有更新).
 ---
 

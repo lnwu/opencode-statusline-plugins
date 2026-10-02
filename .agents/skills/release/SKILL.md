@@ -1,5 +1,5 @@
 ---
-name: Release
+name: release
 description: Cut a release of one or more packages in this monorepo — promote the bilingual changelogs, bump the versions, merge the release PR, tag main, create the GitHub releases, and verify the npm publishes. Use when the user asks to release, ship, or publish a package (发布 / 发版).
 ---
 
