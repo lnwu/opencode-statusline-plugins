@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 1.1.0 - 2026-10-03
+
 ### Changed
 
 - Adapt the statusline to the terminal width: full labels and reset countdowns at 120+ columns, short labels (`5H`, `W`) at 80–119, the weekly window only below 80; expanding the footer details no longer forces the countdowns.
