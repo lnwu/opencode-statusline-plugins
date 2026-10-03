@@ -27,10 +27,7 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { mustRun, run } from "./run";
-import type { Env, RunOptions, RunResult } from "./run";
-
-export { run } from "./run";
-export type { Env, RunOptions, RunResult } from "./run";
+import type { Env } from "./run";
 
 const OPENCODE = "opencode";
 
@@ -94,7 +91,6 @@ export type CaseContext = {
 };
 
 export type Harness = {
-  run(cmd: string[], options?: RunOptions): Promise<RunResult>;
   /** Read the live credential from the environment; call before any TUI work. */
   requireCredential(): string;
   /** Verify the required tools are on PATH and log their versions. */
@@ -434,7 +430,6 @@ export function createHarness(config: HarnessConfig): Harness {
   }
 
   return {
-    run,
     requireCredential,
     assertTools,
     prepareCase,

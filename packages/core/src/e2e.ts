@@ -7,7 +7,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import type { CaseContext, CaseSpec, Harness } from "./harness";
 
 /** Per-case budget: covers a model request plus the TUI start and capture. */
-export const CASE_TIMEOUT_MS = 240_000;
+const CASE_TIMEOUT_MS = 240_000;
 
 export function runE2eCases(harness: Harness, cases: CaseSpec[]): void {
   beforeAll(async () => {
