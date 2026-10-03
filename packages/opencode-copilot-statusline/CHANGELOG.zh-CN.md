@@ -6,7 +6,7 @@
 
 ### 新增
 
-- 在标题后显示当前 OpenCode 凭证的标签（`Copilot · work 42%`）。
+- 在标题后显示当前 OpenCode 凭证的标签，首字母大写（`Copilot · Work 42%`）。
 
 ### 修复
 

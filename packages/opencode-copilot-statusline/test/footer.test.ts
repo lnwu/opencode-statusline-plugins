@@ -84,8 +84,8 @@ test("shows the account label after the title", async () => {
     },
   });
 
-  const frame = await footer.waitForText("Copilot · work 42%");
-  expect(frame).toContain("Copilot · work 42%");
+  const frame = await footer.waitForText("Copilot · Work 42%");
+  expect(frame).toContain("Copilot · Work 42%");
   await footer.dispose();
 });
 
@@ -105,7 +105,7 @@ test("truncates a long account label", async () => {
     },
   });
 
-  const frame = await footer.waitForText("Copilot · a-very-long-acc… 42%");
+  const frame = await footer.waitForText("Copilot · A-very-long-acc… 42%");
   expect(frame).not.toContain("account-label");
   await footer.dispose();
 });

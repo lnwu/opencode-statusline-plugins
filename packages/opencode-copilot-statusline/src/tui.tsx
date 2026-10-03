@@ -15,15 +15,16 @@ import { UsageRpc, type Usage } from "./rpc";
 const COPILOT_PROVIDER_ID = "github-copilot";
 const MAX_ACCOUNT_CHARS = 16;
 
-// `Copilot · label`; a long label is truncated so it cannot crowd out the
+// `Copilot · Label` (first letter capitalized); a long label is truncated so it cannot crowd out the
 // percentage in the single-line footer.
 function titleFor(account: string | undefined): string {
   if (!account) return "Copilot";
   const chars = Array.from(account);
+  chars[0] = chars[0]!.toLocaleUpperCase();
   const label =
     chars.length > MAX_ACCOUNT_CHARS
       ? `${chars.slice(0, MAX_ACCOUNT_CHARS - 1).join("")}…`
-      : account;
+      : chars.join("");
   return `Copilot · ${label}`;
 }
 

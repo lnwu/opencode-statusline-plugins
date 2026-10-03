@@ -6,7 +6,7 @@
 
 ### Added
 
-- Show the active OpenCode credential's label after the title (`Copilot · work 42%`).
+- Show the active OpenCode credential's label, first letter capitalized, after the title (`Copilot · Work 42%`).
 
 ### Fixed
 
