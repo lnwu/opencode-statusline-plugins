@@ -12,7 +12,7 @@ Display your OpenCode Go subscription quota in the TUI footer statusline.
 ## ✨ Features
 
 - Live **rolling 5h / weekly / monthly** usage percentages in the prompt footer
-- Reset countdowns when the footer details are expanded (or the terminal is wide enough)
+- Reset countdowns on terminals 120 columns or wider; 80–119 columns use short labels (`5H`, `W`, `M`), and narrower terminals show the weekly window only
 - Color feedback: subdued normally, warning at ≥70%, error at ≥90% or when a quota window reports a non-`ok` status
 - Only appears for sessions whose model provider is `opencode-go`
 - Usage refreshes about once per minute

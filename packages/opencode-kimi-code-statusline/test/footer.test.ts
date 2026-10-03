@@ -31,11 +31,42 @@ test("renders the two quota windows with reset countdowns", async () => {
   await footer.dispose();
 });
 
+test("uses short labels and no countdowns between 80 and 119 columns", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "kimi-code-plan-global",
+    options: { language: "en" },
+    width: 101,
+    showDetails: true,
+    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+  });
+
+  const frame = await footer.waitForText("Kimi 5H 7%");
+  expect(frame).toContain("Kimi 5H 7% · W 23%");
+  expect(frame).not.toContain("(");
+  await footer.dispose();
+});
+
+test("shows only the weekly window below 80 columns", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "kimi-code-plan-global",
+    options: { language: "en" },
+    width: 60,
+    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+  });
+
+  const frame = await footer.waitForText("Kimi W 23%");
+  expect(frame).not.toContain("5H");
+  await footer.dispose();
+});
+
 test("labels follow the language option", async () => {
   const footer = await setupFooterTest({
     tuiEntry: TUI_ENTRY,
     providerID: "kimi-code-plan-cn",
     options: { language: "zh-CN" },
+    width: 120,
     rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
   });
 
@@ -43,6 +74,28 @@ test("labels follow the language option", async () => {
   expect(frame).toContain("Kimi 5h 7%");
   expect(frame).toContain("周 23%");
   await footer.dispose();
+});
+
+test("keeps the Chinese weekly label in the compact and minimal layouts", async () => {
+  const compact = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "kimi-code-plan-cn",
+    options: { language: "zh-CN" },
+    width: 100,
+    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+  });
+  expect(await compact.waitForText("周 23%")).toContain("Kimi 5H 7% · 周 23%");
+  await compact.dispose();
+
+  const minimal = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "kimi-code-plan-cn",
+    options: { language: "zh-CN" },
+    width: 60,
+    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+  });
+  expect(await minimal.waitForText("Kimi 周 23%")).not.toContain("5H");
+  await minimal.dispose();
 });
 
 test("hides the statusline for sessions on another provider", async () => {

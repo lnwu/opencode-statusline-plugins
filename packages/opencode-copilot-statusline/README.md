@@ -12,7 +12,7 @@ Display your GitHub Copilot quota in the OpenCode TUI footer statusline.
 ## ✨ Features
 
 - Live used-quota percentage in the prompt footer (`Copilot 87%`)
-- Monthly reset countdown when the footer details are expanded (or the terminal is wide enough)
+- Monthly reset countdown on terminals 120 columns or wider; below 80 columns the account label is dropped
 - Color feedback on the whole segment (label and percentage): subdued normally, warning at ≥70%, error at ≥90% or when the quota cannot be resolved
 - With several GitHub Copilot accounts, shows the active account's OpenCode credential label, first letter capitalized (`Copilot · Work 87%`); rename a credential to change it
 - Only appears for sessions whose model provider is `github-copilot`

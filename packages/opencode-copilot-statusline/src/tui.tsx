@@ -8,6 +8,7 @@ import {
   quotaColor,
   QuotaStatusline,
   startPolling,
+  useDensity,
 } from "core/statusline";
 import { statusColors } from "core/theme";
 import { UsageRpc, type Usage } from "./rpc";
@@ -43,11 +44,11 @@ function Segment(props: { usage: Usage; color: () => RGBA | undefined; detailed:
 
 function CopilotUsage(props: {
   sessionID: () => string | undefined;
-  showDetails: () => boolean;
   usage: () => Usage | undefined;
   loaded: () => boolean;
 }) {
   const ctx = usePlugin();
+  const density = useDensity();
   const isCopilot = createProviderGate(
     props.sessionID,
     (providerID) => providerID === COPILOT_PROVIDER_ID,
@@ -68,12 +69,11 @@ function CopilotUsage(props: {
   return (
     <QuotaStatusline
       enabled={isCopilot}
-      title={titleFor(props.usage()?.account)}
+      title={titleFor(density() === "minimal" ? undefined : props.usage()?.account)}
       color={fg}
       usage={props.usage}
-      showDetails={props.showDetails}
     >
-      {(u, detailed) => <Segment usage={u()} color={fg} detailed={detailed} />}
+      {(u, level) => <Segment usage={u()} color={fg} detailed={level === "full"} />}
     </QuotaStatusline>
   );
 }
@@ -98,12 +98,7 @@ export default Plugin.define({
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
       render: (input) => (
-        <CopilotUsage
-          sessionID={() => input.sessionID}
-          showDetails={() => input.showDetails}
-          usage={usage}
-          loaded={loaded}
-        />
+        <CopilotUsage sessionID={() => input.sessionID} usage={usage} loaded={loaded} />
       ),
     });
 
