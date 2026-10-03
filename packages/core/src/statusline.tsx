@@ -15,8 +15,18 @@ import { statusColors } from "./theme";
 /** Usage refresh interval, in milliseconds. */
 export const INTERVAL_MS = 60_000;
 
-/** Footer width (columns) at which the reset countdowns are shown. */
-export const DETAILED_WIDTH = 125;
+/** Footer width (columns) at which the full labels and reset countdowns are shown. */
+export const FULL_WIDTH = 120;
+
+/** Footer width (columns) at which the compact labels are shown; narrower shows one window. */
+export const COMPACT_WIDTH = 80;
+
+/**
+ * How much the statusline shows: `full` (full labels and reset countdowns),
+ * `compact` (short labels, no countdowns), or `minimal` (the weekly window
+ * only).
+ */
+export type Density = "full" | "compact" | "minimal";
 
 /** Compact reset countdown (`2d3h`, `4h5m`, `37m`); undefined when not in the future. */
 export function countdown(resetsAt: string | undefined, now: number): string | undefined {
@@ -32,13 +42,14 @@ export function countdown(resetsAt: string | undefined, now: number): string | u
   return `${mins}m`;
 }
 
-/**
- * Show reset countdowns when the footer details are expanded, or on terminals
- * wide enough to always afford them.
- */
-export function useDetailed(showDetails: () => boolean): Accessor<boolean> {
+/** The statusline density for the current terminal width. */
+export function useDensity(): Accessor<Density> {
   const dims = useTerminalDimensions();
-  return () => showDetails() || dims().width >= DETAILED_WIDTH;
+  return () => {
+    const width = dims().width;
+    if (width >= FULL_WIDTH) return "full";
+    return width >= COMPACT_WIDTH ? "compact" : "minimal";
+  };
 }
 
 /**
@@ -58,7 +69,7 @@ export function quotaColor(theme: unknown, percent: number, ok = true): RGBA | u
 export type QuotaWindow = {
   /** Used percentage of the window, 0-100. */
   percent: number;
-  /** Window reset time (ISO 8601); rendered as a countdown in detailed mode. */
+  /** Window reset time (ISO 8601); rendered as a countdown in `full` density. */
   resetsAt?: string;
   /**
    * Window status as reported by the API, when it reports one. Anything other
@@ -100,17 +111,16 @@ export function Separator() {
  * A quota statusline: the provider title followed by the usage segments, or a
  * `—` fallback while the first fetch is pending. Hidden unless `enabled` (see
  * `createProviderGate`). `children` renders the segments from the current
- * usage and receives whether the detailed (countdown) layout is on.
+ * usage and receives the current density.
  */
 export function QuotaStatusline<T>(props: {
   enabled: Accessor<boolean>;
   title: string;
   color: Accessor<RGBA | undefined>;
   usage: Accessor<T | undefined>;
-  showDetails: () => boolean;
-  children: (usage: Accessor<NonNullable<T>>, detailed: boolean) => JSX.Element;
+  children: (usage: Accessor<NonNullable<T>>, density: Density) => JSX.Element;
 }) {
-  const detailed = useDetailed(props.showDetails);
+  const density = useDensity();
   return (
     <Show when={props.enabled()}>
       <box flexDirection="row" flexShrink={1} minWidth={0}>
@@ -127,7 +137,7 @@ export function QuotaStatusline<T>(props: {
         >
           {(usage) => (
             <box flexDirection="row" flexShrink={1} minWidth={0}>
-              {props.children(usage, detailed())}
+              {props.children(usage, density())}
             </box>
           )}
         </Show>

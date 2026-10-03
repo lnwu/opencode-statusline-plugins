@@ -16,15 +16,20 @@ import { UsageRpc, type Usage } from "./rpc";
 const GO_PROVIDER_ID = "opencode-go";
 
 const LABELS = {
-  en: { rolling: "5h", weekly: "Weekly", monthly: "Monthly" },
-  "zh-CN": { rolling: "5h", weekly: "周", monthly: "月" },
+  en: {
+    full: { rolling: "5h", weekly: "Weekly", monthly: "Monthly" },
+    compact: { rolling: "5H", weekly: "W", monthly: "M" },
+  },
+  "zh-CN": {
+    full: { rolling: "5h", weekly: "周", monthly: "月" },
+    compact: { rolling: "5H", weekly: "周", monthly: "月" },
+  },
 } as const;
 
 type Labels = (typeof LABELS)[Language];
 
 function GoUsage(props: {
   sessionID: () => string | undefined;
-  showDetails: () => boolean;
   usage: () => Usage | undefined;
   labels: Labels;
 }) {
@@ -33,22 +38,32 @@ function GoUsage(props: {
   const muted = () => statusColors<RGBA>(ctx.theme).muted;
 
   return (
-    <QuotaStatusline
-      enabled={isGo}
-      title="Go"
-      color={muted}
-      usage={props.usage}
-      showDetails={props.showDetails}
-    >
-      {(u, detailed) => (
-        <>
-          <QuotaSegment label={props.labels.rolling} win={u().rolling} detailed={detailed} />
-          <Separator />
-          <QuotaSegment label={props.labels.weekly} win={u().weekly} detailed={detailed} />
-          <Separator />
-          <QuotaSegment label={props.labels.monthly} win={u().monthly} detailed={detailed} />
-        </>
-      )}
+    <QuotaStatusline enabled={isGo} title="Go" color={muted} usage={props.usage}>
+      {(u, density) =>
+        density === "minimal" ? (
+          <QuotaSegment label={props.labels.compact.weekly} win={u().weekly} detailed={false} />
+        ) : (
+          <>
+            <QuotaSegment
+              label={props.labels[density].rolling}
+              win={u().rolling}
+              detailed={density === "full"}
+            />
+            <Separator />
+            <QuotaSegment
+              label={props.labels[density].weekly}
+              win={u().weekly}
+              detailed={density === "full"}
+            />
+            <Separator />
+            <QuotaSegment
+              label={props.labels[density].monthly}
+              win={u().monthly}
+              detailed={density === "full"}
+            />
+          </>
+        )
+      }
     </QuotaStatusline>
   );
 }
@@ -71,12 +86,7 @@ export default Plugin.define({
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
       render: (input) => (
-        <GoUsage
-          sessionID={() => input.sessionID}
-          showDetails={() => input.showDetails}
-          usage={usage}
-          labels={labels()}
-        />
+        <GoUsage sessionID={() => input.sessionID} usage={usage} labels={labels()} />
       ),
     });
 

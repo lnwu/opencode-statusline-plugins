@@ -36,11 +36,47 @@ test("renders the three quota windows with reset countdowns", async () => {
   await footer.dispose();
 });
 
+test("uses short labels and no countdowns between 80 and 119 columns", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "opencode-go",
+    options: { language: "en" },
+    width: 101,
+    showDetails: true,
+    rpcResult: {
+      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+    },
+  });
+
+  const frame = await footer.waitForText("Go 5H 3%");
+  expect(frame).toContain("Go 5H 3% · W 12% · M 45%");
+  expect(frame).not.toContain("(");
+  await footer.dispose();
+});
+
+test("shows only the weekly window below 80 columns", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "opencode-go",
+    options: { language: "en" },
+    width: 60,
+    rpcResult: {
+      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+    },
+  });
+
+  const frame = await footer.waitForText("Go W 12%");
+  expect(frame).not.toContain("5H");
+  expect(frame).not.toContain("M 45%");
+  await footer.dispose();
+});
+
 test("labels follow the language option", async () => {
   const footer = await setupFooterTest({
     tuiEntry: TUI_ENTRY,
     providerID: "opencode-go",
     options: { language: "zh-CN" },
+    width: 120,
     rpcResult: {
       usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
     },
@@ -51,6 +87,32 @@ test("labels follow the language option", async () => {
   expect(frame).toContain("周 12%");
   expect(frame).toContain("月 45%");
   await footer.dispose();
+});
+
+test("keeps the Chinese labels in the compact and minimal layouts", async () => {
+  const compact = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "opencode-go",
+    options: { language: "zh-CN" },
+    width: 100,
+    rpcResult: {
+      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+    },
+  });
+  expect(await compact.waitForText("周 12%")).toContain("Go 5H 3% · 周 12% · 月 45%");
+  await compact.dispose();
+
+  const minimal = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "opencode-go",
+    options: { language: "zh-CN" },
+    width: 60,
+    rpcResult: {
+      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+    },
+  });
+  expect(await minimal.waitForText("Go 周 12%")).not.toContain("5H");
+  await minimal.dispose();
 });
 
 test("hides the statusline for sessions on another provider", async () => {

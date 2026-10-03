@@ -34,11 +34,11 @@ export interface FooterTestOptions {
   providerID?: string;
   /** Plugin options, e.g. `{ language: "zh-CN" }`. */
   options?: Readonly<Record<string, unknown>>;
-  /** Renderer width; defaults to 80, below the 125-column countdown threshold. */
+  /** Renderer width; defaults to 80, the compact density (full starts at 120, minimal below 80). */
   width?: number;
   height?: number;
   sessionID?: string;
-  /** Expands the footer details, forcing the reset countdowns on. */
+  /** Expands the footer details; the statusline density follows the width only. */
   showDetails?: boolean;
 }
 

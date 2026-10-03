@@ -89,6 +89,50 @@ test("shows the account label after the title", async () => {
   await footer.dispose();
 });
 
+test("drops the countdown between 80 and 119 columns", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "github-copilot",
+    width: 101,
+    showDetails: true,
+    rpcResult: {
+      usage: {
+        usedPercent: 42,
+        remaining: 174,
+        entitlement: 300,
+        unlimited: false,
+        account: "work",
+        resetsAt: new Date(Date.now() + 12 * 24 * 3600_000).toISOString(),
+      },
+    },
+  });
+
+  const frame = await footer.waitForText("Copilot · Work 42%");
+  expect(frame).not.toContain("(");
+  await footer.dispose();
+});
+
+test("drops the account label below 80 columns", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "github-copilot",
+    width: 60,
+    rpcResult: {
+      usage: {
+        usedPercent: 42,
+        remaining: 174,
+        entitlement: 300,
+        unlimited: false,
+        account: "work",
+      },
+    },
+  });
+
+  const frame = await footer.waitForText("Copilot 42%");
+  expect(frame).not.toContain("Work");
+  await footer.dispose();
+});
+
 test("truncates a long account label", async () => {
   const footer = await setupFooterTest({
     tuiEntry: TUI_ENTRY,
