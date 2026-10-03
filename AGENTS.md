@@ -60,8 +60,9 @@ plus an internal shared `core` package (never published).
 
 | Path | Role |
 | --- | --- |
-| `src/index.ts` | Server plugin: resolves the `github-copilot` credential (OAuth or env `key`) via the integration API, fetches the quota, registers the RPC. Built to `dist/index.js`. |
+| `src/index.ts` | Server plugin: resolves the `github-copilot` credential (OAuth or env `key`) via the integration API, fetches the quota, adds the credential label only when several accounts are connected, registers the RPC. Built to `dist/index.js`. |
 | `src/usage.ts` | Pure mapping from the `copilot_internal/user` response to the displayed usage (premium requests, `chat` fallback, unlimited, `has_quota: false`). |
+| `src/account.ts` | Pure account-label decision: whether the active credential's label is needed to tell several Copilot accounts apart. |
 | `src/rpc.ts` | Shared RPC definition (`Rpc.define`). Built to `dist/rpc.js`. |
 | `src/tui.tsx` | TUI plugin: polls the RPC and renders `prompt.footer.status`. Built to `dist/tui.js`. |
 | `scripts/build.ts` | Dev-only wrapper around `core/build`. |
@@ -69,6 +70,7 @@ plus an internal shared `core` package (never published).
 | `assets/` | README media: the animated demo SVG and its `.cast` master. Repo-only (kept out of the tarball by `files: ["dist"]`); referenced by relative paths from the README. |
 | `test/footer.test.ts` | Footer unit tests via `core/test-footer`: the built TUI entry with a mocked usage RPC and session provider; asserts the rendered statusline text (`Copilot` label, unlimited `∞`, hidden on another provider, `Copilot —` fallback). No credential needed; the gate. |
 | `test/usage.test.ts` | Unit tests for the `src/usage.ts` mapping (premium requests, `chat` fallback, unlimited, `has_quota: false`, clamping); no credential needed. |
+| `test/account.test.ts` | Unit tests for the `src/account.ts` label decision; no credential needed. |
 | `test/e2e/tui.test.ts` | `bun test` cases: live quota with a real Haiku request, non-Copilot session hidden, `Copilot —` fallback; configures the `core` harness with `credentialName` (`GITHUB_TOKEN`). |
 | `test/pack.test.ts` | Packaging smoke test via `core/pack`: tarball contents, declared-import scan, install, entry imports. |
 

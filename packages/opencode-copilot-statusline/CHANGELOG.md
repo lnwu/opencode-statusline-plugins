@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_None yet._
+### Changed
+
+- Show the account label only when several GitHub Copilot accounts are connected; a single account keeps the plain `Copilot` title.
 
 ## 1.1.0 - 2026-10-03
 

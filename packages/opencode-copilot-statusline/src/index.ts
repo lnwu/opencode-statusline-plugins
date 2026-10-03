@@ -1,5 +1,6 @@
 import { Plugin } from "@opencode/plugin";
 import { createUsageCache } from "core/usage-cache";
+import { displayAccount, type ConnectionSlice } from "./account";
 import { UsageRpc } from "./rpc";
 import { parseUsage, type Usage } from "./usage";
 
@@ -18,17 +19,8 @@ function apiBase(credential: { metadata?: Record<string, unknown> }): string {
   return GITHUB_API;
 }
 
-// The slice of the integration API's `ConnectionInfo` this plugin reads: a
-// stored credential carries the user-editable `label`; an environment
-// connection has only a `name`.
-type ConnectionSlice = { type: string; id?: string; label?: string; name?: string };
-
 function connectionKey(connection: ConnectionSlice): string {
   return `${connection.type}:${connection.id ?? connection.name ?? ""}`;
-}
-
-function accountLabel(connection: ConnectionSlice): string | undefined {
-  return connection.type === "credential" ? connection.label?.trim() || undefined : undefined;
 }
 
 export default Plugin.define({
@@ -55,10 +47,18 @@ export default Plugin.define({
           signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
         if (!res.ok) return undefined;
-        const usage = parseUsage(await res.json());
-        if (!usage) return undefined;
-        const account = accountLabel(connection);
-        return account ? { ...usage, account } : usage;
+        return parseUsage(await res.json());
+      } catch {
+        return undefined;
+      }
+    }
+
+    // The integration's connections, or `undefined` when they cannot be read
+    // (the label is then kept, so an unknown account count never hides it).
+    async function listConnections(): Promise<ConnectionSlice[] | undefined> {
+      try {
+        const info = await ctx.integration.get({ integrationID: INTEGRATION_ID });
+        return info.data.connections;
       } catch {
         return undefined;
       }
@@ -80,8 +80,12 @@ export default Plugin.define({
         if (!connection) return {};
         const key = connectionKey(connection);
         connections.set(key, connection);
-        const usage = await getUsage(key);
-        return usage ? { usage } : {};
+        const [usage, all] = await Promise.all([getUsage(key), listConnections()]);
+        if (!usage) return {};
+        // The label is added only when several Copilot accounts need telling
+        // apart; a single account keeps the plain `Copilot` title.
+        const account = displayAccount(connection, all);
+        return { usage: account ? { ...usage, account } : usage };
       },
     });
   },
