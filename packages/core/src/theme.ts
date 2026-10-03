@@ -13,8 +13,6 @@ export type StatusColors<T> = {
   error?: T;
   /** Warning feedback (`text.feedback.warning.base`, or `.default` before 2.0.9). */
   warning?: T;
-  /** Info feedback (`text.feedback.info.base`, or `.default` before 2.0.9). */
-  info?: T;
 };
 
 type ThemeLike = {
@@ -33,6 +31,5 @@ export function statusColors<T>(theme: unknown): StatusColors<T> {
     muted: (text?.muted ?? text?.subdued) as T | undefined,
     error: feedback("error") as T | undefined,
     warning: feedback("warning") as T | undefined,
-    info: feedback("info") as T | undefined,
   };
 }

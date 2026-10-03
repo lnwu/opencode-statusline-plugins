@@ -52,10 +52,10 @@ const TYPE_DELAY_MS = 50;
 const HOME_SCREEN_PAUSE_MS = 700;
 const IDLE_TIME_LIMIT = 1.2;
 const SPEED = 1.25;
-const DEFAULT_REPLY_TIMEOUT_MS = 180_000;
-const DEFAULT_THEME = "github-dark";
+export const DEFAULT_REPLY_TIMEOUT_MS = 180_000;
+export const DEFAULT_THEME = "github-dark";
 /** Default cursor style: no cursor keeps the README image clean. */
-const DEFAULT_CURSOR: CursorStyle = "none";
+export const DEFAULT_CURSOR: CursorStyle = "none";
 /** Window title shown in the SVG chrome (the cast header stores the command). */
 const WINDOW_TITLE = "opencode";
 /** Home-screen footer hint; present once the TUI is ready for input. */
@@ -93,7 +93,7 @@ export type DemoConfig = {
   dir?: string;
 };
 
-export const CONFIG_FILENAME = "record-demo.config.json";
+const CONFIG_FILENAME = "record-demo.config.json";
 
 /**
  * Load `<packageRoot>/record-demo.config.json` when present (the file is

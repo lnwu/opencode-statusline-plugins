@@ -1,5 +1,5 @@
 /** Languages the statusline plugins ship labels for. */
-export const LANGUAGES = ["en", "zh-CN"] as const;
+const LANGUAGES = ["en", "zh-CN"] as const;
 
 export type Language = (typeof LANGUAGES)[number];
 

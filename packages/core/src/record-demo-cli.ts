@@ -12,11 +12,16 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ModelRef } from "./harness";
-import type { CursorStyle, DemoConfig, DemoTake } from "./record-demo";
+import {
+  DEFAULT_CURSOR,
+  DEFAULT_REPLY_TIMEOUT_MS,
+  DEFAULT_THEME,
+  type CursorStyle,
+  type DemoConfig,
+  type DemoTake,
+} from "./record-demo";
 import type { Env } from "./run";
 
-const DEFAULT_THEME = "github-dark";
-const DEFAULT_CURSOR: CursorStyle = "none";
 const DEFAULT_DIR = "~/oc-demo";
 
 export type DemoTakeDefault = {
@@ -87,7 +92,7 @@ function usage(cli: RecordDemoCli, packageRoot: string): string {
     "  --cursor <style>        Cursor shape in the SVG: block|bar|underline|none",
     `                          (default: ${DEFAULT_CURSOR})`,
     "  --from <seconds>        Start the animation here instead of the first paint",
-    "  --reply-timeout <ms>    How long to wait for a finished turn (default: 180000)",
+    `  --reply-timeout <ms>    How long to wait for a finished turn (default: ${DEFAULT_REPLY_TIMEOUT_MS})`,
     `  --dir <path>            Throw-away project directory (default: ${DEFAULT_DIR})`,
     "",
     `Defaults can be set in ${join(packageRoot, "record-demo.config.json")}`,

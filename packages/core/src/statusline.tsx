@@ -13,13 +13,13 @@ import { createEffect, createSignal, onCleanup, Show, type Accessor, type JSX } 
 import { statusColors } from "./theme";
 
 /** Usage refresh interval, in milliseconds. */
-export const INTERVAL_MS = 60_000;
+const INTERVAL_MS = 60_000;
 
 /** Footer width (columns) at which the full labels and reset countdowns are shown. */
-export const FULL_WIDTH = 120;
+const FULL_WIDTH = 120;
 
 /** Footer width (columns) at which the compact labels are shown; narrower shows one window. */
-export const COMPACT_WIDTH = 80;
+const COMPACT_WIDTH = 80;
 
 /**
  * How much the statusline shows: `full` (full labels and reset countdowns),
