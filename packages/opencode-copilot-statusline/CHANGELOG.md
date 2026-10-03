@@ -4,7 +4,13 @@
 
 ## Unreleased
 
-_None yet._
+### Added
+
+- Show the active OpenCode credential's label, first letter capitalized, after the title (`Copilot · Work 42%`).
+
+### Fixed
+
+- Stop showing the previous account's quota after switching GitHub Copilot accounts.
 
 ## 1.0.3 - 2026-09-20
 

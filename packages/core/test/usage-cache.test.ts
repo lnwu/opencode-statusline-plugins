@@ -85,3 +85,32 @@ test("defaults the TTL to just under the polling interval", () => {
   expect(USAGE_CACHE_TTL_MS).toBeLessThan(60_000);
   expect(USAGE_CACHE_TTL_MS).toBeGreaterThan(0);
 });
+
+test("keeps entries per key and never falls back to another key", async () => {
+  let fail = false;
+  const getUsage = createUsageCache(
+    async (key) => {
+      if (fail && key === "b") return undefined;
+      return `usage-${key}`;
+    },
+    { ttlMs: 0 },
+  );
+
+  expect(await getUsage("a")).toBe("usage-a");
+  fail = true;
+  expect(await getUsage("b")).toBeUndefined();
+  expect(await getUsage("a")).toBe("usage-a");
+});
+
+test("does not share a fresh value or in-flight request across keys", async () => {
+  let calls = 0;
+  const getUsage = createUsageCache(async (key) => {
+    calls += 1;
+    return key;
+  });
+
+  expect(await getUsage("a")).toBe("a");
+  expect(await getUsage("b")).toBe("b");
+  expect(await getUsage("a")).toBe("a");
+  expect(calls).toBe(2);
+});

@@ -17,6 +17,8 @@ export type Usage = {
   unlimited: boolean;
   /** Monthly reset timestamp (`quota_reset_date_utc` ISO, or `quota_reset_date`). */
   resetsAt?: string;
+  /** Label of the active OpenCode credential; absent for env connections. */
+  account?: string;
 };
 
 const WINDOW_IDS = ["premium_interactions", "chat"] as const;
