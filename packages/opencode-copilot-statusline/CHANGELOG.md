@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 1.1.0 - 2026-10-03
+
 ### Added
 
 - Show the active OpenCode credential's label, first letter capitalized, after the title (`Copilot · Work 42%`).
