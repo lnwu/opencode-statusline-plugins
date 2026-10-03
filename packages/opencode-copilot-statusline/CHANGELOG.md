@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+_None yet._
+
+## 1.2.0 - 2026-10-03
+
 ### Changed
 
 - Adapt the statusline to the terminal width: the reset countdown shows at 120+ columns and the account label is dropped below 80; expanding the footer details no longer forces the countdown.
