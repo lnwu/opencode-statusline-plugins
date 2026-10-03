@@ -67,3 +67,45 @@ test("falls back to `Copilot —` without usage", async () => {
   expect(frame).toContain("Copilot —");
   await footer.dispose();
 });
+
+test("shows the account label after the title", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "github-copilot",
+    width: 160,
+    rpcResult: {
+      usage: {
+        usedPercent: 42,
+        remaining: 174,
+        entitlement: 300,
+        unlimited: false,
+        account: "work",
+      },
+    },
+  });
+
+  const frame = await footer.waitForText("Copilot · work 42%");
+  expect(frame).toContain("Copilot · work 42%");
+  await footer.dispose();
+});
+
+test("truncates a long account label", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "github-copilot",
+    width: 160,
+    rpcResult: {
+      usage: {
+        usedPercent: 42,
+        remaining: 174,
+        entitlement: 300,
+        unlimited: false,
+        account: "a-very-long-account-label",
+      },
+    },
+  });
+
+  const frame = await footer.waitForText("Copilot · a-very-long-acc… 42%");
+  expect(frame).not.toContain("account-label");
+  await footer.dispose();
+});

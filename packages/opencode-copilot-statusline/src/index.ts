@@ -18,13 +18,25 @@ function apiBase(credential: { metadata?: Record<string, unknown> }): string {
   return GITHUB_API;
 }
 
+// The slice of the integration API's `ConnectionInfo` this plugin reads: a
+// stored credential carries the user-editable `label`; an environment
+// connection has only a `name`.
+type ConnectionSlice = { type: string; id?: string; label?: string; name?: string };
+
+function connectionKey(connection: ConnectionSlice): string {
+  return `${connection.type}:${connection.id ?? connection.name ?? ""}`;
+}
+
+function accountLabel(connection: ConnectionSlice): string | undefined {
+  return connection.type === "credential" ? connection.label?.trim() || undefined : undefined;
+}
+
 export default Plugin.define({
   id: "opencode-copilot-statusline",
   async setup(ctx) {
-    async function fetchUsage(): Promise<Usage | undefined> {
+    type ConnectionInfo = Parameters<typeof ctx.integration.connection.resolve>[0];
+    async function fetchUsage(connection: ConnectionInfo): Promise<Usage | undefined> {
       try {
-        const connection = await ctx.integration.connection.active(INTEGRATION_ID);
-        if (!connection) return undefined;
         const credential = await ctx.integration.connection.resolve(connection);
         // The device flow stores the GitHub token as an OAuth credential
         // (`access` and `refresh` both hold it). An environment connection
@@ -43,17 +55,32 @@ export default Plugin.define({
           signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
         if (!res.ok) return undefined;
-        return parseUsage(await res.json());
+        const usage = parseUsage(await res.json());
+        if (!usage) return undefined;
+        const account = accountLabel(connection);
+        return account ? { ...usage, account } : usage;
       } catch {
         return undefined;
       }
     }
 
-    const getUsage = createUsageCache(fetchUsage);
+    // Cached per connection, so switching accounts never shows (or falls back
+    // to) the previous account's quota.
+    const connections = new Map<string, ConnectionInfo>();
+    const getUsage = createUsageCache((key) => fetchUsage(connections.get(key!)!));
 
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
-        const usage = await getUsage();
+        let connection: ConnectionInfo | undefined;
+        try {
+          connection = await ctx.integration.connection.active(INTEGRATION_ID);
+        } catch {
+          return {};
+        }
+        if (!connection) return {};
+        const key = connectionKey(connection);
+        connections.set(key, connection);
+        const usage = await getUsage(key);
         return usage ? { usage } : {};
       },
     });

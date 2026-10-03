@@ -13,6 +13,19 @@ import { statusColors } from "core/theme";
 import { UsageRpc, type Usage } from "./rpc";
 
 const COPILOT_PROVIDER_ID = "github-copilot";
+const MAX_ACCOUNT_CHARS = 16;
+
+// `Copilot · label`; a long label is truncated so it cannot crowd out the
+// percentage in the single-line footer.
+function titleFor(account: string | undefined): string {
+  if (!account) return "Copilot";
+  const chars = Array.from(account);
+  const label =
+    chars.length > MAX_ACCOUNT_CHARS
+      ? `${chars.slice(0, MAX_ACCOUNT_CHARS - 1).join("")}…`
+      : account;
+  return `Copilot · ${label}`;
+}
 
 function Segment(props: { usage: Usage; color: () => RGBA | undefined; detailed: boolean }) {
   const text = () => {
@@ -54,7 +67,7 @@ function CopilotUsage(props: {
   return (
     <QuotaStatusline
       enabled={isCopilot}
-      title="Copilot"
+      title={titleFor(props.usage()?.account)}
       color={fg}
       usage={props.usage}
       showDetails={props.showDetails}

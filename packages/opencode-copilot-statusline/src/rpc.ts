@@ -10,6 +10,7 @@ const usageSchema = {
     entitlement: { type: "number" },
     unlimited: { type: "boolean" },
     resetsAt: { type: "string" },
+    account: { type: "string" },
   },
   required: ["usedPercent", "remaining", "entitlement", "unlimited"],
   additionalProperties: false,

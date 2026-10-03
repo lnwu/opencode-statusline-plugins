@@ -11,6 +11,10 @@
 // - failure tolerance: a failing fetch returns the last known value (stale)
 //   instead of throwing, or `undefined` when there has never been a success.
 //
+// Entries are kept per key (default key: none), so a plugin whose upstream
+// answer depends on the active credential can pass the credential id and never
+// serve, or fall back to, another account's value.
+//
 // The default TTL sits just under the TUI's polling interval, so a single
 // client still sees fresh data on every poll while extra clients reuse it.
 export const USAGE_CACHE_TTL_MS = 55_000;
@@ -23,29 +27,35 @@ export type UsageCacheOptions = {
 };
 
 export function createUsageCache<T>(
-  fetchUsage: () => Promise<T | undefined>,
+  fetchUsage: (key?: string) => Promise<T | undefined>,
   options: UsageCacheOptions = {},
-): () => Promise<T | undefined> {
+): (key?: string) => Promise<T | undefined> {
   const ttlMs = options.ttlMs ?? USAGE_CACHE_TTL_MS;
   const now = options.now ?? Date.now;
-  let last: { at: number; value: T } | undefined;
-  let inflight: Promise<T | undefined> | undefined;
+  const entries = new Map<
+    string,
+    { last?: { at: number; value: T }; inflight?: Promise<T | undefined> }
+  >();
 
-  return async () => {
-    if (last && now() - last.at < ttlMs) return last.value;
-    if (inflight) return inflight;
-    inflight = (async () => {
+  return async (key) => {
+    const id = key ?? "";
+    let entry = entries.get(id);
+    if (!entry) entries.set(id, (entry = {}));
+    const state = entry;
+    if (state.last && now() - state.last.at < ttlMs) return state.last.value;
+    if (state.inflight) return state.inflight;
+    state.inflight = (async () => {
       try {
-        const value = await fetchUsage();
-        if (value === undefined) return last?.value;
-        last = { at: now(), value };
+        const value = await fetchUsage(key);
+        if (value === undefined) return state.last?.value;
+        state.last = { at: now(), value };
         return value;
       } catch {
-        return last?.value;
+        return state.last?.value;
       } finally {
-        inflight = undefined;
+        state.inflight = undefined;
       }
     })();
-    return inflight;
+    return state.inflight;
   };
 }
