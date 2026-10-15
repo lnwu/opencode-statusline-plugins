@@ -37,9 +37,7 @@ opencode plugin add opencode-kimi-code-statusline
 
 ```jsonc title="~/.config/opencode/opencode.jsonc"
 {
-  "plugins": [
-    { "package": "opencode-kimi-code-statusline", "options": { "language": "zh-CN" } },
-  ],
+  "plugins": [{ "package": "opencode-kimi-code-statusline", "options": { "language": "zh-CN" } }],
 }
 ```
 
@@ -51,11 +49,11 @@ opencode plugin add opencode-kimi-code-statusline
 
 ## 📈 百分比的含义
 
-| 窗口                                | 来源            | 示例                       |
-| ----------------------------------- | --------------- | -------------------------- |
-| 滚动 5 小时                         | 5 小时滚动配额  | `Kimi 5h 63%`              |
-| 每周                                | 7 天配额        | `Kimi 5h 63% · Weekly 18%` |
-| 未登录、凭证无法解析、接口异常      | 无数据          | `Kimi —`                   |
+| 窗口                           | 来源           | 示例                       |
+| ------------------------------ | -------------- | -------------------------- |
+| 滚动 5 小时                    | 5 小时滚动配额 | `Kimi 5h 63%`              |
+| 每周                           | 7 天配额       | `Kimi 5h 63% · Weekly 18%` |
+| 未登录、凭证无法解析、接口异常 | 无数据         | `Kimi —`                   |
 
 两个百分比都是各自窗口的**已用**比例，倒计时指向各自窗口的重置时间。
 

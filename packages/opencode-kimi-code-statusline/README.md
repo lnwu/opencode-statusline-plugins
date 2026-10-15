@@ -37,9 +37,7 @@ Override it with the plugin's `language` option:
 
 ```jsonc title="~/.config/opencode/opencode.jsonc"
 {
-  "plugins": [
-    { "package": "opencode-kimi-code-statusline", "options": { "language": "zh-CN" } },
-  ],
+  "plugins": [{ "package": "opencode-kimi-code-statusline", "options": { "language": "zh-CN" } }],
 }
 ```
 
@@ -51,11 +49,11 @@ Override it with the plugin's `language` option:
 
 ## 📈 What the percentages mean
 
-| Window                                            | Source               | Example                    |
-| ------------------------------------------------- | -------------------- | -------------------------- |
-| Rolling 5-hour                                    | 5-hour rolling quota | `Kimi 5h 63%`              |
-| Weekly                                            | 7-day quota          | `Kimi 5h 63% · Weekly 18%` |
-| Not signed in, credential unresolvable, API down  | no data              | `Kimi —`                   |
+| Window                                           | Source               | Example                    |
+| ------------------------------------------------ | -------------------- | -------------------------- |
+| Rolling 5-hour                                   | 5-hour rolling quota | `Kimi 5h 63%`              |
+| Weekly                                           | 7-day quota          | `Kimi 5h 63% · Weekly 18%` |
+| Not signed in, credential unresolvable, API down | no data              | `Kimi —`                   |
 
 Both percentages are **used** percentages of their own window, and each countdown targets that window's reset time.
 

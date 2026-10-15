@@ -10,11 +10,11 @@
 
 ## 🧩 插件
 
-| 插件 | 订阅配额 | npm |
-| --- | --- | --- |
-| [`opencode-go-statusline`](packages/opencode-go-statusline) | 🐹 OpenCode Go —— 滚动 5h / 周 / 月 | [![npm version](https://img.shields.io/npm/v/opencode-go-statusline)](https://www.npmjs.com/package/opencode-go-statusline) |
-| [`opencode-copilot-statusline`](packages/opencode-copilot-statusline) | 🤖 GitHub Copilot —— premium requests / chat | [![npm version](https://img.shields.io/npm/v/opencode-copilot-statusline)](https://www.npmjs.com/package/opencode-copilot-statusline) |
-| [`opencode-kimi-code-statusline`](packages/opencode-kimi-code-statusline) | 🌙 Kimi Code（Kimi For Coding） | [![npm version](https://img.shields.io/npm/v/opencode-kimi-code-statusline)](https://www.npmjs.com/package/opencode-kimi-code-statusline) |
+| 插件                                                                      | 订阅配额                                     | npm                                                                                                                                       |
+| ------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| [`opencode-go-statusline`](packages/opencode-go-statusline)               | 🐹 OpenCode Go —— 滚动 5h / 周 / 月          | [![npm version](https://img.shields.io/npm/v/opencode-go-statusline)](https://www.npmjs.com/package/opencode-go-statusline)               |
+| [`opencode-copilot-statusline`](packages/opencode-copilot-statusline)     | 🤖 GitHub Copilot —— premium requests / chat | [![npm version](https://img.shields.io/npm/v/opencode-copilot-statusline)](https://www.npmjs.com/package/opencode-copilot-statusline)     |
+| [`opencode-kimi-code-statusline`](packages/opencode-kimi-code-statusline) | 🌙 Kimi Code（Kimi For Coding）              | [![npm version](https://img.shields.io/npm/v/opencode-kimi-code-statusline)](https://www.npmjs.com/package/opencode-kimi-code-statusline) |
 
 ## 📦 安装
 

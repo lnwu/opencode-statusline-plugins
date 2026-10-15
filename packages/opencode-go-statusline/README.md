@@ -37,9 +37,7 @@ Override it with the plugin's `language` option:
 
 ```jsonc title="~/.config/opencode/opencode.jsonc"
 {
-  "plugins": [
-    { "package": "opencode-go-statusline", "options": { "language": "zh-CN" } },
-  ],
+  "plugins": [{ "package": "opencode-go-statusline", "options": { "language": "zh-CN" } }],
 }
 ```
 
