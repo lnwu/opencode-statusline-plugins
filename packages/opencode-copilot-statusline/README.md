@@ -33,12 +33,12 @@ opencode plugin add opencode-copilot-statusline
 
 The statusline picks the quota window that limits your plan:
 
-| Plan                                             | Source                                                 | Example        |
-| ------------------------------------------------ | ------------------------------------------------------ | -------------- |
-| Pro / Business / Enterprise                      | **premium requests** used this month                   | `Copilot 87%`  |
-| Copilot Free (no premium-request quota)          | **chat** allowance                                     | `Copilot 6%`   |
-| Unlimited premium requests                       | no finite quota                                        | `Copilot ∞`    |
-| Not signed in, credential unresolvable, API down | no data                                                | `Copilot —`    |
+| Plan                                             | Source                               | Example       |
+| ------------------------------------------------ | ------------------------------------ | ------------- |
+| Pro / Business / Enterprise                      | **premium requests** used this month | `Copilot 87%` |
+| Copilot Free (no premium-request quota)          | **chat** allowance                   | `Copilot 6%`  |
+| Unlimited premium requests                       | no finite quota                      | `Copilot ∞`   |
+| Not signed in, credential unresolvable, API down | no data                              | `Copilot —`   |
 
 The countdown targets the monthly quota reset date.
 

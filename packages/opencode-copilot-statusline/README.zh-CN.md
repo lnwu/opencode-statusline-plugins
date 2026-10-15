@@ -33,12 +33,12 @@ opencode plugin add opencode-copilot-statusline
 
 状态栏会自动选取限制你当前计划的配额：
 
-| 计划                                        | 来源                          | 示例          |
-| ------------------------------------------- | ----------------------------- | ------------- |
-| Pro / Business / Enterprise                 | 本月已用的 **premium requests** | `Copilot 87%` |
-| Copilot Free（没有 premium requests 配额）  | **chat** 额度                  | `Copilot 6%`  |
-| premium requests 无限                       | 没有有限配额                   | `Copilot ∞`   |
-| 未登录、凭证无法解析、接口异常              | 无数据                         | `Copilot —`   |
+| 计划                                       | 来源                            | 示例          |
+| ------------------------------------------ | ------------------------------- | ------------- |
+| Pro / Business / Enterprise                | 本月已用的 **premium requests** | `Copilot 87%` |
+| Copilot Free（没有 premium requests 配额） | **chat** 额度                   | `Copilot 6%`  |
+| premium requests 无限                      | 没有有限配额                    | `Copilot ∞`   |
+| 未登录、凭证无法解析、接口异常             | 无数据                          | `Copilot —`   |
 
 倒计时指向每月配额重置日期。
 

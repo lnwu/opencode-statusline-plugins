@@ -31,7 +31,7 @@ Verified against opencode > 2.0.0:
   unrelated `GITHUB_TOKEN` cannot be picked up by accident. The Copilot
   provider accepts this env `key` connection for real model requests even
   though its plugin only enables model syncing for OAuth credentials.
-- The plugin is loaded from the isolated *global* plugin directory
+- The plugin is loaded from the isolated _global_ plugin directory
   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`) as re-export shims pointing
   at the built `dist/index.js` and `dist/tui.js`; project-scoped and
   `opencode.json`-path plugins load but cannot reach their RPC, and a package
