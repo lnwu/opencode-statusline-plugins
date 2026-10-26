@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@opentui/core": "^0.7.0",
-    "@opentui/solid": "^0.6.0",
+    "@opentui/solid": "^0.7.0",
     "bun-types": "^1.4.2",
     "core": "*",
     "solid-js": "^1.9.15",
