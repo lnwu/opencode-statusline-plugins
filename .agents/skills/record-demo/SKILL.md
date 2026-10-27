@@ -94,11 +94,12 @@ passing the flag every time:
 { "model": "github-copilot/claude-sonnet-5", "tuiTheme": "aura" }
 ```
 
-- Common options (all packages): `--prompt "..."`, `--theme <terminal-svg
-  theme>` (default `github-dark`), `--tui-theme <opencode theme>` (default:
-  the developer's own), `--cursor block|bar|underline|none` (default `none`),
-  `--from <seconds>` (defaults to the TUI's first paint), `--reply-timeout
-  <ms>` (default `180000`), `--dir <path>` (default `~/oc-demo`).
+- Common options (all packages): `--prompt "..."`,
+  `--theme <terminal-svg theme>` (default `github-dark`),
+  `--tui-theme <opencode theme>` (default: the developer's own),
+  `--cursor block|bar|underline|none` (default `none`), `--from <seconds>`
+  (defaults to the TUI's first paint), `--reply-timeout <ms>` (default
+  `180000`), `--dir <path>` (default `~/oc-demo`).
 - go and kimi: `--locale en|zh-CN|all` (default `all`); `--prompt` overrides
   both locales' default (en `Reply with exactly: ok`, zh-CN `请只回复：ok`).
 - copilot-only: `--model <provider/id>` (default `github-copilot/gpt-6-luna`);
