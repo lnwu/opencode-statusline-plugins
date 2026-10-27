@@ -1,6 +1,10 @@
 import { Rpc } from "@opencode/plugin/rpc";
+import type { Usage } from "./usage";
 
 export type { Usage, UsageWindow } from "./usage";
+
+/** Usage per Kimi For Coding plan, keyed by its integration (and provider) id. */
+export type Usages = Partial<Record<"kimi-code-plan-global" | "kimi-code-plan-cn", Usage>>;
 
 const windowSchema = {
   type: "object",
@@ -22,6 +26,15 @@ const usageSchema = {
   additionalProperties: false,
 };
 
+const usagesSchema = {
+  type: "object",
+  properties: {
+    "kimi-code-plan-global": usageSchema,
+    "kimi-code-plan-cn": usageSchema,
+  },
+  additionalProperties: false,
+};
+
 export const UsageRpc = Rpc.define({
   id: "opencode-kimi-code-statusline",
   methods: {
@@ -29,7 +42,7 @@ export const UsageRpc = Rpc.define({
       input: { type: "object", properties: {}, additionalProperties: false },
       output: {
         type: "object",
-        properties: { usage: usageSchema, language: { type: "string" } },
+        properties: { usages: usagesSchema, language: { type: "string" } },
         additionalProperties: false,
       },
     },

@@ -7,7 +7,7 @@
 export type UsageWindow = {
   /** Window status as reported by the API (`ok` when healthy). */
   status: string;
-  /** Used percentage of the window, 0-100. */
+  /** Used percentage of the window, rounded and clamped to 0-100. */
   percent: number;
   /** Window reset timestamp (ISO 8601). */
   resetsAt: string;
@@ -39,7 +39,7 @@ function parseWindow(value: unknown): UsageWindow | undefined {
   if (typeof status !== "string") return undefined;
   if (typeof percent !== "number" || !Number.isFinite(percent)) return undefined;
   if (typeof resetsAt !== "string" || resetsAt === "") return undefined;
-  return { status, percent, resetsAt };
+  return { status, percent: Math.round(Math.min(100, Math.max(0, percent))), resetsAt };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
