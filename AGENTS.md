@@ -268,6 +268,9 @@ CI.
   the pair together with the first implementation release.
 - When planning any change, consider whether this file needs an update (new
   commands, package layout, release process) and include it in the same change.
+- Project skills live in `.agents/skills/<name>/`; `.claude/skills/<name>` is a
+  relative symlink to each one so Claude Code loads them too. Add the symlink
+  when you add a skill.
 
 ## Release
 
