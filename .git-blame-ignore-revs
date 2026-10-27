@@ -1,3 +1,7 @@
 # Format the workspace with Oxfmt; hides the one-time reformat from git blame.
 # https://github.com/lnwu/opencode-statusline-plugins/pull/60
 66a48294e3b92d3c14d4b894849511154660563a
+
+# Reformat the workspace with bun fmt (80-column print width).
+# https://github.com/lnwu/opencode-statusline-plugins/pull/135
+14572850e6c4087595236406fc7a14b18599797d
