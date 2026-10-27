@@ -47,7 +47,7 @@ const CASES: CaseSpec[] = [
     name: "en-wide-usage",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "gpt-5-mini" },
+    model: { providerID: "github-copilot", id: "gpt-6-luna" },
     expect: [/Copilot \d+%/, /\(\d+(d\d+h|h\d+m|m)\)/],
   },
   {
@@ -73,7 +73,7 @@ const CASES: CaseSpec[] = [
     name: "invalid-credential-fallback",
     width: 160,
     height: 20,
-    model: { providerID: "github-copilot", id: "gpt-5-mini" },
+    model: { providerID: "github-copilot", id: "gpt-6-luna" },
     credential: "invalid",
     expect: [/Copilot —/],
   },
