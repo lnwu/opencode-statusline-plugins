@@ -35,6 +35,16 @@ test("keeps a non-ok window status", () => {
   expect(usage?.weekly.percent).toBe(18);
 });
 
+test("rounds and clamps the percentage", () => {
+  const window = (percent: number) => ({ ...LIVE.usage.rolling, percent });
+  const usage = parseUsage({
+    usage: { rolling: window(63.4), weekly: window(103), monthly: window(-2) },
+  });
+  expect(usage?.rolling.percent).toBe(63);
+  expect(usage?.weekly.percent).toBe(100);
+  expect(usage?.monthly.percent).toBe(0);
+});
+
 test("rejects a response missing a window", () => {
   const { monthly: _monthly, ...withoutMonthly } = LIVE.usage;
   expect(parseUsage({ usage: withoutMonthly })).toBeUndefined();

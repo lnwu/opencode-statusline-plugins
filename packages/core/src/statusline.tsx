@@ -1,7 +1,8 @@
 /** @jsxImportSource @opentui/solid */
 // Shared TUI pieces for the statusline plugins: the statusline frame and its
-// quota segments, usage polling, quota colors, the reset countdown, and the
-// provider gate that hides the statusline for sessions on another provider.
+// quota segments, usage polling, quota colors, the reset countdown, the
+// session's provider, and the provider gate that hides the statusline for
+// sessions on another provider.
 //
 // Like the rest of `core`, this module is inlined into each package's built
 // `tui.js`, so the JSX still goes through the Solid transform and the runtime
@@ -147,29 +148,27 @@ export function QuotaStatusline<T>(props: {
 }
 
 /**
- * Gate a statusline on the session's model provider: false while the session
- * is unknown or on another provider, true when `matches` accepts it. Refreshes
- * when the session selects another model, and ignores a stale check's result
- * when the session changed mid-flight.
+ * The session's model provider: undefined while the session is unknown or
+ * syncing. Refreshes when the session selects another model, and ignores a
+ * stale lookup's result when the session changed mid-flight.
  */
-export function createProviderGate(
+export function createSessionProvider(
   sessionID: () => string | undefined,
-  matches: (providerID: string | undefined) => boolean,
-): Accessor<boolean> {
+): Accessor<string | undefined> {
   const ctx = usePlugin();
-  const [enabled, setEnabled] = createSignal(false);
+  const [provider, setProvider] = createSignal<string>();
   let generation = 0;
 
   async function check(id: string | undefined) {
     const current = ++generation;
-    setEnabled(false);
+    setProvider(undefined);
     if (!id) return;
     try {
       await ctx.data.session.sync(id);
       if (current !== generation) return;
-      setEnabled(matches(ctx.data.session.get(id)?.model?.providerID));
+      setProvider(ctx.data.session.get(id)?.model?.providerID);
     } catch {
-      if (current === generation) setEnabled(false);
+      if (current === generation) setProvider(undefined);
     }
   }
 
@@ -183,7 +182,20 @@ export function createProviderGate(
     }),
   );
 
-  return enabled;
+  return provider;
+}
+
+/**
+ * Gate a statusline on the session's model provider: false while the session
+ * is unknown or on another provider, true when `matches` accepts it (see
+ * `createSessionProvider`).
+ */
+export function createProviderGate(
+  sessionID: () => string | undefined,
+  matches: (providerID: string | undefined) => boolean,
+): Accessor<boolean> {
+  const provider = createSessionProvider(sessionID);
+  return () => matches(provider());
 }
 
 /**

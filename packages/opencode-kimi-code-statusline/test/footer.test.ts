@@ -14,6 +14,8 @@ function window(percent: number, resetInMs: number) {
   return { percent, resetsAt: new Date(Date.now() + resetInMs).toISOString() };
 }
 
+const USAGE = { rolling: window(7, DAY), weekly: window(23, DAY) };
+
 test("renders the two quota windows with reset countdowns", async () => {
   const footer = await setupFooterTest({
     tuiEntry: TUI_ENTRY,
@@ -21,7 +23,12 @@ test("renders the two quota windows with reset countdowns", async () => {
     options: { language: "en" },
     width: 160,
     rpcResult: {
-      usage: { rolling: window(7, 4 * HOUR + 5 * 60_000), weekly: window(23, 2 * DAY + 3 * HOUR) },
+      usages: {
+        "kimi-code-plan-global": {
+          rolling: window(7, 4 * HOUR + 5 * 60_000),
+          weekly: window(23, 2 * DAY + 3 * HOUR),
+        },
+      },
     },
   });
 
@@ -38,7 +45,7 @@ test("uses short labels and no countdowns between 80 and 119 columns", async () 
     options: { language: "en" },
     width: 101,
     showDetails: true,
-    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+    rpcResult: { usages: { "kimi-code-plan-global": USAGE } },
   });
 
   const frame = await footer.waitForText("Kimi 5H 7%");
@@ -53,7 +60,7 @@ test("shows only the weekly window below 80 columns", async () => {
     providerID: "kimi-code-plan-global",
     options: { language: "en" },
     width: 60,
-    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+    rpcResult: { usages: { "kimi-code-plan-global": USAGE } },
   });
 
   const frame = await footer.waitForText("Kimi W 23%");
@@ -67,7 +74,7 @@ test("labels follow the language option", async () => {
     providerID: "kimi-code-plan-cn",
     options: { language: "zh-CN" },
     width: 120,
-    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+    rpcResult: { usages: { "kimi-code-plan-cn": USAGE } },
   });
 
   const frame = await footer.waitForText("周 23%");
@@ -82,7 +89,7 @@ test("keeps the Chinese weekly label in the compact and minimal layouts", async 
     providerID: "kimi-code-plan-cn",
     options: { language: "zh-CN" },
     width: 100,
-    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+    rpcResult: { usages: { "kimi-code-plan-cn": USAGE } },
   });
   expect(await compact.waitForText("周 23%")).toContain("Kimi 5H 7% · 周 23%");
   await compact.dispose();
@@ -92,7 +99,7 @@ test("keeps the Chinese weekly label in the compact and minimal layouts", async 
     providerID: "kimi-code-plan-cn",
     options: { language: "zh-CN" },
     width: 60,
-    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+    rpcResult: { usages: { "kimi-code-plan-cn": USAGE } },
   });
   expect(await minimal.waitForText("Kimi 周 23%")).not.toContain("5H");
   await minimal.dispose();
@@ -102,11 +109,43 @@ test("hides the statusline for sessions on another provider", async () => {
   const footer = await setupFooterTest({
     tuiEntry: TUI_ENTRY,
     providerID: "opencode-other",
-    rpcResult: { usage: { rolling: window(7, DAY), weekly: window(23, DAY) } },
+    rpcResult: { usages: { "kimi-code-plan-global": USAGE, "kimi-code-plan-cn": USAGE } },
   });
 
   const frame = await footer.renderOnce();
   expect(frame).not.toContain("Kimi");
+  await footer.dispose();
+});
+
+test("shows the quota of the plan the session runs on", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "kimi-code-plan-cn",
+    options: { language: "en" },
+    width: 100,
+    rpcResult: {
+      usages: {
+        "kimi-code-plan-global": { rolling: window(41, DAY), weekly: window(52, DAY) },
+        "kimi-code-plan-cn": USAGE,
+      },
+    },
+  });
+
+  const frame = await footer.waitForText("Kimi 5H 7%");
+  expect(frame).toContain("Kimi 5H 7% · W 23%");
+  expect(frame).not.toContain("41%");
+  await footer.dispose();
+});
+
+test("falls back to `Kimi —` without the session plan's usage", async () => {
+  const footer = await setupFooterTest({
+    tuiEntry: TUI_ENTRY,
+    providerID: "kimi-code-plan-cn",
+    rpcResult: { usages: { "kimi-code-plan-global": USAGE } },
+  });
+
+  const frame = await footer.waitForText("Kimi —");
+  expect(frame).not.toContain("7%");
   await footer.dispose();
 });
 

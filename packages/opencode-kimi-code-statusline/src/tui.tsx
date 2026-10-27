@@ -4,16 +4,19 @@ import type { RGBA } from "@opentui/core";
 import { createSignal } from "solid-js";
 import { resolveLanguage, type Language } from "core/language";
 import {
-  createProviderGate,
+  createSessionProvider,
   QuotaSegment,
   QuotaStatusline,
   Separator,
   startPolling,
 } from "core/statusline";
 import { statusColors } from "core/theme";
-import { UsageRpc, type Usage } from "./rpc";
+import { UsageRpc, type Usages } from "./rpc";
 
-const KIMI_PROVIDER_IDS = new Set(["kimi-code-plan-global", "kimi-code-plan-cn"]);
+const KIMI_PROVIDER_IDS = new Set<string | undefined>([
+  "kimi-code-plan-global",
+  "kimi-code-plan-cn",
+]);
 
 const LABELS = {
   en: {
@@ -30,18 +33,18 @@ type Labels = (typeof LABELS)[Language];
 
 function KimiUsage(props: {
   sessionID: () => string | undefined;
-  usage: () => Usage | undefined;
+  usages: () => Usages | undefined;
   labels: Labels;
 }) {
   const ctx = usePlugin();
-  const isKimi = createProviderGate(
-    props.sessionID,
-    (providerID) => !!providerID && KIMI_PROVIDER_IDS.has(providerID),
-  );
+  const provider = createSessionProvider(props.sessionID);
+  const isKimi = () => KIMI_PROVIDER_IDS.has(provider());
+  // The quota of the plan the session runs on, never the other plan's.
+  const usage = () => props.usages()?.[provider() as keyof Usages];
   const muted = () => statusColors<RGBA>(ctx.theme).muted;
 
   return (
-    <QuotaStatusline enabled={isKimi} title="Kimi" color={muted} usage={props.usage}>
+    <QuotaStatusline enabled={isKimi} title="Kimi" color={muted} usage={usage}>
       {(u, density) =>
         density === "minimal" ? (
           <QuotaSegment label={props.labels.compact.weekly} win={u().weekly} detailed={false} />
@@ -69,21 +72,21 @@ export default Plugin.define({
   id: "opencode-kimi-code-statusline.tui",
   setup(context) {
     const rpc = context.client.rpc(UsageRpc);
-    const [usage, setUsage] = createSignal<Usage>();
+    const [usages, setUsages] = createSignal<Usages>();
     const [serverLanguage, setServerLanguage] = createSignal<unknown>();
     const labels = () => LABELS[resolveLanguage(context.options.language, serverLanguage())];
 
     // A failing fetch keeps the last known usage; the next tick retries.
     const stopPolling = startPolling(async () => {
-      const result = (await rpc.get({})) as { usage?: Usage; language?: string };
-      if (result?.usage) setUsage(result.usage);
+      const result = (await rpc.get({})) as { usages?: Usages; language?: string };
+      if (result?.usages) setUsages(result.usages);
       if (typeof result?.language === "string") setServerLanguage(result.language);
     });
 
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
       render: (input) => (
-        <KimiUsage sessionID={() => input.sessionID} usage={usage} labels={labels()} />
+        <KimiUsage sessionID={() => input.sessionID} usages={usages} labels={labels()} />
       ),
     });
 

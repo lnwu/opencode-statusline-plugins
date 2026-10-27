@@ -12,6 +12,7 @@ const INTEGRATIONS = [
   { id: "kimi-code-plan-global", base: "https://api.kimi.ai" },
   { id: "kimi-code-plan-cn", base: "https://api.kimi.com" },
 ] as const;
+type Integration = (typeof INTEGRATIONS)[number];
 const FETCH_TIMEOUT_MS = 10000;
 
 export default Plugin.define({
@@ -19,34 +20,38 @@ export default Plugin.define({
   async setup(ctx) {
     const language = ctx.options.language;
 
-    async function fetchUsage(): Promise<Usage | undefined> {
+    // Each plan has its own account and quota, so they are fetched and cached
+    // separately: the TUI shows the plan the session runs on. A failure on one
+    // host never hides the other plan's quota.
+    async function fetchUsage(integration: Integration): Promise<Usage | undefined> {
       try {
-        for (const integration of INTEGRATIONS) {
-          const connection = await ctx.integration.connection.active(integration.id);
-          if (!connection) continue;
-          const credential = await ctx.integration.connection.resolve(connection);
-          if (credential?.type !== "key" || !credential.key) continue;
-          const res = await fetch(`${integration.base}/coding/v1/usages`, {
-            headers: { Authorization: `Bearer ${credential.key}`, Accept: "application/json" },
-            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-          });
-          if (!res.ok) continue;
-          const usage = parseUsage(await res.json());
-          if (usage) return usage;
-        }
-        return undefined;
+        const connection = await ctx.integration.connection.active(integration.id);
+        if (!connection) return undefined;
+        const credential = await ctx.integration.connection.resolve(connection);
+        if (credential?.type !== "key" || !credential.key) return undefined;
+        const res = await fetch(`${integration.base}/coding/v1/usages`, {
+          headers: { Authorization: `Bearer ${credential.key}`, Accept: "application/json" },
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
+        if (!res.ok) return undefined;
+        return parseUsage(await res.json());
       } catch {
         return undefined;
       }
     }
 
-    const getUsage = createUsageCache(fetchUsage);
+    const getUsage = createUsageCache((id) =>
+      fetchUsage(INTEGRATIONS.find((integration) => integration.id === id)!),
+    );
 
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
-        const usage = await getUsage();
+        const results = await Promise.all(
+          INTEGRATIONS.map(async ({ id }) => [id, await getUsage(id)] as const),
+        );
+        const usages = Object.fromEntries(results.filter(([, usage]) => usage));
         return {
-          ...(usage ? { usage } : {}),
+          ...(Object.keys(usages).length ? { usages } : {}),
           ...(typeof language === "string" ? { language } : {}),
         };
       },
