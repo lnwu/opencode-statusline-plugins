@@ -96,9 +96,17 @@ export type Harness = {
   /** Verify the required tools are on PATH and log their versions. */
   assertTools(): Promise<void>;
   prepareCase(spec: CaseSpec): Promise<CaseContext>;
-  sendPrompt(context: CaseContext, text: string, timeoutMs?: number): Promise<void>;
+  sendPrompt(
+    context: CaseContext,
+    text: string,
+    timeoutMs?: number,
+  ): Promise<void>;
   startTui(context: CaseContext): Promise<void>;
-  waitForFrame(context: CaseContext, pattern: RegExp, timeoutMs?: number): Promise<string>;
+  waitForFrame(
+    context: CaseContext,
+    pattern: RegExp,
+    timeoutMs?: number,
+  ): Promise<string>;
   writeArtifacts(context: CaseContext, frame: string): Promise<void>;
   cleanupCase(context: CaseContext): Promise<void>;
 };
@@ -121,11 +129,13 @@ export function createHarness(config: HarnessConfig): Harness {
   const tuiEntry = resolve(config.tuiEntry);
   const packageRoot = resolve(config.packageRoot);
   const artifactDir =
-    process.env.E2E_ARTIFACT_DIR ?? join(packageRoot, "test", "e2e", ".artifacts");
+    process.env.E2E_ARTIFACT_DIR ??
+    join(packageRoot, "test", "e2e", ".artifacts");
   const rootBase = process.env.E2E_ROOT_BASE ?? "/tmp";
   const keepRoot = process.env.E2E_KEEP === "1";
   const pluginDir = config.pluginDir ?? "statusline";
-  const invalidCredential = config.invalidCredential ?? "invalid-e2e-credential";
+  const invalidCredential =
+    config.invalidCredential ?? "invalid-e2e-credential";
   const tools = config.tools ?? DEFAULT_TOOLS;
   const credentialName = config.credentialName ?? config.credentialEnv;
 
@@ -155,11 +165,14 @@ export function createHarness(config: HarnessConfig): Harness {
   async function prepareCase(spec: CaseSpec): Promise<CaseContext> {
     for (const entry of [serverEntry, tuiEntry]) {
       if (!(await Bun.file(entry).exists())) {
-        throw new Error(`${entry} is missing — run \`bun run build\` before the integration tests`);
+        throw new Error(
+          `${entry} is missing — run \`bun run build\` before the integration tests`,
+        );
       }
     }
 
-    const credential = spec.credential === "invalid" ? invalidCredential : requireCredential();
+    const credential =
+      spec.credential === "invalid" ? invalidCredential : requireCredential();
 
     const root = await shortRoot(rootBase, spec.name);
     const env = isolate(root);
@@ -202,8 +215,13 @@ export function createHarness(config: HarnessConfig): Harness {
     );
 
     const servicePort = freePort();
-    await mustRun([OPENCODE, "service", "set", "port", String(servicePort)], { env });
-    await mustRun([OPENCODE, "service", "set", "env", credentialName, credential], { env });
+    await mustRun([OPENCODE, "service", "set", "port", String(servicePort)], {
+      env,
+    });
+    await mustRun(
+      [OPENCODE, "service", "set", "env", credentialName, credential],
+      { env },
+    );
 
     const projectDir = join(root, "p");
     await mkdir(projectDir, { recursive: true });
@@ -227,13 +245,19 @@ export function createHarness(config: HarnessConfig): Harness {
         "post",
         "/api/session",
         "-d",
-        JSON.stringify({ model: spec.model, location: { directory: projectDir } }),
+        JSON.stringify({
+          model: spec.model,
+          location: { directory: projectDir },
+        }),
       ],
       { env, cwd: projectDir, timeoutMs: 60_000 },
     );
-    const sessionID = parseJson<{ data?: { id?: string } }>(created.stdout, "session.create").data
-      ?.id;
-    if (!sessionID) throw new Error(`session.create returned no id:\n${created.stdout}`);
+    const sessionID = parseJson<{ data?: { id?: string } }>(
+      created.stdout,
+      "session.create",
+    ).data?.id;
+    if (!sessionID)
+      throw new Error(`session.create returned no id:\n${created.stdout}`);
 
     const tmuxSocket = `ocstat-${spec.name}-${process.pid}`;
     return {
@@ -247,7 +271,17 @@ export function createHarness(config: HarnessConfig): Harness {
       artifactBase: join(artifactDir, spec.name),
       capture: async () => {
         const result = await run(
-          ["tmux", "-L", tmuxSocket, "-f", "/dev/null", "capture-pane", "-p", "-t", "t"],
+          [
+            "tmux",
+            "-L",
+            tmuxSocket,
+            "-f",
+            "/dev/null",
+            "capture-pane",
+            "-p",
+            "-t",
+            "t",
+          ],
           {
             env,
           },
@@ -263,7 +297,10 @@ export function createHarness(config: HarnessConfig): Harness {
    * `ModelUnavailableError` and leaves no provider error on the session. Wait
    * for the model to show up in `/api/model` before prompting.
    */
-  async function waitForModel(context: CaseContext, timeoutMs = 120_000): Promise<void> {
+  async function waitForModel(
+    context: CaseContext,
+    timeoutMs = 120_000,
+  ): Promise<void> {
     const { providerID, id } = context.spec.model;
     const deadline = Date.now() + timeoutMs;
     let last = "";
@@ -278,7 +315,12 @@ export function createHarness(config: HarnessConfig): Harness {
           result.stdout,
           "model.list",
         ).data ?? [];
-      if (models.some((model) => model.providerID === providerID && model.modelID === id)) return;
+      if (
+        models.some(
+          (model) => model.providerID === providerID && model.modelID === id,
+        )
+      )
+        return;
       last = result.stdout;
       await Bun.sleep(2_000);
     }
@@ -308,13 +350,18 @@ export function createHarness(config: HarnessConfig): Harness {
     const deadline = Date.now() + timeoutMs;
     let last = "";
     while (Date.now() < deadline) {
-      const result = await run([OPENCODE, "api", "get", `/api/session/${context.sessionID}`], {
-        env: context.env,
-        cwd: context.projectDir,
-        timeoutMs: 30_000,
-      });
-      const outcome = parseJson<{ data?: { outcome?: string } }>(result.stdout, "session.get").data
-        ?.outcome;
+      const result = await run(
+        [OPENCODE, "api", "get", `/api/session/${context.sessionID}`],
+        {
+          env: context.env,
+          cwd: context.projectDir,
+          timeoutMs: 30_000,
+        },
+      );
+      const outcome = parseJson<{ data?: { outcome?: string } }>(
+        result.stdout,
+        "session.get",
+      ).data?.outcome;
       if (outcome === "succeeded") return;
       if (outcome === "failed") {
         throw new Error(
@@ -363,7 +410,9 @@ export function createHarness(config: HarnessConfig): Harness {
     const tuiEnv: Env = {
       ...context.env,
       OPENCODE_CLI_CONFIG_CONTENT: JSON.stringify(CLI_CONFIG),
-      ...(spec.language === "zh-CN" ? { LANG: "zh_CN.UTF-8", LC_ALL: "zh_CN.UTF-8" } : {}),
+      ...(spec.language === "zh-CN"
+        ? { LANG: "zh_CN.UTF-8", LC_ALL: "zh_CN.UTF-8" }
+        : {}),
     };
     await mustRun(
       [
@@ -410,7 +459,10 @@ export function createHarness(config: HarnessConfig): Harness {
     );
   }
 
-  async function writeArtifacts(context: CaseContext, frame: string): Promise<void> {
+  async function writeArtifacts(
+    context: CaseContext,
+    frame: string,
+  ): Promise<void> {
     await mkdir(artifactDir, { recursive: true });
     await writeFile(`${context.artifactBase}.txt`, frame);
   }
@@ -424,7 +476,9 @@ export function createHarness(config: HarnessConfig): Harness {
   }
 
   async function cleanupCase(context: CaseContext): Promise<void> {
-    await run(["tmux", "-L", context.tmuxSocket, "kill-server"], { env: context.env });
+    await run(["tmux", "-L", context.tmuxSocket, "kill-server"], {
+      env: context.env,
+    });
     await stopService(context.env);
     await removeRoot(context.root);
   }
@@ -442,7 +496,11 @@ export function createHarness(config: HarnessConfig): Harness {
 }
 
 function freePort(): number {
-  const server = Bun.serve({ hostname: "127.0.0.1", port: 0, fetch: () => new Response("") });
+  const server = Bun.serve({
+    hostname: "127.0.0.1",
+    port: 0,
+    fetch: () => new Response(""),
+  });
   const port = server.port;
   void server.stop(true);
   if (port === undefined) throw new Error("could not allocate a free TCP port");
@@ -481,7 +539,11 @@ async function checkTool(
     const result = await run([name, ...args], { timeoutMs: 30_000 });
     const version = result.stdout.trim().split("\n")[0] ?? "";
     if (result.code === 0 && version) return { ok: true, version };
-    return { ok: false, version, error: result.stderr.trim() || `exit ${result.code}` };
+    return {
+      ok: false,
+      version,
+      error: result.stderr.trim() || `exit ${result.code}`,
+    };
   } catch (error) {
     return { ok: false, version: "", error: String(error) };
   }

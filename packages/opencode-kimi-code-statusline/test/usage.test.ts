@@ -7,7 +7,12 @@ import { parseUsage } from "../src/usage";
 // (`usages.limit_5h` / `usages.limit_7d`). `booster_wallet` is a top-up
 // balance OpenCode never draws from.
 const LIVE = {
-  usage: { limit: "100", used: "18", remaining: "82", resetTime: "2026-09-23T08:40:09.844508Z" },
+  usage: {
+    limit: "100",
+    used: "18",
+    remaining: "82",
+    resetTime: "2026-09-23T08:40:09.844508Z",
+  },
   limits: [
     {
       window: { duration: 300, timeUnit: "TIME_UNIT_MINUTE" },
@@ -73,7 +78,9 @@ test("selects the 300-minute entry when several rolling windows are reported", (
 test("accepts numeric JSON values as well as strings", () => {
   const usage = parseUsage({
     usage: { limit: 100, remaining: 25 },
-    limits: [{ window: { duration: 300 }, detail: { limit: 10, remaining: 4 } }],
+    limits: [
+      { window: { duration: 300 }, detail: { limit: 10, remaining: 4 } },
+    ],
   });
   expect(usage).toEqual({ rolling: { percent: 60 }, weekly: { percent: 75 } });
 });
@@ -81,7 +88,12 @@ test("accepts numeric JSON values as well as strings", () => {
 test("rounds to whole percentages", () => {
   const usage = parseUsage({
     usage: { limit: "100", remaining: "62.5" },
-    limits: [{ window: { duration: 300 }, detail: { limit: "100", remaining: "62.5" } }],
+    limits: [
+      {
+        window: { duration: 300 },
+        detail: { limit: "100", remaining: "62.5" },
+      },
+    ],
   });
   expect(usage?.rolling.percent).toBe(38);
   expect(usage?.weekly.percent).toBe(38);
@@ -90,7 +102,9 @@ test("rounds to whole percentages", () => {
 test("clamps overage usage to 100%", () => {
   const usage = parseUsage({
     usage: { limit: "100", remaining: "-20" },
-    limits: [{ window: { duration: 300 }, detail: { limit: "100", remaining: "-20" } }],
+    limits: [
+      { window: { duration: 300 }, detail: { limit: "100", remaining: "-20" } },
+    ],
     usages: { limit_5h: { used_ratio: 1.2 }, limit_7d: { used_ratio: 1.2 } },
   });
   expect(usage?.rolling.percent).toBe(100);
@@ -104,6 +118,10 @@ test("returns undefined for malformed responses", () => {
   expect(parseUsage({ limits: [] })).toBeUndefined();
   expect(parseUsage({ usage: { limit: "0", remaining: "0" } })).toBeUndefined();
   expect(
-    parseUsage({ limits: [{ window: { duration: 300 }, detail: { limit: "0", remaining: "0" } }] }),
+    parseUsage({
+      limits: [
+        { window: { duration: 300 }, detail: { limit: "0", remaining: "0" } },
+      ],
+    }),
   ).toBeUndefined();
 });

@@ -7,8 +7,11 @@ export type Language = (typeof LANGUAGES)[number];
  * Resolve the display language from the terminal locale:
  * `LC_ALL` → `LC_MESSAGES` → `LANGUAGE` → `LANG`; `zh*` locales map to `zh-CN`.
  */
-export function detectLanguage(env: Record<string, string | undefined> = process.env): Language {
-  const locale = env.LC_ALL || env.LC_MESSAGES || env.LANGUAGE || env.LANG || "";
+export function detectLanguage(
+  env: Record<string, string | undefined> = process.env,
+): Language {
+  const locale =
+    env.LC_ALL || env.LC_MESSAGES || env.LANGUAGE || env.LANG || "";
   return /^zh([_.-]|$)/i.test(locale) ? "zh-CN" : "en";
 }
 

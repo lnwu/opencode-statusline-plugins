@@ -47,7 +47,11 @@ function KimiUsage(props: {
     <QuotaStatusline enabled={isKimi} title="Kimi" color={muted} usage={usage}>
       {(u, density) =>
         density === "minimal" ? (
-          <QuotaSegment label={props.labels.compact.weekly} win={u().weekly} detailed={false} />
+          <QuotaSegment
+            label={props.labels.compact.weekly}
+            win={u().weekly}
+            detailed={false}
+          />
         ) : (
           <>
             <QuotaSegment
@@ -74,19 +78,28 @@ export default Plugin.define({
     const rpc = context.client.rpc(UsageRpc);
     const [usages, setUsages] = createSignal<Usages>();
     const [serverLanguage, setServerLanguage] = createSignal<unknown>();
-    const labels = () => LABELS[resolveLanguage(context.options.language, serverLanguage())];
+    const labels = () =>
+      LABELS[resolveLanguage(context.options.language, serverLanguage())];
 
     // A failing fetch keeps the last known usage; the next tick retries.
     const stopPolling = startPolling(async () => {
-      const result = (await rpc.get({})) as { usages?: Usages; language?: string };
+      const result = (await rpc.get({})) as {
+        usages?: Usages;
+        language?: string;
+      };
       if (result?.usages) setUsages(result.usages);
-      if (typeof result?.language === "string") setServerLanguage(result.language);
+      if (typeof result?.language === "string")
+        setServerLanguage(result.language);
     });
 
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
       render: (input) => (
-        <KimiUsage sessionID={() => input.sessionID} usages={usages} labels={labels()} />
+        <KimiUsage
+          sessionID={() => input.sessionID}
+          usages={usages}
+          labels={labels()}
+        />
       ),
     });
 

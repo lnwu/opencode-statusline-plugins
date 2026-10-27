@@ -26,8 +26,8 @@ Read the issue body, then follow its link(s) to the source of truth:
 - Upstream PR named in the body (a report can have a fix in flight):
   `gh pr view <n> --repo <owner/repo> --json state,mergedAt`
 - Release watches (targets waiting on the next upstream release):
-  `gh release list --repo <owner/repo> --limit 5`, plus `npm view <pkg>
-  version` for npm packages.
+  `gh release list --repo <owner/repo> --limit 5`, plus
+  `npm view <pkg> version` for npm packages.
 
 ## 3. Report
 

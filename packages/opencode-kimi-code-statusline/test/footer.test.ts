@@ -109,7 +109,9 @@ test("hides the statusline for sessions on another provider", async () => {
   const footer = await setupFooterTest({
     tuiEntry: TUI_ENTRY,
     providerID: "opencode-other",
-    rpcResult: { usages: { "kimi-code-plan-global": USAGE, "kimi-code-plan-cn": USAGE } },
+    rpcResult: {
+      usages: { "kimi-code-plan-global": USAGE, "kimi-code-plan-cn": USAGE },
+    },
   });
 
   const frame = await footer.renderOnce();
@@ -125,7 +127,10 @@ test("shows the quota of the plan the session runs on", async () => {
     width: 100,
     rpcResult: {
       usages: {
-        "kimi-code-plan-global": { rolling: window(41, DAY), weekly: window(52, DAY) },
+        "kimi-code-plan-global": {
+          rolling: window(41, DAY),
+          weekly: window(52, DAY),
+        },
         "kimi-code-plan-cn": USAGE,
       },
     },

@@ -29,7 +29,11 @@
 //   assets/demo.en.svg / assets/demo.zh-CN.svg          animated README images
 //   assets/demo.en.cast / assets/demo.zh-CN.cast        asciicast masters
 import { resolve } from "node:path";
-import { assertRecordingTools, loadDemoConfig, recordDemo } from "core/record-demo";
+import {
+  assertRecordingTools,
+  loadDemoConfig,
+  recordDemo,
+} from "core/record-demo";
 import { parseRecordDemoArgs, type RecordDemoCli } from "core/record-demo-cli";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");

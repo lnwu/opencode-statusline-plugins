@@ -19,7 +19,9 @@ type ThemeLike = {
   text?: {
     muted?: unknown;
     subdued?: unknown;
-    feedback?: Partial<Record<string, { base?: unknown; default?: unknown } | undefined>>;
+    feedback?: Partial<
+      Record<string, { base?: unknown; default?: unknown } | undefined>
+    >;
   };
 };
 

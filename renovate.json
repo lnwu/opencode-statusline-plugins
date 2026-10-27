@@ -6,7 +6,9 @@
       "customType": "regex",
       "description": "Track the pinned OpenCode CLI used by the integration tests",
       "fileMatch": ["^\\.github/workflows/ci\\.yml$"],
-      "matchStrings": ["OPENCODE_VERSION:\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""],
+      "matchStrings": [
+        "OPENCODE_VERSION:\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
       "datasourceTemplate": "npm",
       "depNameTemplate": "@opencode/cli",
       "versioningTemplate": "npm"

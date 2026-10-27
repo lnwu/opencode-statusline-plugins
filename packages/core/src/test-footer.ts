@@ -14,10 +14,19 @@
 // (the limitation that makes the published entries pre-compiled).
 import { PluginContextProvider, type Plugin } from "@opencode/plugin/tui";
 import { testRender } from "@opentui/solid";
-import { createComponent, createComputed, createSignal, type JSX } from "solid-js";
+import {
+  createComponent,
+  createComputed,
+  createSignal,
+  type JSX,
+} from "solid-js";
 
 /** The `prompt.footer.status` render input the helper feeds the slot claim. */
-type PromptFooterInput = { sessionID?: string; mode: "normal" | "shell"; showDetails: boolean };
+type PromptFooterInput = {
+  sessionID?: string;
+  mode: "normal" | "shell";
+  showDetails: boolean;
+};
 
 /** The registered slot claim, narrowed to what the helper renders. */
 type FooterClaim = { render: (input: PromptFooterInput) => JSX.Element };
@@ -51,7 +60,9 @@ export interface FooterTest {
   dispose(): Promise<void>;
 }
 
-export async function setupFooterTest(options: FooterTestOptions): Promise<FooterTest> {
+export async function setupFooterTest(
+  options: FooterTestOptions,
+): Promise<FooterTest> {
   assertReactiveSolid();
 
   const tui = (await import(options.tuiEntry)) as {
@@ -83,8 +94,10 @@ export async function setupFooterTest(options: FooterTestOptions): Promise<Foote
     },
   } as unknown as Plugin.Context;
 
-  const cleanup = (await tui.default.setup(context)) as (() => void) | undefined;
-  if (!claim) throw new Error("the plugin registered no prompt.footer.status slot");
+  const cleanup = (await tui.default.setup(context)) as
+    (() => void) | undefined;
+  if (!claim)
+    throw new Error("the plugin registered no prompt.footer.status slot");
   const render = claim.render;
 
   const input: PromptFooterInput = {
@@ -104,7 +117,8 @@ export async function setupFooterTest(options: FooterTestOptions): Promise<Foote
   );
 
   return {
-    waitForText: (text) => renderer.waitForFrame((frame) => frame.includes(text)),
+    waitForText: (text) =>
+      renderer.waitForFrame((frame) => frame.includes(text)),
     async renderOnce() {
       await renderer.renderOnce();
       return renderer.captureCharFrame();
@@ -130,6 +144,8 @@ function assertReactiveSolid(): void {
   });
   setValue(1);
   if (runs < 2) {
-    throw new Error("solid-js resolved to its server build; run `bun test --conditions=browser`");
+    throw new Error(
+      "solid-js resolved to its server build; run `bun test --conditions=browser`",
+    );
   }
 }

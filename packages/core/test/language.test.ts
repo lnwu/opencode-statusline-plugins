@@ -18,8 +18,12 @@ function withoutLocale(fn: () => void): void {
 
 describe("detectLanguage", () => {
   test("prefers LC_ALL over the other locale variables", () => {
-    expect(detectLanguage({ LC_ALL: "zh_CN.UTF-8", LANG: "en_US.UTF-8" })).toBe("zh-CN");
-    expect(detectLanguage({ LC_ALL: "en_US.UTF-8", LANG: "zh_CN.UTF-8" })).toBe("en");
+    expect(detectLanguage({ LC_ALL: "zh_CN.UTF-8", LANG: "en_US.UTF-8" })).toBe(
+      "zh-CN",
+    );
+    expect(detectLanguage({ LC_ALL: "en_US.UTF-8", LANG: "zh_CN.UTF-8" })).toBe(
+      "en",
+    );
   });
 
   test("falls back through LC_MESSAGES, LANGUAGE, LANG", () => {
@@ -29,7 +33,13 @@ describe("detectLanguage", () => {
   });
 
   test("accepts zh locale spellings", () => {
-    for (const locale of ["zh", "zh_CN", "zh-CN", "zh_CN.UTF-8", "ZH_cn.utf8"]) {
+    for (const locale of [
+      "zh",
+      "zh_CN",
+      "zh-CN",
+      "zh_CN.UTF-8",
+      "ZH_cn.utf8",
+    ]) {
       expect(detectLanguage({ LANG: locale })).toBe("zh-CN");
     }
   });

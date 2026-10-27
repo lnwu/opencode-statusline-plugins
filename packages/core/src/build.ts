@@ -18,7 +18,13 @@
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin";
 
 const DEFAULT_ENTRYPOINTS = ["src/index.ts", "src/rpc.ts", "src/tui.tsx"];
-const EXTERNAL = ["@opencode/plugin", "@opencode/plugin/*", "@opentui/*", "solid-js", "solid-js/*"];
+const EXTERNAL = [
+  "@opencode/plugin",
+  "@opencode/plugin/*",
+  "@opentui/*",
+  "solid-js",
+  "solid-js/*",
+];
 
 export async function buildPlugin(
   options: { entrypoints?: string[]; outdir?: string } = {},

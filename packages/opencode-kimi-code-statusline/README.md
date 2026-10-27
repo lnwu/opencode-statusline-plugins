@@ -37,7 +37,12 @@ Override it with the plugin's `language` option:
 
 ```jsonc title="~/.config/opencode/opencode.jsonc"
 {
-  "plugins": [{ "package": "opencode-kimi-code-statusline", "options": { "language": "zh-CN" } }],
+  "plugins": [
+    {
+      "package": "opencode-kimi-code-statusline",
+      "options": { "language": "zh-CN" },
+    },
+  ],
 }
 ```
 

@@ -14,7 +14,8 @@ export default Plugin.define({
 
     async function fetchUsage(): Promise<Usage | undefined> {
       try {
-        const connection = await ctx.integration.connection.active(INTEGRATION_ID);
+        const connection =
+          await ctx.integration.connection.active(INTEGRATION_ID);
         if (!connection) return undefined;
         const credential = await ctx.integration.connection.resolve(connection);
         if (credential?.type !== "key") return undefined;
