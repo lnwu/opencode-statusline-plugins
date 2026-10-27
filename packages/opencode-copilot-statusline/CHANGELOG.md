@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_None yet._
+### Changed
+
+- Correct the README's requirements, plan table, account-label, `∞`, and `Copilot —` descriptions, and link the changelog.
 
 ## 1.2.0 - 2026-10-03
 

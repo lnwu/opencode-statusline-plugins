@@ -1,7 +1,8 @@
 # AGENTS.md
 
 Bun-workspace monorepo of OpenCode V2 TUI plugins (footer statusline quota),
-plus an internal shared `core` package (never published).
+plus an internal shared `core` package (never published). User-facing docs:
+[README.md](README.md).
 
 ## Packages
 
@@ -27,7 +28,7 @@ plus an internal shared `core` package (never published).
 | `src/statusline.tsx`                                                      | Shared TUI pieces for the statusline plugins: the statusline frame (`QuotaStatusline`) and its quota segments (`QuotaSegment`), usage polling (`startPolling`), quota colors (`quotaColor`), the reset `countdown`, `Separator`, `useDensity` (full ≥ 120 columns, compact 80–119, minimal below 80), `createSessionProvider` (the session's model provider), and `createProviderGate` (hides the statusline for sessions on another provider). Inlined into each package's `dist/tui.js`.                                                                                                                                                                                                                                                                               |
 | `src/harness.ts`                                                          | `createHarness`: isolated OpenCode env, real TUI in tmux, frame capture; parameterized per package.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `src/e2e.ts`                                                              | `runE2eCases`: registers a package's `CaseSpec[]` as `bun test` cases (credential/tool checks, cleanup, artifact writing, failure output); per-package `test/e2e/tui.test.ts` files carry only their harness config and cases.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `src/test-footer.ts`                                                      | `setupFooterTest`: renders a package's built `dist/tui.js` in the OpenTUI test renderer with a mocked plugin context (usage RPC, session provider, options, theme) and captures the footer frame. Requires `--conditions=browser` (see the file header).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `src/test-footer.ts`                                                      | `setupFooterTest`: renders a package's built `dist/tui.js` in the OpenTUI test renderer with a mocked plugin context (usage RPC, session provider, options, theme) and captures the footer frame. Requires `--conditions=browser` (see `packages/core/AGENTS.md`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `src/run.ts`                                                              | `run`/`mustRun` subprocess helper shared by the harness, packaging smoke test, and demo recorder.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `src/usage-cache.ts`                                                      | `createUsageCache`: server-side TTL + single-flight wrapper for a plugin's quota fetch, so several TUI clients share one upstream request; inlined into each package's `dist/index.js`. Entries are kept per optional key (the copilot plugin keys by active credential, so switching accounts never serves or falls back to another account's quota).                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `src/record-demo.ts`                                                      | `recordDemo`: local-mode README demo recorder (real TUI in tmux, wrapped in `terminal-svg rec`, rendered to an animated SVG); takes a list of takes (prompt, model, env, output name) so it carries no locale/label knowledge, plus a gitignored per-package `record-demo.config.json` for per-developer defaults. Hides the cursor by default, pins each take's model in opencode's `model.json` (home-screen model selection) while recording, verifies it against the local `/api/model` catalog so a stale integration fails loudly instead of recording the fallback model, hands an optional TUI theme (`tuiTheme`) to the recorded process as inline CLI settings, and carries terminal-svg workarounds tracked in #64 and #65. Runbook: the `record-demo` skill. |
@@ -71,7 +72,7 @@ plus an internal shared `core` package (never published).
 | `test/footer.test.ts`    | Footer unit tests via `core/test-footer`: the built TUI entry with a mocked usage RPC and session provider; asserts the rendered statusline text (`Copilot` label, unlimited `∞`, hidden on another provider, `Copilot —` fallback). No credential needed; the gate. |
 | `test/usage.test.ts`     | Unit tests for the `src/usage.ts` mapping (premium requests, `chat` fallback, unlimited, `has_quota: false`, clamping); no credential needed.                                                                                                                        |
 | `test/account.test.ts`   | Unit tests for the `src/account.ts` label decision; no credential needed.                                                                                                                                                                                            |
-| `test/e2e/tui.test.ts`   | `bun test` cases: live quota with a real Haiku request, non-Copilot session hidden, `Copilot —` fallback; configures the `core` harness with `credentialName` (`GITHUB_TOKEN`).                                                                                      |
+| `test/e2e/tui.test.ts`   | `bun test` cases: live quota (no model request; see Integration tests), non-Copilot session hidden, `Copilot —` fallback; configures the `core` harness with `credentialName` (`GITHUB_TOKEN`).                                                                      |
 | `test/pack.test.ts`      | Packaging smoke test via `core/pack`: tarball contents, declared-import scan, install, entry imports.                                                                                                                                                                |
 
 ### Package layout (`opencode-kimi-code-statusline`)
@@ -109,16 +110,16 @@ see Release).
 - `bun fmt` / `bun fmt --check` — format (or verify) the workspace with Bun's
   built-in formatter. `bun fmt --check` runs in CI.
 - `bun run build` / `bun run typecheck` — all packages; root scripts use
-  `--if-present`, so README-only packages are skipped.
+  `--if-present`, so packages without the script are skipped.
 - `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
 - `bun run test` — all package unit tests (core plus each statusline's footer
-  tests; no credential needed, runs in CI). The integration tests are separate
-  (see below).
-- `bun run --filter core test` — core unit tests (language and theme
-  resolution); no credential needed.
+  and usage-mapping tests, and copilot's account tests; no credential needed;
+  CI runs the same per-package scripts). The integration tests are separate (see below).
+- `bun run --filter core test` — core unit tests (language, theme, and usage
+  cache); no credential needed.
 - `bun run --filter <pkg> test:e2e` — real-TUI integration tests per package:
   builds `dist/`, then boots OpenCode in tmux; needs the live credential (see
-  Integration tests). Runs in CI on `main` pushes only.
+  Integration tests). Runs in CI on `main` pushes and manual dispatches only.
 - `bun run --filter <pkg> test:pack` — packaging smoke test per package
   (`npm pack`, declared-import scan, install, entry imports); runs in CI.
 - `bun run --filter opencode-go-statusline record:demo` — dev-only: rebuilds
@@ -200,7 +201,10 @@ CI.
   `checks` job plus the `ci` fan-in job the ruleset actually requires) on an
   up-to-date branch. `checks` runs typecheck, formatting, the unit tests,
   changelog validation, build, and the packaging smoke tests; only it gates.
-  Merging is squash-only and the head branch is deleted on merge.
+  Merging is squash-only and the head branch is deleted on merge. CI runs each
+  package's `test`, `test:pack`, and `test:e2e` from the package directory
+  instead of through `bun run --filter`, whose line prefix stops the runner
+  from parsing Bun's workflow commands (`::group::`, `::error`) (#79).
 - The real-TUI integration jobs (`go`, `copilot`, `kimi`) run on `main` pushes
   and manual dispatches only, in parallel with `checks`; they are informational
   and never gate a merge. They need the `OPENCODE_GO_API_KEY`,
@@ -230,10 +234,11 @@ CI.
 - Plugin ids use the npm package name: the server plugin id is the package name
   (`opencode-go-statusline`), the TUI entry appends `.tui`, and the RPC id
   matches the server plugin id. Follow this for every package.
-- The footer `language` option (`"auto"` default / `"en"` / `"zh-CN"`) resolves
-  in the TUI entry with this priority: `cli.json` plugin options, then the
-  server plugin's `options.language` relayed over the usage RPC, then the
-  terminal locale (`LC_ALL` → `LC_MESSAGES` → `LANGUAGE` → `LANG`). The TUI
+- The footer `language` option resolves in the TUI entry with this priority:
+  `cli.json` plugin options, then the server plugin's `options.language`
+  relayed over the usage RPC, then the terminal locale. The values and the
+  locale variable order are user-facing and live in the go and kimi package
+  READMEs (Language section). The TUI
   plugin loader does not forward `opencode.json` plugin options to the `./tui`
   entry, which is why the server relays them. This applies to the go and kimi
   statuslines: the copilot statusline has no localizable text and ships no such
@@ -244,7 +249,8 @@ CI.
 - Formatting is Bun's built-in `bun fmt` with its default options (no config
   file); run `bun fmt` before opening a PR. Pitfall (Bun 1.4.4): in a Markdown
   list item, a continuation line that starts inside an inline code span loses
-  its indentation and breaks the list, so keep each code span on one line.
+  its indentation and breaks the list, so keep each code span on one line
+  (#137).
 - Upstream bugs and limitations: apply a local workaround instead of blocking
   on upstream, then open a tracking issue in this repo (search for an existing
   one first) and label it `upstream` when you create it. The issue records the
@@ -266,8 +272,8 @@ CI.
   `## Unreleased` with the `_None yet._` / `_暂无变更。_` placeholder while
   empty, `## x.y.z - YYYY-MM-DD`, Added/Changed/Fixed/Security) written in
   Common Changelog style: imperative, one line per change, no
-  CI/internal/dependency noise. Planned README-only packages have none; create
-  the pair together with the first implementation release.
+  CI/internal/dependency noise. A new package creates the pair together with
+  its first implementation release.
 - When planning any change, consider whether this file needs an update (new
   commands, package layout, release process) and include it in the same change.
 - Project skills live in `.agents/skills/<name>/`; `.claude/skills/<name>` is a
@@ -316,5 +322,5 @@ CI.
   on the npm page — npm rewrites relative paths and resolves the package
   subdirectory (verified with `opencode-go-statusline@0.3.1`). `files: ["dist"]`
   keeps the assets out of the tarball.
-- Check the V2 plugin docs (https://opencode.ai/v2/docs/build/plugins) or the
-  `opencode` skill before changing plugin API usage.
+- Check the V2 plugin docs (https://opencode.ai/v2/docs/build/plugins) before
+  changing plugin API usage.
