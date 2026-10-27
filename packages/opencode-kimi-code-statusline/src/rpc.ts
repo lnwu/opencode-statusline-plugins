@@ -4,7 +4,9 @@ import type { Usage } from "./usage";
 export type { Usage, UsageWindow } from "./usage";
 
 /** Usage per Kimi For Coding plan, keyed by its integration (and provider) id. */
-export type Usages = Partial<Record<"kimi-code-plan-global" | "kimi-code-plan-cn", Usage>>;
+export type Usages = Partial<
+  Record<"kimi-code-plan-global" | "kimi-code-plan-cn", Usage>
+>;
 
 const windowSchema = {
   type: "object",

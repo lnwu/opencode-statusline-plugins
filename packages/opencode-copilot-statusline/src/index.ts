@@ -26,26 +26,36 @@ function connectionKey(connection: ConnectionSlice): string {
 export default Plugin.define({
   id: "opencode-copilot-statusline",
   async setup(ctx) {
-    type ConnectionInfo = Parameters<typeof ctx.integration.connection.resolve>[0];
-    async function fetchUsage(connection: ConnectionInfo): Promise<Usage | undefined> {
+    type ConnectionInfo = Parameters<
+      typeof ctx.integration.connection.resolve
+    >[0];
+    async function fetchUsage(
+      connection: ConnectionInfo,
+    ): Promise<Usage | undefined> {
       try {
         const credential = await ctx.integration.connection.resolve(connection);
         // The device flow stores the GitHub token as an OAuth credential
         // (`access` and `refresh` both hold it). An environment connection
         // (`GITHUB_TOKEN`) resolves to a `key` credential instead.
-        if (credential?.type !== "oauth" && credential?.type !== "key") return undefined;
+        if (credential?.type !== "oauth" && credential?.type !== "key")
+          return undefined;
         const token =
-          credential.type === "oauth" ? credential.access || credential.refresh : credential.key;
+          credential.type === "oauth"
+            ? credential.access || credential.refresh
+            : credential.key;
         if (!token) return undefined;
-        const res = await fetch(`${apiBase(credential)}/copilot_internal/user`, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-            "X-GitHub-Api-Version": API_VERSION,
-            "User-Agent": "opencode-copilot-statusline",
+        const res = await fetch(
+          `${apiBase(credential)}/copilot_internal/user`,
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+              "X-GitHub-Api-Version": API_VERSION,
+              "User-Agent": "opencode-copilot-statusline",
+            },
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
           },
-          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        });
+        );
         if (!res.ok) return undefined;
         return parseUsage(await res.json());
       } catch {
@@ -57,7 +67,9 @@ export default Plugin.define({
     // (the label is then kept, so an unknown account count never hides it).
     async function listConnections(): Promise<ConnectionSlice[] | undefined> {
       try {
-        const info = await ctx.integration.get({ integrationID: INTEGRATION_ID });
+        const info = await ctx.integration.get({
+          integrationID: INTEGRATION_ID,
+        });
         return info.data.connections;
       } catch {
         return undefined;
@@ -67,7 +79,9 @@ export default Plugin.define({
     // Cached per connection, so switching accounts never shows (or falls back
     // to) the previous account's quota.
     const connections = new Map<string, ConnectionInfo>();
-    const getUsage = createUsageCache((key) => fetchUsage(connections.get(key!)!));
+    const getUsage = createUsageCache((key) =>
+      fetchUsage(connections.get(key!)!),
+    );
 
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
@@ -80,7 +94,10 @@ export default Plugin.define({
         if (!connection) return {};
         const key = connectionKey(connection);
         connections.set(key, connection);
-        const [usage, all] = await Promise.all([getUsage(key), listConnections()]);
+        const [usage, all] = await Promise.all([
+          getUsage(key),
+          listConnections(),
+        ]);
         if (!usage) return {};
         // The label is added only when several Copilot accounts need telling
         // apart; a single account keeps the plain `Copilot` title.

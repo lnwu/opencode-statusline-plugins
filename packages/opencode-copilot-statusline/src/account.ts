@@ -5,11 +5,20 @@
 // integration: a credential carries the user-editable `label`, an environment
 // connection has only a `name`. The label is therefore shown only when more
 // than one connection carries one.
-export type ConnectionSlice = { type: string; id?: string; label?: string; name?: string };
+export type ConnectionSlice = {
+  type: string;
+  id?: string;
+  label?: string;
+  name?: string;
+};
 
 /** The trimmed, user-editable label of a credential connection; env connections have none. */
-export function connectionLabel(connection: ConnectionSlice): string | undefined {
-  return connection.type === "credential" ? connection.label?.trim() || undefined : undefined;
+export function connectionLabel(
+  connection: ConnectionSlice,
+): string | undefined {
+  return connection.type === "credential"
+    ? connection.label?.trim() || undefined
+    : undefined;
 }
 
 /**
@@ -26,7 +35,8 @@ export function displayAccount(
   const label = connectionLabel(active);
   if (!label) return undefined;
   if (!connections) return label;
-  return connections.filter((connection) => connectionLabel(connection)).length > 1
+  return connections.filter((connection) => connectionLabel(connection))
+    .length > 1
     ? label
     : undefined;
 }

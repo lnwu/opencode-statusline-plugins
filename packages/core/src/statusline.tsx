@@ -10,7 +10,14 @@
 import { usePlugin } from "@opencode/plugin/tui";
 import type { RGBA } from "@opentui/core";
 import { useTerminalDimensions } from "@opentui/solid";
-import { createEffect, createSignal, onCleanup, Show, type Accessor, type JSX } from "solid-js";
+import {
+  createEffect,
+  createSignal,
+  onCleanup,
+  Show,
+  type Accessor,
+  type JSX,
+} from "solid-js";
 import { statusColors } from "./theme";
 
 /** Usage refresh interval, in milliseconds. */
@@ -30,7 +37,10 @@ const COMPACT_WIDTH = 80;
 export type Density = "full" | "compact" | "minimal";
 
 /** Compact reset countdown (`2d3h`, `4h5m`, `37m`); undefined when not in the future. */
-export function countdown(resetsAt: string | undefined, now: number): string | undefined {
+export function countdown(
+  resetsAt: string | undefined,
+  now: number,
+): string | undefined {
   if (!resetsAt) return undefined;
   const ms = new Date(resetsAt).getTime() - now;
   if (!Number.isFinite(ms) || ms <= 0) return undefined;
@@ -58,7 +68,11 @@ export function useDensity(): Accessor<Density> {
  * muted otherwise. Tokens that resolve to neither name render in the
  * terminal's default color (see `core/src/theme.ts`).
  */
-export function quotaColor(theme: unknown, percent: number, ok = true): RGBA | undefined {
+export function quotaColor(
+  theme: unknown,
+  percent: number,
+  ok = true,
+): RGBA | undefined {
   const colors = statusColors<RGBA>(theme);
   if (!ok) return colors.error;
   if (percent >= 90) return colors.error;
@@ -83,12 +97,22 @@ export type QuotaWindow = {
  * One quota segment (`5h 3%`, `Weekly 12% (4h5m)`), colored by usage; the
  * countdown is appended when `detailed`.
  */
-export function QuotaSegment(props: { label: string; win: QuotaWindow; detailed: boolean }) {
+export function QuotaSegment(props: {
+  label: string;
+  win: QuotaWindow;
+  detailed: boolean;
+}) {
   const ctx = usePlugin();
   const fg = () =>
-    quotaColor(ctx.theme, props.win.percent, !props.win.status || props.win.status === "ok");
+    quotaColor(
+      ctx.theme,
+      props.win.percent,
+      !props.win.status || props.win.status === "ok",
+    );
   const text = () => {
-    const left = props.detailed ? countdown(props.win.resetsAt, Date.now()) : undefined;
+    const left = props.detailed
+      ? countdown(props.win.resetsAt, Date.now())
+      : undefined;
     return `${props.label} ${props.win.percent}%${left ? ` (${left})` : ""}`;
   };
   return (
@@ -204,7 +228,10 @@ export function createProviderGate(
  * function. A failing fetch is ignored so the next tick retries and the TUI
  * never crashes; the caller keeps rendering the last known value.
  */
-export function startPolling(fetch: () => Promise<void>, intervalMs = INTERVAL_MS): () => void {
+export function startPolling(
+  fetch: () => Promise<void>,
+  intervalMs = INTERVAL_MS,
+): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
 

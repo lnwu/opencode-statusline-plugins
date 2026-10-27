@@ -23,14 +23,21 @@ export default Plugin.define({
     // Each plan has its own account and quota, so they are fetched and cached
     // separately: the TUI shows the plan the session runs on. A failure on one
     // host never hides the other plan's quota.
-    async function fetchUsage(integration: Integration): Promise<Usage | undefined> {
+    async function fetchUsage(
+      integration: Integration,
+    ): Promise<Usage | undefined> {
       try {
-        const connection = await ctx.integration.connection.active(integration.id);
+        const connection = await ctx.integration.connection.active(
+          integration.id,
+        );
         if (!connection) return undefined;
         const credential = await ctx.integration.connection.resolve(connection);
         if (credential?.type !== "key" || !credential.key) return undefined;
         const res = await fetch(`${integration.base}/coding/v1/usages`, {
-          headers: { Authorization: `Bearer ${credential.key}`, Accept: "application/json" },
+          headers: {
+            Authorization: `Bearer ${credential.key}`,
+            Accept: "application/json",
+          },
           signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
         if (!res.ok) return undefined;

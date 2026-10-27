@@ -37,7 +37,12 @@ opencode plugin add opencode-kimi-code-statusline
 
 ```jsonc title="~/.config/opencode/opencode.jsonc"
 {
-  "plugins": [{ "package": "opencode-kimi-code-statusline", "options": { "language": "zh-CN" } }],
+  "plugins": [
+    {
+      "package": "opencode-kimi-code-statusline",
+      "options": { "language": "zh-CN" },
+    },
+  ],
 }
 ```
 

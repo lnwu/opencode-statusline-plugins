@@ -109,7 +109,9 @@ export async function loadDemoConfig(packageRoot: string): Promise<DemoConfig> {
   try {
     parsed = JSON.parse(await file.text());
   } catch (error) {
-    throw new Error(`${path} is not valid JSON: ${error instanceof Error ? error.message : error}`);
+    throw new Error(
+      `${path} is not valid JSON: ${error instanceof Error ? error.message : error}`,
+    );
   }
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new Error(`${path} must be a JSON object`);
@@ -118,7 +120,9 @@ export async function loadDemoConfig(packageRoot: string): Promise<DemoConfig> {
   const config: DemoConfig = {};
   if (raw.model !== undefined) {
     if (typeof raw.model !== "string" || !raw.model.includes("/")) {
-      throw new Error(`${path}: "model" must be "provider/id", got ${JSON.stringify(raw.model)}`);
+      throw new Error(
+        `${path}: "model" must be "provider/id", got ${JSON.stringify(raw.model)}`,
+      );
     }
     config.model = raw.model;
   }
@@ -156,7 +160,9 @@ export async function loadDemoConfig(packageRoot: string): Promise<DemoConfig> {
       !Number.isFinite(raw.replyTimeout) ||
       raw.replyTimeout <= 0
     ) {
-      throw new Error(`${path}: "replyTimeout" must be a positive number of milliseconds`);
+      throw new Error(
+        `${path}: "replyTimeout" must be a positive number of milliseconds`,
+      );
     }
     config.replyTimeout = raw.replyTimeout;
   }
@@ -192,12 +198,19 @@ export async function assertRecordingTools(): Promise<void> {
   ]) {
     const result = await run([tool.name, ...tool.args], { timeoutMs: 30_000 });
     if (result.code !== 0)
-      throw new Error(`${tool.name} is required for recording (not found on PATH)`);
+      throw new Error(
+        `${tool.name} is required for recording (not found on PATH)`,
+      );
     console.log(result.stdout.trim().split("\n")[0]);
   }
-  const terminalSvg = await run([process.env.TERMINAL_SVG ?? "terminal-svg", "--version"]);
+  const terminalSvg = await run([
+    process.env.TERMINAL_SVG ?? "terminal-svg",
+    "--version",
+  ]);
   if (terminalSvg.code !== 0) {
-    throw new Error("terminal-svg is required: brew install russmckendrick/tap/terminal-svg");
+    throw new Error(
+      "terminal-svg is required: brew install russmckendrick/tap/terminal-svg",
+    );
   }
   console.log(terminalSvg.stdout.trim());
 }
@@ -235,22 +248,34 @@ export async function recordDemo(options: RecordDemoOptions): Promise<void> {
  * model — recording a demo of the wrong statusline. The catalog registers
  * asynchronously after a service start, so poll briefly before giving up.
  */
-async function assertModelsAvailable(models: ModelRef[], timeoutMs = 60_000): Promise<void> {
-  const missing = new Map(models.map((model) => [`${model.providerID}/${model.id}`, model]));
+async function assertModelsAvailable(
+  models: ModelRef[],
+  timeoutMs = 60_000,
+): Promise<void> {
+  const missing = new Map(
+    models.map((model) => [`${model.providerID}/${model.id}`, model]),
+  );
   const deadline = Date.now() + timeoutMs;
   let sawList = false;
   for (;;) {
-    const listed = await run(["opencode", "api", "get", "/api/model"], { timeoutMs: 30_000 });
+    const listed = await run(["opencode", "api", "get", "/api/model"], {
+      timeoutMs: 30_000,
+    });
     if (listed.code === 0) {
       try {
         const data =
-          (JSON.parse(listed.stdout) as { data?: Array<{ providerID?: string; modelID?: string }> })
-            .data ?? [];
+          (
+            JSON.parse(listed.stdout) as {
+              data?: Array<{ providerID?: string; modelID?: string }>;
+            }
+          ).data ?? [];
         sawList = true;
         for (const [key, model] of missing) {
           if (
             data.some(
-              (entry) => entry.providerID === model.providerID && entry.modelID === model.id,
+              (entry) =>
+                entry.providerID === model.providerID &&
+                entry.modelID === model.id,
             )
           ) {
             missing.delete(key);
@@ -263,7 +288,9 @@ async function assertModelsAvailable(models: ModelRef[], timeoutMs = 60_000): Pr
     }
     if (Date.now() >= deadline) {
       if (!sawList) {
-        console.warn("could not verify model availability (no /api/model response); continuing");
+        console.warn(
+          "could not verify model availability (no /api/model response); continuing",
+        );
         return;
       }
       throw new Error(
@@ -289,7 +316,8 @@ function shq(value: string): string {
  * model to `recent` and returns a restore callback for the original content.
  */
 async function pinRecentModel(model: ModelRef): Promise<() => Promise<void>> {
-  const stateDir = process.env.XDG_STATE_HOME ?? join(homedir(), ".local", "state");
+  const stateDir =
+    process.env.XDG_STATE_HOME ?? join(homedir(), ".local", "state");
   const path = join(stateDir, "opencode", "model.json");
   const file = Bun.file(path);
   if (!(await file.exists())) return async () => {};
@@ -298,7 +326,8 @@ async function pinRecentModel(model: ModelRef): Promise<() => Promise<void>> {
     recent?: Array<{ providerID?: string; modelID?: string }>;
   };
   const recent = (parsed.recent ?? []).filter(
-    (entry) => entry.providerID !== model.providerID || entry.modelID !== model.id,
+    (entry) =>
+      entry.providerID !== model.providerID || entry.modelID !== model.id,
   );
   recent.unshift({ providerID: model.providerID, modelID: model.id });
   parsed.recent = recent;
@@ -346,14 +375,19 @@ async function recordTake(
   const paneEnv: Env = take.env ?? {};
 
   const tmux = (...args: string[]) =>
-    run(["tmux", "-L", tmuxSocket, "-f", "/dev/null", ...args], { env: paneEnv });
+    run(["tmux", "-L", tmuxSocket, "-f", "/dev/null", ...args], {
+      env: paneEnv,
+    });
   const mustTmux = async (...args: string[]) => {
     const result = await tmux(...args);
     if (result.code !== 0)
-      throw new Error(`tmux ${args.join(" ")} failed:\n${result.stderr || result.stdout}`);
+      throw new Error(
+        `tmux ${args.join(" ")} failed:\n${result.stderr || result.stdout}`,
+      );
     return result;
   };
-  const capture = async () => (await mustTmux("capture-pane", "-p", "-t", SESSION)).stdout;
+  const capture = async () =>
+    (await mustTmux("capture-pane", "-p", "-t", SESSION)).stdout;
   const waitFor = async (marker: string, timeoutMs: number) => {
     const deadline = Date.now() + timeoutMs;
     let frame = "";
@@ -362,7 +396,9 @@ async function recordTake(
       if (frame.includes(marker)) return frame;
       await Bun.sleep(1_000);
     }
-    throw new Error(`timed out waiting for ${JSON.stringify(marker)}; last frame:\n${frame}`);
+    throw new Error(
+      `timed out waiting for ${JSON.stringify(marker)}; last frame:\n${frame}`,
+    );
   };
 
   let frame = "";
@@ -424,7 +460,8 @@ async function recordTake(
     await Bun.sleep(300);
     await mustTmux("send-keys", "-t", SESSION, "C-c");
     for (let i = 0; ; i++) {
-      if (i >= 60) throw new Error("the recording session did not exit after ctrl+c");
+      if (i >= 60)
+        throw new Error("the recording session did not exit after ctrl+c");
       if ((await tmux("has-session", "-t", SESSION)).code !== 0) break;
       await Bun.sleep(1_000);
     }
@@ -438,7 +475,9 @@ async function recordTake(
       );
     const exitAt = await altScreenExitTime(castPath);
     if (exitAt === undefined)
-      console.warn("no alt-screen exit found; rendering to the end of the cast");
+      console.warn(
+        "no alt-screen exit found; rendering to the end of the cast",
+      );
     await retitleCast(castPath, WINDOW_TITLE);
 
     // Skip the blank terminal (and its collapsing window) before the first
@@ -466,7 +505,9 @@ async function recordTake(
     if (exitAt !== undefined) render.push("--to", String(exitAt));
     const rendered = await run(render);
     if (rendered.code !== 0)
-      throw new Error(`terminal-svg failed:\n${rendered.stderr || rendered.stdout}`);
+      throw new Error(
+        `terminal-svg failed:\n${rendered.stderr || rendered.stdout}`,
+      );
     const sealed = await sealTiledRects(svgPath);
     if (sealed > 0)
       console.log(
@@ -507,7 +548,8 @@ async function repairCast(castPath: string): Promise<number> {
     if (!line.trim() || !line.includes("\ufffd")) continue;
     try {
       const event = JSON.parse(line) as [number, string, string];
-      if (event[1] === "o" && typeof event[2] === "string") events.set(i, event);
+      if (event[1] === "o" && typeof event[2] === "string")
+        events.set(i, event);
     } catch {
       // leave malformed lines untouched
     }
@@ -561,30 +603,42 @@ async function repairCast(castPath: string): Promise<number> {
 
 /** Best effort: delete every session whose directory is the throw-away dir. */
 async function deleteSessionsFor(directory: string): Promise<void> {
-  const listed = await run(["opencode", "api", "get", "/api/session"], { timeoutMs: 30_000 });
+  const listed = await run(["opencode", "api", "get", "/api/session"], {
+    timeoutMs: 30_000,
+  });
   if (listed.code !== 0) return;
   let sessions: Array<{ id?: string; location?: { directory?: string } }>;
   try {
-    sessions = (JSON.parse(listed.stdout) as { data?: typeof sessions }).data ?? [];
+    sessions =
+      (JSON.parse(listed.stdout) as { data?: typeof sessions }).data ?? [];
   } catch {
     return;
   }
   for (const session of sessions) {
     if (session.id && session.location?.directory === directory) {
-      await run(["opencode", "api", "delete", `/api/session/${session.id}`], { timeoutMs: 30_000 });
+      await run(["opencode", "api", "delete", `/api/session/${session.id}`], {
+        timeoutMs: 30_000,
+      });
     }
   }
 }
 
 /** Time of the last `ESC[?1049l` (leaving the alternate screen) in the cast. */
-async function altScreenExitTime(castPath: string): Promise<number | undefined> {
+async function altScreenExitTime(
+  castPath: string,
+): Promise<number | undefined> {
   const text = await Bun.file(castPath).text();
   let exitAt: number | undefined;
   for (const line of text.split("\n")) {
     const event = parseEvent(line);
     if (!event) continue;
     const [time, type, data] = event;
-    if (type === "o" && typeof data === "string" && data.includes("\u001b[?1049l")) exitAt = time;
+    if (
+      type === "o" &&
+      typeof data === "string" &&
+      data.includes("\u001b[?1049l")
+    )
+      exitAt = time;
   }
   return exitAt === undefined ? undefined : Math.max(0, exitAt - 0.01);
 }
@@ -600,7 +654,11 @@ async function firstPaintTime(castPath: string): Promise<number | undefined> {
     const event = parseEvent(line);
     if (!event) continue;
     const [time, type, data] = event;
-    if (type === "o" && typeof data === "string" && /\u001b\[(?:48;[25];|4[0-7]m)/.test(data)) {
+    if (
+      type === "o" &&
+      typeof data === "string" &&
+      /\u001b\[(?:48;[25];|4[0-7]m)/.test(data)
+    ) {
       return time + 0.3;
     }
   }
@@ -615,7 +673,11 @@ function parseEvent(line: string): [number, string, unknown] | undefined {
   } catch {
     return undefined;
   }
-  if (!Array.isArray(event) || typeof event[0] !== "number" || typeof event[1] !== "string")
+  if (
+    !Array.isArray(event) ||
+    typeof event[0] !== "number" ||
+    typeof event[1] !== "string"
+  )
     return undefined;
   return event as [number, string, unknown];
 }

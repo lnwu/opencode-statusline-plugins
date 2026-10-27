@@ -42,10 +42,15 @@ export function runE2eCases(harness: Harness, cases: CaseSpec[]): void {
           frame = await harness.waitForFrame(context, spec.expect[0]!);
 
           for (const pattern of spec.expect) {
-            expect(frame, `expected ${pattern} in ${spec.name} frame`).toMatch(pattern);
+            expect(frame, `expected ${pattern} in ${spec.name} frame`).toMatch(
+              pattern,
+            );
           }
           for (const pattern of spec.reject ?? []) {
-            expect(frame, `did not expect ${pattern} in ${spec.name} frame`).not.toMatch(pattern);
+            expect(
+              frame,
+              `did not expect ${pattern} in ${spec.name} frame`,
+            ).not.toMatch(pattern);
           }
         } catch (error) {
           const captured = frame || (await context.capture().catch(() => ""));

@@ -38,7 +38,9 @@ opencode plugin add opencode-go-statusline
 
 ```jsonc title="~/.config/opencode/opencode.jsonc"
 {
-  "plugins": [{ "package": "opencode-go-statusline", "options": { "language": "zh-CN" } }],
+  "plugins": [
+    { "package": "opencode-go-statusline", "options": { "language": "zh-CN" } },
+  ],
 }
 ```
 

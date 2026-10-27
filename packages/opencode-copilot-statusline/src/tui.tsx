@@ -29,10 +29,16 @@ function titleFor(account: string | undefined): string {
   return `Copilot · ${label}`;
 }
 
-function Segment(props: { usage: Usage; color: () => RGBA | undefined; detailed: boolean }) {
+function Segment(props: {
+  usage: Usage;
+  color: () => RGBA | undefined;
+  detailed: boolean;
+}) {
   const text = () => {
     if (props.usage.unlimited) return "∞";
-    const left = props.detailed ? countdown(props.usage.resetsAt, Date.now()) : undefined;
+    const left = props.detailed
+      ? countdown(props.usage.resetsAt, Date.now())
+      : undefined;
     return `${props.usage.usedPercent}%${left ? ` (${left})` : ""}`;
   };
   return (
@@ -69,11 +75,15 @@ function CopilotUsage(props: {
   return (
     <QuotaStatusline
       enabled={isCopilot}
-      title={titleFor(density() === "minimal" ? undefined : props.usage()?.account)}
+      title={titleFor(
+        density() === "minimal" ? undefined : props.usage()?.account,
+      )}
       color={fg}
       usage={props.usage}
     >
-      {(u, level) => <Segment usage={u()} color={fg} detailed={level === "full"} />}
+      {(u, level) => (
+        <Segment usage={u()} color={fg} detailed={level === "full"} />
+      )}
     </QuotaStatusline>
   );
 }
@@ -98,7 +108,11 @@ export default Plugin.define({
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
       render: (input) => (
-        <CopilotUsage sessionID={() => input.sessionID} usage={usage} loaded={loaded} />
+        <CopilotUsage
+          sessionID={() => input.sessionID}
+          usage={usage}
+          loaded={loaded}
+        />
       ),
     });
 

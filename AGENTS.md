@@ -106,8 +106,8 @@ see Release).
 ## Commands
 
 - `bun install` — lockfile is `bun.lock`; use Bun, not npm/pnpm.
-- `bun run fmt` / `bun run fmt:check` — format (or verify) the workspace with
-  Oxfmt. `fmt:check` runs in CI.
+- `bun fmt` / `bun fmt --check` — format (or verify) the workspace with Bun's
+  built-in formatter. `bun fmt --check` runs in CI.
 - `bun run build` / `bun run typecheck` — all packages; root scripts use
   `--if-present`, so README-only packages are skipped.
 - `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
@@ -241,8 +241,10 @@ CI.
 - Published packages ship `dist/` only: `files: ["dist"]` and every `exports`
   entry points at a built bundle. `src/` is dev-only. `core` is inlined into
   each plugin's bundles.
-- Formatting is Oxfmt with its default options (`.oxfmtrc.json` at the repo
-  root); run `bun run fmt` before opening a PR.
+- Formatting is Bun's built-in `bun fmt` with its default options (no config
+  file); run `bun fmt` before opening a PR. Pitfall (Bun 1.4.4): in a Markdown
+  list item, a continuation line that starts inside an inline code span loses
+  its indentation and breaks the list, so keep each code span on one line.
 - Upstream bugs and limitations: apply a local workaround instead of blocking
   on upstream, then open a tracking issue in this repo (search for an existing
   one first) and label it `upstream` when you create it. The issue records the

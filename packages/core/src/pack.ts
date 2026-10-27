@@ -28,7 +28,9 @@ export type PackedPackage = {
   files: string[];
 };
 
-export async function checkPackedPackage(options: PackedPackageOptions): Promise<PackedPackage> {
+export async function checkPackedPackage(
+  options: PackedPackageOptions,
+): Promise<PackedPackage> {
   const packageDir = resolve(options.packageDir);
   const workDir = await mkdtemp(join(tmpdir(), "pack-check-"));
   try {
@@ -42,7 +44,10 @@ export async function checkPackedPackage(options: PackedPackageOptions): Promise
         `tarball is missing ${missing.join(", ")}\npacked files:\n${files.join("\n")}`,
       );
     }
-    await assertDeclaredImports(packageDir, await extractTarball(tarball, workDir));
+    await assertDeclaredImports(
+      packageDir,
+      await extractTarball(tarball, workDir),
+    );
     if (options.imports && options.imports.length > 0) {
       await installAndImport(tarball, workDir, options.imports);
     }
@@ -57,14 +62,17 @@ async function pack(packageDir: string, workDir: string): Promise<string> {
     cwd: packageDir,
     timeoutMs: 120_000,
   });
-  if (result.code !== 0) throw new Error(`npm pack failed:\n${result.stdout}\n${result.stderr}`);
+  if (result.code !== 0)
+    throw new Error(`npm pack failed:\n${result.stdout}\n${result.stderr}`);
   const filename = result.stdout
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.endsWith(".tgz"))
     .at(-1);
   if (!filename)
-    throw new Error(`npm pack did not report a tarball:\n${result.stdout}\n${result.stderr}`);
+    throw new Error(
+      `npm pack did not report a tarball:\n${result.stdout}\n${result.stderr}`,
+    );
   return join(workDir, filename);
 }
 
@@ -77,7 +85,10 @@ async function listTarball(tarball: string): Promise<string[]> {
     .filter(Boolean);
 }
 
-async function extractTarball(tarball: string, workDir: string): Promise<string> {
+async function extractTarball(
+  tarball: string,
+  workDir: string,
+): Promise<string> {
   const dir = join(workDir, "extracted");
   await mkdir(dir, { recursive: true });
   const result = await run(["tar", "-xzf", tarball, "-C", dir]);
@@ -86,8 +97,13 @@ async function extractTarball(tarball: string, workDir: string): Promise<string>
 }
 
 /** Every bare import in a shipped bundle must be a declared runtime dependency. */
-async function assertDeclaredImports(packageDir: string, extractedDir: string): Promise<void> {
-  const manifest = (await Bun.file(join(packageDir, "package.json")).json()) as {
+async function assertDeclaredImports(
+  packageDir: string,
+  extractedDir: string,
+): Promise<void> {
+  const manifest = (await Bun.file(
+    join(packageDir, "package.json"),
+  ).json()) as {
     dependencies?: Record<string, string>;
     optionalDependencies?: Record<string, string>;
     peerDependencies?: Record<string, string>;
@@ -102,11 +118,14 @@ async function assertDeclaredImports(packageDir: string, extractedDir: string): 
   const undeclared = new Map<string, Set<string>>();
   for await (const file of new Bun.Glob("**/*.js").scan({ cwd: root })) {
     const code = await Bun.file(join(root, file)).text();
-    const imports = new Bun.Transpiler({ loader: "js", target: "bun" }).scan(code).imports;
+    const imports = new Bun.Transpiler({ loader: "js", target: "bun" }).scan(
+      code,
+    ).imports;
     for (const item of imports) {
       const specifier = item.path;
       if (specifier.startsWith(".") || specifier.startsWith("/")) continue;
-      if (specifier.startsWith("node:") || specifier.startsWith("bun:")) continue;
+      if (specifier.startsWith("node:") || specifier.startsWith("bun:"))
+        continue;
       const name = packageNameOf(specifier);
       if (declared.has(name)) continue;
       const files = undeclared.get(name) ?? new Set<string>();
@@ -139,16 +158,26 @@ async function installAndImport(
   await mkdir(dir, { recursive: true });
   await writeFile(
     join(dir, "package.json"),
-    JSON.stringify({ name: "pack-check", private: true, type: "module" }, null, 2) + "\n",
+    JSON.stringify(
+      { name: "pack-check", private: true, type: "module" },
+      null,
+      2,
+    ) + "\n",
   );
 
   // Bun is the repo's package manager; a package's own devDependencies never
   // install from a registry tarball, so this exercises runtime dependencies only.
-  const install = await run(["bun", "add", tarball], { cwd: dir, timeoutMs: 300_000 });
-  if (install.code !== 0) throw new Error(`bun add failed:\n${install.stdout}\n${install.stderr}`);
+  const install = await run(["bun", "add", tarball], {
+    cwd: dir,
+    timeoutMs: 300_000,
+  });
+  if (install.code !== 0)
+    throw new Error(`bun add failed:\n${install.stdout}\n${install.stderr}`);
 
   const script = join(dir, "import-check.mjs");
-  const lines = imports.map((specifier) => `await import(${JSON.stringify(specifier)})`);
+  const lines = imports.map(
+    (specifier) => `await import(${JSON.stringify(specifier)})`,
+  );
   await writeFile(script, `${lines.join("\n")}\n`);
   const imported = await run(["bun", script], { cwd: dir, timeoutMs: 120_000 });
   if (imported.code !== 0) {

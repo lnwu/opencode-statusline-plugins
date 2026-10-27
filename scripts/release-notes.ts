@@ -23,7 +23,8 @@ import { join } from "node:path";
 const ROOT = join(import.meta.dir, "..");
 const PACKAGES = join(ROOT, "packages");
 const REPO = "https://github.com/lnwu/opencode-statusline-plugins";
-const USAGE = "usage: bun scripts/release-notes.ts <package>@<version> | --check";
+const USAGE =
+  "usage: bun scripts/release-notes.ts <package>@<version> | --check";
 
 const HEADING = /^## (.+)$/;
 const DATED = /^(.+?)\s+-\s+(\d{4}-\d{2}-\d{2})$/;
@@ -40,16 +41,22 @@ interface Section {
 
 function parseSections(path: string): Section[] {
   const sections: Section[] = [];
-  let current: { label: string; version: string | null; lines: string[] } | null = null;
+  let current: {
+    label: string;
+    version: string | null;
+    lines: string[];
+  } | null = null;
   const flush = () => {
-    if (current) sections.push({ ...current, body: current.lines.join("\n").trim() });
+    if (current)
+      sections.push({ ...current, body: current.lines.join("\n").trim() });
   };
   for (const line of readFileSync(path, "utf8").split("\n")) {
     const match = HEADING.exec(line);
     if (match) {
       flush();
       const label = match[1]!.trim();
-      const version = label === "Unreleased" ? null : (DATED.exec(label)?.[1] ?? label);
+      const version =
+        label === "Unreleased" ? null : (DATED.exec(label)?.[1] ?? label);
       current = { label, version, lines: [] };
     } else if (current && !LINK_DEFINITION.test(line)) {
       current.lines.push(line);
@@ -60,7 +67,11 @@ function parseSections(path: string): Section[] {
 }
 
 function changelogPath(pkg: string, locale: "en" | "zh"): string {
-  return join(PACKAGES, pkg, locale === "en" ? "CHANGELOG.md" : "CHANGELOG.zh-CN.md");
+  return join(
+    PACKAGES,
+    pkg,
+    locale === "en" ? "CHANGELOG.md" : "CHANGELOG.zh-CN.md",
+  );
 }
 
 function listPackages(): string[] {
@@ -98,7 +109,9 @@ function check(): void {
     checked++;
 
     if (!existsSync(changelogPath(pkg, "zh"))) {
-      errors.push(`${pkg}: CHANGELOG.md exists but CHANGELOG.zh-CN.md is missing`);
+      errors.push(
+        `${pkg}: CHANGELOG.md exists but CHANGELOG.zh-CN.md is missing`,
+      );
       continue;
     }
 
@@ -142,18 +155,24 @@ function check(): void {
           continue;
         }
         if (!dated) {
-          errors.push(`${pkg}: ${file}: "## ${section.label}" is missing the "- YYYY-MM-DD" date`);
+          errors.push(
+            `${pkg}: ${file}: "## ${section.label}" is missing the "- YYYY-MM-DD" date`,
+          );
           continue;
         }
         if (section.body === "") {
-          errors.push(`${pkg}: ${file}: "## ${section.label}" has an empty body`);
+          errors.push(
+            `${pkg}: ${file}: "## ${section.label}" has an empty body`,
+          );
         }
       }
     }
 
     const pkgJson = join(PACKAGES, pkg, "package.json");
     if (existsSync(pkgJson)) {
-      const { version } = JSON.parse(readFileSync(pkgJson, "utf8")) as { version?: string };
+      const { version } = JSON.parse(readFileSync(pkgJson, "utf8")) as {
+        version?: string;
+      };
       const versions = en.map((section) => section.version);
       if (version && !versions.includes(version)) {
         errors.push(
@@ -167,7 +186,10 @@ function check(): void {
     for (const error of errors) console.error(`✗ ${error}`);
     fail(`changelog check failed: ${errors.length} problem(s)`);
   }
-  const note = skipped.length > 0 ? ` (skipped without changelog: ${skipped.join(", ")})` : "";
+  const note =
+    skipped.length > 0
+      ? ` (skipped without changelog: ${skipped.join(", ")})`
+      : "";
   console.log(`changelog check: ${checked} package(s) OK${note}`);
 }
 
@@ -182,15 +204,20 @@ function releaseNotes(tag: string): string {
   const index = enSections.findIndex((section) => section.version === version);
   if (index === -1) fail(`${pkg}: CHANGELOG.md has no "## ${version}" section`);
   const en = enSections[index]!;
-  const zh = parseSections(changelogPath(pkg, "zh")).find((section) => section.version === version);
+  const zh = parseSections(changelogPath(pkg, "zh")).find(
+    (section) => section.version === version,
+  );
   if (!zh) fail(`${pkg}: CHANGELOG.zh-CN.md has no "## ${version}" section`);
   if (!en.body) fail(`${pkg}: CHANGELOG.md: "## ${version}" has an empty body`);
-  if (!zh.body) fail(`${pkg}: CHANGELOG.zh-CN.md: "## ${version}" has an empty body`);
+  if (!zh.body)
+    fail(`${pkg}: CHANGELOG.zh-CN.md: "## ${version}" has an empty body`);
 
   // The next released section below is the previous version (latest first).
   const previous = enSections
     .slice(index + 1)
-    .find((section) => section.version !== null && SEMVER.test(section.version));
+    .find(
+      (section) => section.version !== null && SEMVER.test(section.version),
+    );
   const compare = previous
     ? `${REPO}/compare/${encodeURIComponent(`${pkg}@${previous.version}`)}...${encodeURIComponent(tag)}`
     : `${REPO}/commits/${encodeURIComponent(tag)}`;

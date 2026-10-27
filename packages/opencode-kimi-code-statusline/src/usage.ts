@@ -29,8 +29,12 @@ const ROLLING_WINDOW_MINUTES = 300;
 export function parseUsage(body: unknown): Usage | undefined {
   if (!isRecord(body)) return undefined;
   const usages = isRecord(body.usages) ? body.usages : undefined;
-  const rolling = (usages ? fromRatio(usages.limit_5h) : undefined) ?? fromLimits(body.limits);
-  const weekly = (usages ? fromRatio(usages.limit_7d) : undefined) ?? fromAbsolute(body.usage);
+  const rolling =
+    (usages ? fromRatio(usages.limit_5h) : undefined) ??
+    fromLimits(body.limits);
+  const weekly =
+    (usages ? fromRatio(usages.limit_7d) : undefined) ??
+    fromAbsolute(body.usage);
   if (!rolling || !weekly) return undefined;
   return { rolling, weekly };
 }
@@ -48,7 +52,8 @@ function fromLimits(value: unknown): UsageWindow | undefined {
   if (!Array.isArray(value)) return undefined;
   const entries = value.filter(isRecord);
   const rolling =
-    entries.find((entry) => windowMinutes(entry) === ROLLING_WINDOW_MINUTES) ?? entries[0];
+    entries.find((entry) => windowMinutes(entry) === ROLLING_WINDOW_MINUTES) ??
+    entries[0];
   return rolling ? fromAbsolute(rolling.detail) : undefined;
 }
 
@@ -57,7 +62,8 @@ function fromAbsolute(value: unknown): UsageWindow | undefined {
   if (!isRecord(value)) return undefined;
   const limit = asNumber(value.limit);
   const remaining = asNumber(value.remaining);
-  if (limit === undefined || limit <= 0 || remaining === undefined) return undefined;
+  if (limit === undefined || limit <= 0 || remaining === undefined)
+    return undefined;
   return window(((limit - remaining) / limit) * 100, asString(value.resetTime));
 }
 

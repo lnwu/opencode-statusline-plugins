@@ -8,7 +8,10 @@ export type Env = Record<string, string | undefined>;
 export type RunResult = { code: number; stdout: string; stderr: string };
 export type RunOptions = { env?: Env; cwd?: string; timeoutMs?: number };
 
-export async function run(cmd: string[], options: RunOptions = {}): Promise<RunResult> {
+export async function run(
+  cmd: string[],
+  options: RunOptions = {},
+): Promise<RunResult> {
   const proc = Bun.spawn(cmd, {
     env: { ...process.env, ...options.env },
     cwd: options.cwd,
@@ -16,7 +19,9 @@ export async function run(cmd: string[], options: RunOptions = {}): Promise<RunR
     stdout: "pipe",
     stderr: "pipe",
   });
-  const timer = options.timeoutMs ? setTimeout(() => proc.kill(), options.timeoutMs) : undefined;
+  const timer = options.timeoutMs
+    ? setTimeout(() => proc.kill(), options.timeoutMs)
+    : undefined;
   const [stdout, stderr] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
@@ -26,7 +31,10 @@ export async function run(cmd: string[], options: RunOptions = {}): Promise<RunR
   return { code, stdout, stderr };
 }
 
-export async function mustRun(cmd: string[], options: RunOptions = {}): Promise<RunResult> {
+export async function mustRun(
+  cmd: string[],
+  options: RunOptions = {},
+): Promise<RunResult> {
   const result = await run(cmd, options);
   if (result.code !== 0) {
     throw new Error(

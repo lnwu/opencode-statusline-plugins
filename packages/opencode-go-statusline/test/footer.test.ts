@@ -11,7 +11,11 @@ const HOUR = 3600_000;
 const DAY = 24 * HOUR;
 
 function window(percent: number, resetInMs: number) {
-  return { status: "ok", percent, resetsAt: new Date(Date.now() + resetInMs).toISOString() };
+  return {
+    status: "ok",
+    percent,
+    resetsAt: new Date(Date.now() + resetInMs).toISOString(),
+  };
 }
 
 test("renders the three quota windows with reset countdowns", async () => {
@@ -44,7 +48,11 @@ test("uses short labels and no countdowns between 80 and 119 columns", async () 
     width: 101,
     showDetails: true,
     rpcResult: {
-      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+      usage: {
+        rolling: window(3, DAY),
+        weekly: window(12, DAY),
+        monthly: window(45, DAY),
+      },
     },
   });
 
@@ -61,7 +69,11 @@ test("shows only the weekly window below 80 columns", async () => {
     options: { language: "en" },
     width: 60,
     rpcResult: {
-      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+      usage: {
+        rolling: window(3, DAY),
+        weekly: window(12, DAY),
+        monthly: window(45, DAY),
+      },
     },
   });
 
@@ -78,7 +90,11 @@ test("labels follow the language option", async () => {
     options: { language: "zh-CN" },
     width: 120,
     rpcResult: {
-      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+      usage: {
+        rolling: window(3, DAY),
+        weekly: window(12, DAY),
+        monthly: window(45, DAY),
+      },
     },
   });
 
@@ -96,10 +112,16 @@ test("keeps the Chinese labels in the compact and minimal layouts", async () => 
     options: { language: "zh-CN" },
     width: 100,
     rpcResult: {
-      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+      usage: {
+        rolling: window(3, DAY),
+        weekly: window(12, DAY),
+        monthly: window(45, DAY),
+      },
     },
   });
-  expect(await compact.waitForText("周 12%")).toContain("Go 5H 3% · 周 12% · 月 45%");
+  expect(await compact.waitForText("周 12%")).toContain(
+    "Go 5H 3% · 周 12% · 月 45%",
+  );
   await compact.dispose();
 
   const minimal = await setupFooterTest({
@@ -108,7 +130,11 @@ test("keeps the Chinese labels in the compact and minimal layouts", async () => 
     options: { language: "zh-CN" },
     width: 60,
     rpcResult: {
-      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+      usage: {
+        rolling: window(3, DAY),
+        weekly: window(12, DAY),
+        monthly: window(45, DAY),
+      },
     },
   });
   expect(await minimal.waitForText("Go 周 12%")).not.toContain("5H");
@@ -120,7 +146,11 @@ test("hides the statusline for sessions on another provider", async () => {
     tuiEntry: TUI_ENTRY,
     providerID: "opencode-other",
     rpcResult: {
-      usage: { rolling: window(3, DAY), weekly: window(12, DAY), monthly: window(45, DAY) },
+      usage: {
+        rolling: window(3, DAY),
+        weekly: window(12, DAY),
+        monthly: window(45, DAY),
+      },
     },
   });
 

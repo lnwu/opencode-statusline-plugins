@@ -18,7 +18,9 @@ test("renders the premium-request quota with the monthly reset countdown", async
         remaining: 174,
         entitlement: 300,
         unlimited: false,
-        resetsAt: new Date(Date.now() + 12 * 24 * 3600_000 + 6 * 3600_000).toISOString(),
+        resetsAt: new Date(
+          Date.now() + 12 * 24 * 3600_000 + 6 * 3600_000,
+        ).toISOString(),
       },
     },
   });
@@ -47,7 +49,12 @@ test("hides the statusline for sessions on another provider", async () => {
     tuiEntry: TUI_ENTRY,
     providerID: "opencode-other",
     rpcResult: {
-      usage: { usedPercent: 42, remaining: 174, entitlement: 300, unlimited: false },
+      usage: {
+        usedPercent: 42,
+        remaining: 174,
+        entitlement: 300,
+        unlimited: false,
+      },
     },
   });
 

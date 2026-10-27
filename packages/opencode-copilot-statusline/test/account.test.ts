@@ -1,17 +1,30 @@
 import { expect, test } from "bun:test";
-import { connectionLabel, displayAccount, type ConnectionSlice } from "../src/account";
+import {
+  connectionLabel,
+  displayAccount,
+  type ConnectionSlice,
+} from "../src/account";
 
-const credential = (label: string): ConnectionSlice => ({ type: "credential", id: label, label });
+const credential = (label: string): ConnectionSlice => ({
+  type: "credential",
+  id: label,
+  label,
+});
 const env: ConnectionSlice = { type: "env", name: "GITHUB_TOKEN" };
 
 test("shows the label when several credentials are connected", () => {
-  expect(displayAccount(credential("work"), [credential("work"), credential("personal")])).toBe(
-    "work",
-  );
+  expect(
+    displayAccount(credential("work"), [
+      credential("work"),
+      credential("personal"),
+    ]),
+  ).toBe("work");
 });
 
 test("hides the label with a single credential", () => {
-  expect(displayAccount(credential("work"), [credential("work")])).toBeUndefined();
+  expect(
+    displayAccount(credential("work"), [credential("work")]),
+  ).toBeUndefined();
 });
 
 test("hides the label for an environment connection", () => {
@@ -19,7 +32,9 @@ test("hides the label for an environment connection", () => {
 });
 
 test("does not count an environment connection as a labelled account", () => {
-  expect(displayAccount(credential("work"), [credential("work"), env])).toBeUndefined();
+  expect(
+    displayAccount(credential("work"), [credential("work"), env]),
+  ).toBeUndefined();
 });
 
 test("keeps the label when the connection list cannot be read", () => {
@@ -27,7 +42,9 @@ test("keeps the label when the connection list cannot be read", () => {
 });
 
 test("treats a blank credential label as unlabelled", () => {
-  expect(connectionLabel({ type: "credential", id: "x", label: "  " })).toBeUndefined();
+  expect(
+    connectionLabel({ type: "credential", id: "x", label: "  " }),
+  ).toBeUndefined();
   expect(
     displayAccount({ type: "credential", id: "x", label: "" }, [
       { type: "credential", id: "x", label: "" },

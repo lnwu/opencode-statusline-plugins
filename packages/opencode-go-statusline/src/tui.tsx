@@ -34,14 +34,26 @@ function GoUsage(props: {
   labels: Labels;
 }) {
   const ctx = usePlugin();
-  const isGo = createProviderGate(props.sessionID, (providerID) => providerID === GO_PROVIDER_ID);
+  const isGo = createProviderGate(
+    props.sessionID,
+    (providerID) => providerID === GO_PROVIDER_ID,
+  );
   const muted = () => statusColors<RGBA>(ctx.theme).muted;
 
   return (
-    <QuotaStatusline enabled={isGo} title="Go" color={muted} usage={props.usage}>
+    <QuotaStatusline
+      enabled={isGo}
+      title="Go"
+      color={muted}
+      usage={props.usage}
+    >
       {(u, density) =>
         density === "minimal" ? (
-          <QuotaSegment label={props.labels.compact.weekly} win={u().weekly} detailed={false} />
+          <QuotaSegment
+            label={props.labels.compact.weekly}
+            win={u().weekly}
+            detailed={false}
+          />
         ) : (
           <>
             <QuotaSegment
@@ -74,19 +86,28 @@ export default Plugin.define({
     const rpc = context.client.rpc(UsageRpc);
     const [usage, setUsage] = createSignal<Usage>();
     const [serverLanguage, setServerLanguage] = createSignal<unknown>();
-    const labels = () => LABELS[resolveLanguage(context.options.language, serverLanguage())];
+    const labels = () =>
+      LABELS[resolveLanguage(context.options.language, serverLanguage())];
 
     // A failing fetch keeps the last known usage; the next tick retries.
     const stopPolling = startPolling(async () => {
-      const result = (await rpc.get({})) as { usage?: Usage; language?: string };
+      const result = (await rpc.get({})) as {
+        usage?: Usage;
+        language?: string;
+      };
       if (result?.usage) setUsage(result.usage);
-      if (typeof result?.language === "string") setServerLanguage(result.language);
+      if (typeof result?.language === "string")
+        setServerLanguage(result.language);
     });
 
     const unregister = context.ui.slot({
       append: "prompt.footer.status",
       render: (input) => (
-        <GoUsage sessionID={() => input.sessionID} usage={usage} labels={labels()} />
+        <GoUsage
+          sessionID={() => input.sessionID}
+          usage={usage}
+          labels={labels()}
+        />
       ),
     });
 

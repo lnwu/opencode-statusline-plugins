@@ -76,7 +76,9 @@ function usage(cli: RecordDemoCli, packageRoot: string): string {
   const lines = ["usage: bun scripts/record-demo.ts [options]", ""];
   if (locales) {
     const names = cli.takes.map((take) => take.name).join("|");
-    lines.push(`  --locale ${names}|all   Which demo(s) to record (default: all)`);
+    lines.push(
+      `  --locale ${names}|all   Which demo(s) to record (default: all)`,
+    );
   }
   lines.push(
     locales
@@ -127,7 +129,10 @@ export function parseRecordDemoArgs(options: {
     const flag = argv[i];
     switch (flag) {
       case "--locale": {
-        if (!locales) throw new Error(`unknown option: ${flag}\n\n${usage(cli, packageRoot)}`);
+        if (!locales)
+          throw new Error(
+            `unknown option: ${flag}\n\n${usage(cli, packageRoot)}`,
+          );
         const value = need(argv, i, flag);
         if (value === "all") {
           selected = cli.takes;
@@ -157,7 +162,12 @@ export function parseRecordDemoArgs(options: {
         continue;
       case "--cursor": {
         const value = need(argv, i, flag);
-        if (value !== "block" && value !== "bar" && value !== "underline" && value !== "none") {
+        if (
+          value !== "block" &&
+          value !== "bar" &&
+          value !== "underline" &&
+          value !== "none"
+        ) {
           throw new Error(`unknown cursor style: ${value}`);
         }
         cursor = value;
@@ -181,7 +191,9 @@ export function parseRecordDemoArgs(options: {
         console.log(usage(cli, packageRoot));
         process.exit(0);
       default:
-        throw new Error(`unknown option: ${flag}\n\n${usage(cli, packageRoot)}`);
+        throw new Error(
+          `unknown option: ${flag}\n\n${usage(cli, packageRoot)}`,
+        );
     }
   }
 

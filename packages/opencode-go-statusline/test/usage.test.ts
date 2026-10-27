@@ -29,7 +29,10 @@ test("parses the three quota windows", () => {
 
 test("keeps a non-ok window status", () => {
   const usage = parseUsage({
-    usage: { ...LIVE.usage, rolling: { ...LIVE.usage.rolling, status: "exceeded" } },
+    usage: {
+      ...LIVE.usage,
+      rolling: { ...LIVE.usage.rolling, status: "exceeded" },
+    },
   });
   expect(usage?.rolling.status).toBe("exceeded");
   expect(usage?.weekly.percent).toBe(18);
@@ -53,13 +56,19 @@ test("rejects a response missing a window", () => {
 test("rejects windows with malformed fields", () => {
   const rolling = LIVE.usage.rolling;
   expect(
-    parseUsage({ usage: { ...LIVE.usage, rolling: { ...rolling, percent: "63" } } }),
+    parseUsage({
+      usage: { ...LIVE.usage, rolling: { ...rolling, percent: "63" } },
+    }),
   ).toBeUndefined();
   expect(
-    parseUsage({ usage: { ...LIVE.usage, rolling: { ...rolling, status: 200 } } }),
+    parseUsage({
+      usage: { ...LIVE.usage, rolling: { ...rolling, status: 200 } },
+    }),
   ).toBeUndefined();
   expect(
-    parseUsage({ usage: { ...LIVE.usage, rolling: { ...rolling, resetsAt: "" } } }),
+    parseUsage({
+      usage: { ...LIVE.usage, rolling: { ...rolling, resetsAt: "" } },
+    }),
   ).toBeUndefined();
 });
 
@@ -67,5 +76,7 @@ test("returns undefined for malformed responses", () => {
   expect(parseUsage(undefined)).toBeUndefined();
   expect(parseUsage({})).toBeUndefined();
   expect(parseUsage({ usage: [] })).toBeUndefined();
-  expect(parseUsage({ usage: { rolling: LIVE.usage.rolling } })).toBeUndefined();
+  expect(
+    parseUsage({ usage: { rolling: LIVE.usage.rolling } }),
+  ).toBeUndefined();
 });

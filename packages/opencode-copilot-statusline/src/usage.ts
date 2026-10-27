@@ -28,8 +28,11 @@ export function parseUsage(body: unknown): Usage | undefined {
   const snapshots = body.quota_snapshots;
   if (!isRecord(snapshots)) return undefined;
   const resetsAt =
-    (typeof body.quota_reset_date_utc === "string" && body.quota_reset_date_utc) ||
-    (typeof body.quota_reset_date === "string" ? body.quota_reset_date : undefined);
+    (typeof body.quota_reset_date_utc === "string" &&
+      body.quota_reset_date_utc) ||
+    (typeof body.quota_reset_date === "string"
+      ? body.quota_reset_date
+      : undefined);
   for (const id of WINDOW_IDS) {
     const window = snapshots[id];
     if (!isRecord(window)) continue;
@@ -39,10 +42,19 @@ export function parseUsage(body: unknown): Usage | undefined {
   return undefined;
 }
 
-function toUsage(window: Record<string, unknown>, resetsAt: string | undefined): Usage | undefined {
+function toUsage(
+  window: Record<string, unknown>,
+  resetsAt: string | undefined,
+): Usage | undefined {
   const reset = resetsAt ? { resetsAt } : {};
   if (window.unlimited === true) {
-    return { usedPercent: 0, remaining: 0, entitlement: 0, unlimited: true, ...reset };
+    return {
+      usedPercent: 0,
+      remaining: 0,
+      entitlement: 0,
+      unlimited: true,
+      ...reset,
+    };
   }
   if (window.has_quota === false) return undefined;
   const entitlement = asNumber(window.entitlement);
@@ -69,5 +81,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function asNumber(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }

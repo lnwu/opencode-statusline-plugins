@@ -37,9 +37,14 @@ function parseWindow(value: unknown): UsageWindow | undefined {
   if (!isRecord(value)) return undefined;
   const { status, percent, resetsAt } = value;
   if (typeof status !== "string") return undefined;
-  if (typeof percent !== "number" || !Number.isFinite(percent)) return undefined;
+  if (typeof percent !== "number" || !Number.isFinite(percent))
+    return undefined;
   if (typeof resetsAt !== "string" || resetsAt === "") return undefined;
-  return { status, percent: Math.round(Math.min(100, Math.max(0, percent))), resetsAt };
+  return {
+    status,
+    percent: Math.round(Math.min(100, Math.max(0, percent))),
+    resetsAt,
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

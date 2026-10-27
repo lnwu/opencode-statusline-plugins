@@ -29,14 +29,20 @@
 //   assets/demo.svg    animated README image
 //   assets/demo.cast   asciicast master
 import { resolve } from "node:path";
-import { assertRecordingTools, loadDemoConfig, recordDemo } from "core/record-demo";
+import {
+  assertRecordingTools,
+  loadDemoConfig,
+  recordDemo,
+} from "core/record-demo";
 import { parseRecordDemoArgs, type RecordDemoCli } from "core/record-demo-cli";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 const CLI: RecordDemoCli = {
   defaultModel: { providerID: "github-copilot", id: "gpt-6-luna" },
-  takes: [{ name: "demo", outputBasename: "demo", prompt: "Reply with exactly: ok" }],
+  takes: [
+    { name: "demo", outputBasename: "demo", prompt: "Reply with exactly: ok" },
+  ],
 };
 
 const config = await loadDemoConfig(PACKAGE_ROOT);
