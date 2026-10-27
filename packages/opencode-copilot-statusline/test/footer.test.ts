@@ -1,7 +1,7 @@
 // Footer unit tests: render the built TUI entry with a mocked usage RPC and
 // session provider, and assert the statusline text. See `core/src/test-footer.ts`
 // for the harness and the `--conditions=browser` requirement.
-import { expect, test } from "bun:test";
+import { expect, jest, test } from "bun:test";
 import { join } from "node:path";
 import { setupFooterTest } from "core/test-footer";
 
@@ -96,6 +96,44 @@ test("shows the account label after the title", async () => {
   await footer.dispose();
 });
 
+test("clears the previous account's quota when the new account has none", async () => {
+  jest.useFakeTimers();
+  let calls = 0;
+  let result: unknown = {
+    usage: {
+      usedPercent: 42,
+      remaining: 174,
+      entitlement: 300,
+      unlimited: false,
+      account: "work",
+    },
+  };
+  try {
+    const footer = await setupFooterTest({
+      tuiEntry: TUI_ENTRY,
+      providerID: "github-copilot",
+      width: 160,
+      rpcResult: () => {
+        calls += 1;
+        return result;
+      },
+    });
+    await flush();
+    expect(await footer.renderOnce()).toContain("Copilot · Work 42%");
+
+    result = {};
+    jest.advanceTimersByTime(60_000);
+    await flush();
+    expect(calls).toBe(2);
+    const frame = await footer.renderOnce();
+    expect(frame).toContain("Copilot —");
+    expect(frame).not.toContain("42%");
+    await footer.dispose();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
 test("drops the countdown between 80 and 119 columns", async () => {
   const footer = await setupFooterTest({
     tuiEntry: TUI_ENTRY,
@@ -160,3 +198,8 @@ test("truncates a long account label", async () => {
   expect(frame).not.toContain("account-label");
   await footer.dispose();
 });
+
+/** Lets the polled RPC promise and the resulting signal updates settle. */
+async function flush(): Promise<void> {
+  for (let i = 0; i < 10; i++) await Promise.resolve();
+}

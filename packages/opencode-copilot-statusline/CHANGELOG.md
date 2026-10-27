@@ -8,6 +8,10 @@
 
 - Correct the README's requirements, plan table, account-label, `∞`, and `Copilot —` descriptions, and link the changelog.
 
+### Fixed
+
+- Show `Copilot —` instead of the previous account's quota after switching to an account that has no quota data yet.
+
 ## 1.2.0 - 2026-10-03
 
 ### Changed

@@ -27,8 +27,8 @@ export interface FooterTestOptions {
   /** Absolute path to the package's built `dist/tui.js`. */
   tuiEntry: string;
   /**
-   * Resolved value of the usage RPC's `get`. Omitted (or `{}`) renders the
-   * "no data" fallback.
+   * Resolved value of the usage RPC's `get`, or a function called on each
+   * poll. Omitted (or `{}`) renders the "no data" fallback.
    */
   rpcResult?: unknown;
   /** Model provider of the session; anything else hides the statusline. */
@@ -67,9 +67,14 @@ export async function setupFooterTest(
     location: undefined,
     theme: {},
     client: {
-      // The fake ignores the RPC definition and always answers with the
-      // caller's canned result.
-      rpc: () => ({ get: async () => options.rpcResult ?? {} }),
+      // The fake ignores the RPC definition and answers with the caller's
+      // canned result.
+      rpc: () => ({
+        get: async () =>
+          (typeof options.rpcResult === "function"
+            ? options.rpcResult()
+            : options.rpcResult) ?? {},
+      }),
     },
     ui: {
       slot: (candidate: FooterClaim) => {

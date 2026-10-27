@@ -95,11 +95,13 @@ export default Plugin.define({
     const [usage, setUsage] = createSignal<Usage>();
     const [loaded, setLoaded] = createSignal(false);
 
-    // A failing fetch keeps the last known usage; the next tick retries.
+    // The server keeps the last known usage per account, so a result without
+    // usage means the active account has none: clear it instead of keeping
+    // another account's quota. A failing RPC throws and keeps the last value.
     const stopPolling = startPolling(async () => {
       try {
         const result = (await rpc.get({})) as { usage?: Usage };
-        if (result?.usage) setUsage(result.usage);
+        setUsage(result?.usage);
       } finally {
         setLoaded(true);
       }

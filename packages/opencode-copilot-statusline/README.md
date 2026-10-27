@@ -40,7 +40,7 @@ The statusline shows premium requests; plans without a premium-request quota fal
 | Displayed quota reported as unlimited                                                                                                    | no finite quota                      | `Copilot ∞`   |
 | No successful fetch yet: first fetch running, not signed in, credential unresolvable or rejected, API unreachable or unexpected response | no data                              | `Copilot —`   |
 
-The countdown targets the monthly quota reset date. After one successful fetch, the statusline keeps the last values when a later fetch fails.
+The countdown targets the monthly quota reset date. After one successful fetch, the statusline keeps that account's last values when a later fetch fails; switching to an account without data shows `Copilot —`.
 
 ## 🩺 Troubleshooting
 
