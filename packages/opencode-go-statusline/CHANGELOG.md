@@ -4,7 +4,9 @@
 
 ## Unreleased
 
-_None yet._
+### Fixed
+
+- Round quota percentages to whole numbers and clamp them to 0–100%.
 
 ## 1.1.0 - 2026-10-03
 

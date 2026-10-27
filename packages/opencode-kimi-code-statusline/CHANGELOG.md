@@ -4,7 +4,10 @@
 
 ## Unreleased
 
-_None yet._
+### Fixed
+
+- Show the quota of the plan the session runs on when both the global and the CN plan are connected.
+- Keep showing one plan's quota when the other plan's host fails or times out.
 
 ## 1.1.0 - 2026-10-03
 
