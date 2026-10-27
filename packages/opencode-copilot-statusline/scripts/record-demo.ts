@@ -35,7 +35,7 @@ import { parseRecordDemoArgs, type RecordDemoCli } from "core/record-demo-cli";
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 const CLI: RecordDemoCli = {
-  defaultModel: { providerID: "github-copilot", id: "gpt-5-mini" },
+  defaultModel: { providerID: "github-copilot", id: "gpt-6-luna" },
   takes: [{ name: "demo", outputBasename: "demo", prompt: "Reply with exactly: ok" }],
 };
 

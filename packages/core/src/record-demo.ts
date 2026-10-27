@@ -79,7 +79,7 @@ export type DemoTake = {
 
 /** Per-package defaults for `record-demo.config.json`; all fields optional. */
 export type DemoConfig = {
-  /** Model to record with, as `provider/id` (e.g. `github-copilot/gpt-5-mini`). */
+  /** Model to record with, as `provider/id` (e.g. `github-copilot/gpt-6-luna`). */
   model?: string;
   /** Prompt to type; overrides the wrapper's default for every take. */
   prompt?: string;

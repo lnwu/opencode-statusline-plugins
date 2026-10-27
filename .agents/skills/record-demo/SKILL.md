@@ -101,7 +101,7 @@ passing the flag every time:
   <ms>` (default `180000`), `--dir <path>` (default `~/oc-demo`).
 - go and kimi: `--locale en|zh-CN|all` (default `all`); `--prompt` overrides
   both locales' default (en `Reply with exactly: ok`, zh-CN `请只回复：ok`).
-- copilot-only: `--model <provider/id>` (default `github-copilot/gpt-5-mini`);
+- copilot-only: `--model <provider/id>` (default `github-copilot/gpt-6-luna`);
   default prompt is `Reply with exactly: ok`.
 - Outputs (repo-only; `files: ["dist"]` keeps them out of the npm tarball):
   - go: `assets/demo.en.svg`, `assets/demo.zh-CN.svg` (+ matching `.cast`)
