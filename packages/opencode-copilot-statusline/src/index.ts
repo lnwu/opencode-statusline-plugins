@@ -85,12 +85,9 @@ export default Plugin.define({
 
     await ctx.rpc.register(UsageRpc, {
       get: async () => {
-        let connection: ConnectionInfo | undefined;
-        try {
-          connection = await ctx.integration.connection.active(INTEGRATION_ID);
-        } catch {
-          return {};
-        }
+        // A failing lookup throws, so the TUI keeps the last known usage.
+        const connection =
+          await ctx.integration.connection.active(INTEGRATION_ID);
         if (!connection) return {};
         const key = connectionKey(connection);
         connections.set(key, connection);

@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Correct the README's requirements and `Go —` troubleshooting, name the config files that take the `language` option, and note that `cli.json` takes precedence.
+
 ### Fixed
 
 - Round quota percentages to whole numbers and clamp them to 0–100%.

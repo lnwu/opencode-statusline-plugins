@@ -4,9 +4,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Correct the README's plan, examples, and `Kimi —` troubleshooting to match the per-plan quota, name the config files that take the `language` option, note that `cli.json` takes precedence, and link the changelog.
+
 ### Fixed
 
-- Show the quota of the plan the session runs on when both the global and the CN plan are connected.
+- Show the quota of the plan the session runs on when both the global and the China plan are connected.
 - Keep showing one plan's quota when the other plan's host fails or times out.
 
 ## 1.1.0 - 2026-10-03

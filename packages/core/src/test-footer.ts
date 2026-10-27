@@ -2,16 +2,8 @@
 // OpenTUI test renderer with a mocked plugin context and capture the footer
 // frame — no OpenCode, no tmux, no network.
 //
-// Tests must run with `bun test --conditions=browser`. Bun's default
-// resolution selects solid-js's server build, where `createEffect` never runs
-// and signals do not propagate, so the statusline would stay in its initial
-// state and `waitForText` would hang. The browser condition selects the
-// reactive build; `assertReactiveSolid` turns a missing flag into a clear
-// error.
-//
-// The built entry must be tested, not `src/`: `src` imports `core/*.tsx`
-// through the node_modules symlink, where OpenTUI's Solid transform is skipped
-// (the limitation that makes the published entries pre-compiled).
+// Requires `bun test --conditions=browser` and the built entry; the reasons
+// are in `packages/core/AGENTS.md` (Footer unit tests).
 import { PluginContextProvider, type Plugin } from "@opencode/plugin/tui";
 import { testRender } from "@opentui/solid";
 import {
@@ -35,8 +27,8 @@ export interface FooterTestOptions {
   /** Absolute path to the package's built `dist/tui.js`. */
   tuiEntry: string;
   /**
-   * Resolved value of the usage RPC's `get`. Omitted (or `{}`) renders the
-   * "no data" fallback.
+   * Resolved value of the usage RPC's `get`, or a function called on each
+   * poll. Omitted (or `{}`) renders the "no data" fallback.
    */
   rpcResult?: unknown;
   /** Model provider of the session; anything else hides the statusline. */
@@ -75,9 +67,14 @@ export async function setupFooterTest(
     location: undefined,
     theme: {},
     client: {
-      // The fake ignores the RPC definition and always answers with the
-      // caller's canned result.
-      rpc: () => ({ get: async () => options.rpcResult ?? {} }),
+      // The fake ignores the RPC definition and answers with the caller's
+      // canned result.
+      rpc: () => ({
+        get: async () =>
+          (typeof options.rpcResult === "function"
+            ? options.rpcResult()
+            : options.rpcResult) ?? {},
+      }),
     },
     ui: {
       slot: (candidate: FooterClaim) => {

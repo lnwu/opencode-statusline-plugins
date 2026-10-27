@@ -20,8 +20,8 @@ Display your Kimi For Coding (Kimi Code) subscription quota in the OpenCode TUI 
 
 ## 📋 Requirements
 
-- OpenCode@2
-- An active Kimi For Coding subscription connected to OpenCode (`opencode auth login kimi-code-plan-global`, or `kimi-code-plan-cn` for the kimi.com plan)
+- OpenCode newer than 2.0.0
+- An active Kimi For Coding subscription connected to OpenCode (`opencode auth login kimi-code-plan-global`, or `kimi-code-plan-cn` for the China plan)
 
 ## 🚀 Install
 
@@ -33,7 +33,7 @@ opencode plugin add opencode-kimi-code-statusline
 
 Labels follow your terminal locale by default: `zh*` locales show `5h / 周`, everything else shows `5h / Weekly`.
 
-Override it with the plugin's `language` option:
+Override it with the plugin's `language` option in the OpenCode config (`opencode.json` or `opencode.jsonc`):
 
 ```jsonc title="~/.config/opencode/opencode.jsonc"
 {
@@ -52,25 +52,27 @@ Override it with the plugin's `language` option:
 | `"en"`             | `5h / Weekly`                                           |
 | `"zh-CN"` / `"zh"` | `5h / 周`                                               |
 
+A `language` set for the plugin in `cli.json` takes precedence over the one in `opencode.json`.
+
 ## 📈 What the percentages mean
 
-| Window                                           | Source               | Example                    |
-| ------------------------------------------------ | -------------------- | -------------------------- |
-| Rolling 5-hour                                   | 5-hour rolling quota | `Kimi 5h 63%`              |
-| Weekly                                           | 7-day quota          | `Kimi 5h 63% · Weekly 18%` |
-| Not signed in, credential unresolvable, API down | no data              | `Kimi —`                   |
+| Case                                                                                                                                                            | Example      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Rolling 5-hour                                                                                                                                                  | `5h 63%`     |
+| Weekly                                                                                                                                                          | `Weekly 18%` |
+| No successful fetch yet for the session's plan: first fetch running, not signed in, credential unresolvable or rejected, API unreachable or unexpected response | `Kimi —`     |
 
-Both percentages are **used** percentages of their own window, and each countdown targets that window's reset time.
+Both percentages are **used** percentages of their own window, and each countdown targets that window's reset time. After one successful fetch, the statusline keeps the last values when a later fetch fails.
 
 ## 🩺 Troubleshooting
 
 - **The statusline never shows up** — it is hidden unless the session's model provider is `kimi-code-plan-global` or `kimi-code-plan-cn`. Switch to a Kimi For Coding model in the session.
-- **It shows `Kimi —` instead of numbers** — the Kimi For Coding credential could not be resolved, or the server plugin is disabled. Run `opencode auth login kimi-code-plan-global` (or `kimi-code-plan-cn` for the kimi.com plan) and check the plugin is enabled again.
-- **Global vs. China plan** — `kimi-code-plan-global` is the kimi.ai plan; `kimi-code-plan-cn` is the kimi.com plan. The plugin reads whichever credential is connected, so a single login is enough.
+- **It shows `Kimi —` instead of numbers** — no quota fetch has succeeded yet for the session's plan: the first fetch is still running, its credential could not be resolved or was rejected, its API could not be reached or returned an unexpected response, or the server plugin is disabled. Log in to the plan the session's model uses (`opencode auth login kimi-code-plan-global`, or `kimi-code-plan-cn` for the China plan) and wait up to a minute for the next refresh. If it persists, check that `opencode-kimi-code-statusline` is still listed under `plugins` in the OpenCode config (`opencode.json` or `opencode.jsonc`).
+- **Global vs. China plan** — `kimi-code-plan-global` is the global plan (`api.kimi.ai`); `kimi-code-plan-cn` is the China plan (`api.kimi.com`). The statusline shows the quota of the plan the current session uses, so connect that plan's credential.
 
 ## 📜 Changelog
 
-See the [releases](https://github.com/lnwu/opencode-statusline-plugins/releases) for the release history.
+See [CHANGELOG.md](https://github.com/lnwu/opencode-statusline-plugins/blob/main/packages/opencode-kimi-code-statusline/CHANGELOG.md) for the release history.
 
 ## 📄 License
 

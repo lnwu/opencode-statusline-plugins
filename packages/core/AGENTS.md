@@ -21,26 +21,24 @@ Verified against opencode > 2.0.0:
   isolation alone does not prevent collisions with a running service.
 - Credentials: V2 stores accounts in SQLite. `auth.json` is legacy import-only,
   and `opencode auth login` has no non-interactive key flag. The harness sets
-  `opencode service set env <credentialEnv>`, an environment connection the
-  plugin resolves to a `key` credential.
+  `opencode service set env <credentialName>` (default: `credentialEnv`), an
+  environment connection the plugin resolves to a `key` credential.
 - Env-connection names: `service set env <name> <value>` must use a name the
-  target integration declares (OpenCode Go: `OPENCODE_API_KEY`, GitHub Copilot:
-  `GITHUB_TOKEN`). Set `credentialName` when the environment variable the tests
-  read (`credentialEnv`) differs from the registered name; the copilot tests
-  read `COPILOT_GITHUB_TOKEN` and register `GITHUB_TOKEN`, so a developer's
-  unrelated `GITHUB_TOKEN` cannot be picked up by accident. The Copilot
-  provider accepts this env `key` connection for real model requests even
-  though its plugin only enables model syncing for OAuth credentials.
+  target integration declares. Set `credentialName` when the environment
+  variable the tests read (`credentialEnv`) differs from the registered name,
+  so an unrelated developer variable cannot be picked up by accident. Each
+  package's names are listed in the root `AGENTS.md` (Integration tests).
 - The plugin is loaded from the isolated _global_ plugin directory
   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`) as re-export shims pointing
-  at the built `dist/index.js` and `dist/tui.js`; project-scoped and
-  `opencode.json`-path plugins load but cannot reach their RPC, and a package
-  `plugins` entry relying on `exports` does not load at all (see #66).
+  at the built `dist/index.js` and `dist/tui.js`. A project-scoped plugin
+  (`.opencode/plugins/`) renders but cannot reach its RPC
+  (`RPC is unavailable`), and an `opencode.json` `plugins` path entry that
+  relies on the package `exports` does not load at all (see #66).
 - The test TUI receives inline CLI settings through
   `OPENCODE_CLI_CONFIG_CONTENT` that hide the sidebar and the tab strip
   (`session.sidebar: "hide"`, `tabs.enabled: false`), so the frame has no
   session-dependent panels and the footer has room for the full statusline at
-  160 columns.
+  the 160 columns the cases use.
 - Model readiness: models from the models.dev catalog register asynchronously
   after a fresh service starts, and a prompt sent before its model is
   registered fails with `ModelUnavailableError` (and no provider error on the
@@ -68,11 +66,12 @@ only its cases; it is the merge gate.
 Two non-obvious requirements:
 
 - Run the tests with `bun test --conditions=browser` (the package `test`
-  script already does). Bun's default resolution selects solid-js's server
-  build, where `createEffect` never runs and signals do not propagate, so the
-  statusline would stay in its initial state and `waitForText` would hang. The
-  browser condition selects the reactive build; `assertReactiveSolid` turns a
-  missing flag into a clear error.
+  script already does; seen on Bun 1.4.4 with solid-js 1.9.15). Bun's default
+  resolution selects solid-js's server build, where `createEffect` never runs
+  and signals do not propagate, so the statusline would stay in its initial
+  state and `waitForText` would hang. The browser condition selects the
+  reactive build; `assertReactiveSolid` turns a missing flag into a clear
+  error.
 - Test the built `dist/tui.js`, never `src/`: `src` imports `core/*.tsx`
   through the node_modules symlink, where the Solid transform is skipped — the
   same limitation that makes the published entries pre-compiled. The helper

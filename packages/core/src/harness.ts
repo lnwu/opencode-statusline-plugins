@@ -1,29 +1,9 @@
 // Integration-test harness factory: drives a real `opencode` TUI against a
 // plugin package's working tree and captures the rendered frame for assertions.
 //
-// Recipe verified against opencode > 2.0.0:
-//
-// - Credentials live in the server's SQLite database in V2. `opencode service
-//   set env <name> <value>` registers an environment connection that the
-//   plugin resolves to a `key` credential, so the statusline renders live
-//   quota without an interactive `/connect`. The name must match an env method
-//   the integration declares (OpenCode Go: `OPENCODE_API_KEY`; GitHub Copilot:
-//   `GITHUB_TOKEN`), which is why `credentialName` can differ from the
-//   environment variable the tests read (`credentialEnv`).
-// - The plugin is loaded from the isolated *global* plugin directory
-//   (`$XDG_CONFIG_HOME/opencode/plugins/<pluginDir>`). A project-scoped plugin
-//   renders but its RPC stays unreachable (`RPC is unavailable`), which leaves
-//   the statusline at its "no usage" fallback (tracked in #66).
-// - The managed background service binds a fixed default port (49374). Each
-//   case sets its own port so tests stay isolated and do not collide with a
-//   developer's running service.
-// - The TUI receives inline CLI settings (`OPENCODE_CLI_CONFIG_CONTENT`) that
-//   hide the sidebar and the tab strip, and the case root lives under a short
-//   `/tmp` path so the footer keeps its directory indicator short.
-// - Models from the models.dev catalog register asynchronously after a fresh
-//   service starts. A prompt sent before its model is registered fails with a
-//   `ModelUnavailableError` and no assistant message, so `sendPrompt` waits for
-//   the model to appear in `/api/model` first.
+// The recipe (isolation, credentials, plugin loading, CLI settings, model
+// readiness) and its pitfalls are documented in `packages/core/AGENTS.md`
+// (Harness recipe).
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { mustRun, run } from "./run";
