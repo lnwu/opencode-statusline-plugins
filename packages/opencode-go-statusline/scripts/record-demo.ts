@@ -16,8 +16,7 @@
 // `{ "model": "opencode-go/deepseek-v4.1-flash" }`); CLI flags override it.
 //
 // Requirements: `opencode`, `tmux`, `asciinema` (3+), and `terminal-record`
-// on PATH, and a logged-in
-// OpenCode Go credential.
+// on PATH, and a logged-in OpenCode Go credential.
 //
 // Usage:
 //   bun scripts/record-demo.ts                 # en and zh-CN

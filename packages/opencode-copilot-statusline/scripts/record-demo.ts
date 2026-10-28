@@ -14,8 +14,7 @@
 // `{ "model": "github-copilot/claude-sonnet-5" }`); CLI flags override it.
 //
 // Requirements: `opencode`, `tmux`, `asciinema` (3+), and `terminal-record`
-// on PATH, and a GitHub
-// Copilot credential connected to OpenCode
+// on PATH, and a GitHub Copilot credential connected to OpenCode
 // (`opencode auth login github-copilot`) whose plan supports the recorded
 // model — override `--model` if the default is rejected (e.g. Copilot Free
 // is entitled to `github-copilot/gpt-4o-mini-2024-07-18` only).
