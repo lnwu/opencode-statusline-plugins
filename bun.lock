@@ -39,7 +39,7 @@
     },
     "packages/opencode-go-statusline": {
       "name": "opencode-go-statusline",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dependencies": {
         "@opencode/plugin": ">2.0.0",
       },
@@ -59,7 +59,7 @@
     },
     "packages/opencode-kimi-code-statusline": {
       "name": "opencode-kimi-code-statusline",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "dependencies": {
         "@opencode/plugin": ">2.0.0",
       },
