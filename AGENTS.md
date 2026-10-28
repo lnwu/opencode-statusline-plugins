@@ -114,7 +114,8 @@ see Release).
 - `bun run changelog:check` — validate the bilingual changelogs; runs in CI.
 - `bun run test` — all package unit tests (core plus each statusline's footer
   and usage-mapping tests, and copilot's account tests; no credential needed;
-  CI runs the same per-package scripts). The integration tests are separate (see below).
+  CI runs the same per-package scripts). The integration tests are separate
+  (see below).
 - `bun run --filter core test` — core unit tests (language, theme, and usage
   cache); no credential needed.
 - `bun run --filter <pkg> test:e2e` — real-TUI integration tests per package:
@@ -142,7 +143,8 @@ the go and kimi tests additionally make a real model call), and the live
 credential:
 
 - `opencode-go-statusline`: `OPENCODE_API_KEY` (the `OPENCODE_GO_API_KEY`
-  repository secret in CI); makes a real call to `opencode-go/deepseek-v4.1-flash`.
+  repository secret in CI); makes a real call to
+  `opencode-go/deepseek-v4.1-flash`.
 - `opencode-copilot-statusline`: `COPILOT_GITHUB_TOKEN` (the
   `COPILOT_GITHUB_TOKEN` repository secret in CI; a device-flow GitHub token,
   any Copilot-enabled account works including Copilot Free). The cases fetch
@@ -238,11 +240,10 @@ CI.
   `cli.json` plugin options, then the server plugin's `options.language`
   relayed over the usage RPC, then the terminal locale. The values and the
   locale variable order are user-facing and live in the go and kimi package
-  READMEs (Language section). The TUI
-  plugin loader does not forward `opencode.json` plugin options to the `./tui`
-  entry, which is why the server relays them. This applies to the go and kimi
-  statuslines: the copilot statusline has no localizable text and ships no such
-  option.
+  READMEs (Language section). The TUI plugin loader does not forward
+  `opencode.json` plugin options to the `./tui` entry, which is why the server
+  relays them. This applies to the go and kimi statuslines: the copilot
+  statusline has no localizable text and ships no such option.
 - Published packages ship `dist/` only: `files: ["dist"]` and every `exports`
   entry points at a built bundle. `src/` is dev-only. `core` is inlined into
   each plugin's bundles.
