@@ -147,13 +147,16 @@ passing the flag every time:
 
 ## Gotchas
 
-- **`terminal-record` only renders**: it has no trimming, speed, or cursor
-  options, so `trimCast` edits the cast before rendering. Output events are
-  screen deltas, so the head before the first paint is **folded into one
-  zero-interval event** instead of dropped (dropping it loses screen state),
-  and only the tail after the alt-screen exit (opencode's exit frame) is
-  dropped. Intervals are divided by the speed factor; pauses are capped by
-  the header's `idle_time_limit`, which `terminal-record` honors.
+- **`terminal-record` only renders**: it has no trimming or cursor options,
+  so `trimCast` edits the cast before rendering. Output events are screen
+  deltas, so the head before the first paint (a blank window collapsed to one
+  row) is **folded into one zero-interval event** instead of dropped
+  (dropping it loses screen state), and only the tail after the alt-screen
+  exit is dropped (opencode's exit screen, which prints the session id).
+  Intervals are divided by the speed factor (1.25×, which also cuts the SVG
+  size by about 30%: `terminal-record` merges frames that fall close
+  together); pauses are capped by the header's `idle_time_limit`, which
+  `terminal-record` honors.
 - **The cursor is hidden by stripping `ESC[?25h`**: `terminal-record` always
   draws a block cursor while the terminal shows one (opencode 2.1.4 shows it
   in the composer).

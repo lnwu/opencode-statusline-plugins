@@ -466,7 +466,7 @@ async function recordTake(
       `export XDG_CONFIG_HOME=${shq(ctx.configHome)}`,
       `exec asciinema rec --quiet --overwrite --title ${WINDOW_TITLE} ` +
         `--idle-time-limit ${IDLE_TIME_LIMIT} ` +
-        `--command 'opencode --standalone' ${shq(rawCastPath)}`,
+        `--command 'exec opencode --standalone' ${shq(rawCastPath)}`,
       "",
     ];
     await writeFile(paneScript, paneLines.join("\n"));
@@ -548,9 +548,16 @@ async function recordTake(
     throw error;
   } finally {
     await run(["tmux", "-L", tmuxSocket, "kill-server"]);
-    // asciinema survives the pane's hangup (asciinema 3.2.1), so a take that
-    // failed before the TUI exited would leave it and opencode running.
-    await run(["pkill", "-f", `asciinema rec .*${rawCastPath}`]);
+    // asciinema ignores the pane's SIGHUP and SIGTERM (asciinema 3.2.1), so a
+    // take that failed before the TUI exited would leave it and opencode
+    // running; it exits once its command (opencode) does.
+    const recorder = await run([
+      "pgrep",
+      "-f",
+      `asciinema rec .*${rawCastPath}`,
+    ]);
+    for (const pid of recorder.stdout.split(/\s+/).filter(Boolean))
+      await run(["pkill", "-P", pid]);
     await deleteSessionsFor(canonicalDir);
     await rm(projectDir, { recursive: true, force: true });
     await restoreModel();
