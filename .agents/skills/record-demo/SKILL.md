@@ -1,18 +1,18 @@
 ---
 name: record-demo
-description: Record or refresh the animated README demo for a statusline package — a real OpenCode TUI in a fixed-size tmux pane, recorded with terminal-svg and rendered to an SVG. Use when the user asks to record, re-record, or update the demo animation (录制 / 更新演示动图).
+description: Record or refresh the animated README demo for a statusline package — a real OpenCode TUI in a fixed-size tmux pane, recorded with asciinema and rendered to an SVG with terminal-record. Use when the user asks to record, re-record, or update the demo animation (录制 / 更新演示动图).
 ---
 
 # Record the demo animation
 
 The package READMEs show the statusline with an animated SVG recorded from a
 real TUI session. `packages/core/src/record-demo.ts` (`recordDemo`) drives it:
-tmux runs the real TUI inside `terminal-svg rec` at a fixed 120×28, the prompt
-is typed with `tmux send-keys` so the animation shows it character by
-character, and the finished cast is rendered to an SVG (with the `.cast`
-master kept next to it). The take starts on opencode's home screen (logo +
-composer), and the animation opens at the first paint — the blank terminal and
-its collapsing window are skipped.
+tmux runs the real TUI inside `asciinema rec` at a fixed 120×28, the prompt is
+typed with `tmux send-keys` so the animation shows it character by character,
+and the finished cast is trimmed and rendered to an SVG with `terminal-record` (with the trimmed
+`.cast` master kept next to it). The take starts on opencode's home screen
+(logo + composer), and the animation opens at the first paint — the blank
+terminal and its collapsing window are skipped.
 
 `recordDemo` is always local and knows nothing about locale or footer label
 text: it takes a list of **takes** (`{ name, outputBasename, model, prompt,
@@ -31,29 +31,34 @@ builds its own take list and calls `recordDemo`:
   footer labels are bilingual (`5h / Weekly` vs `5h / 周`); output is
   `assets/demo.en.svg` / `assets/demo.zh-CN.svg`.
 
-Uses the developer's own OpenCode configuration and credentials — records
-whatever plugins the local configuration loads (i.e. the released versions).
+The recorded TUI is `opencode --standalone` (a private server; the
+developer's background service is untouched) with `XDG_CONFIG_HOME` pointed at
+a throw-away config home: a copy of the developer's `opencode.json` and
+`cli.json` **without the `cli.json` `plugins` list**, plus re-export shims that
+load the package's freshly built `dist/` as a global plugin. So the demo shows
+the working tree's statusline next to the built-in footer, even when the
+developer's own config disables that footer or swaps in personal TUI plugins.
+Credentials live in the data directory and are the developer's own.
 
 Per-developer defaults live in `<package>/record-demo.config.json`
 (gitignored): `{ "model": "provider/id", "prompt": "...", "cursor": "none",
-"theme": "github-dark", "tuiTheme": "aura", "replyTimeout": 180000, "dir":
+"theme": "dark", "tuiTheme": "aura", "replyTimeout": 180000, "dir":
 "~/oc-demo" }`. All fields are optional; CLI flags override the file, and
 invalid values fail loudly instead of recording the wrong thing.
 
-The recorder hides the cursor in the SVG by default (`--cursor block|bar|
-underline|none`, default `none`) and pins the take's model in opencode's
-global `model.json` for the duration of the take, restoring the original file
-afterwards: the home screen's model — and therefore which statusline renders
-— follows the globally most-recent model, not the project config. With
-`--tui-theme` it also hands the recorded TUI an inline CLI theme
-(`OPENCODE_CLI_CONFIG_CONTENT`; CLI settings have no project-local file), so
-the theme applies to the recording without touching the developer's own
-`cli.json`.
+The recorder hides the cursor in the SVG by default (`--cursor block|none`,
+default `none`) and pins the take's model in opencode's global `model.json`
+for the duration of the take, restoring the original file afterwards: the
+home screen's model — and therefore which statusline renders — follows the
+globally most-recent model, not the project config. With `--tui-theme` it
+writes the theme into the throw-away `cli.json`.
 
 ## Prerequisites
 
-- `opencode`, `tmux`, and `terminal-svg` on PATH
-  (`brew install russmckendrick/tap/terminal-svg`)
+- `opencode`, `tmux`, `asciinema` (3+, writes asciicast v3), and
+  `terminal-record` on PATH. Install `terminal-record` from its checkout with
+  `cargo install --path . --locked`; `TERMINAL_RECORD=<path>` overrides the
+  binary.
 - The package's own credential logged in locally: an OpenCode Go account for
   `opencode-go-statusline`, a GitHub Copilot account
   (`opencode auth login github-copilot`) for `opencode-copilot-statusline`,
@@ -63,26 +68,26 @@ the theme applies to the recording without touching the developer's own
 
 ## Record
 
-```sh
-# go: local, en and zh-CN
-bun run --filter opencode-go-statusline record:demo
+The committed demos use the `aura` TUI theme; pass `--tui-theme aura` (or set
+`tuiTheme`) to keep them consistent.
 
-# go: one language; custom prompt/theme
+```sh
+# go: en and zh-CN
+bun run --filter opencode-go-statusline record:demo -- --tui-theme aura
+
+# go: one language; custom prompt
 bun run --filter opencode-go-statusline record:demo -- --locale en
-bun scripts/record-demo.ts --prompt "Say hi in one short sentence." --theme dracula
+bun scripts/record-demo.ts --prompt "Say hi in one short sentence."
 
 # copilot: single demo
-bun run --filter opencode-copilot-statusline record:demo
+bun run --filter opencode-copilot-statusline record:demo -- --tui-theme aura
 
 # copilot: override the model if the default is rejected by your plan
 # (Copilot Free is entitled to gpt-4o-mini-2024-07-18 only)
 bun scripts/record-demo.ts --model github-copilot/gpt-4o-mini-2024-07-18
 
 # kimi: en and zh-CN
-bun run --filter opencode-kimi-code-statusline record:demo
-
-# any package: record with the aura TUI theme (terminal-svg chrome unchanged)
-bun scripts/record-demo.ts --tui-theme aura
+bun run --filter opencode-kimi-code-statusline record:demo -- --tui-theme aura
 ```
 
 There is no npm key needed. Each `record:demo` script builds `dist/` first.
@@ -95,11 +100,11 @@ passing the flag every time:
 ```
 
 - Common options (all packages): `--prompt "..."`,
-  `--theme <terminal-svg theme>` (default `github-dark`),
-  `--tui-theme <opencode theme>` (default: the developer's own),
-  `--cursor block|bar|underline|none` (default `none`), `--from <seconds>`
-  (defaults to the TUI's first paint), `--reply-timeout <ms>` (default
-  `180000`), `--dir <path>` (default `~/oc-demo`).
+  `--theme auto|dark|light` (window colors in `terminal-record`; default
+  `dark`), `--tui-theme <opencode theme>` (default: the developer's own),
+  `--cursor block|none` (default `none`), `--from <seconds>` (into the raw
+  recording; defaults to the TUI's first paint), `--reply-timeout <ms>`
+  (default `180000`), `--dir <path>` (default `~/oc-demo`).
 - go and kimi: `--locale en|zh-CN|all` (default `all`); `--prompt` overrides
   both locales' default (en `Reply with exactly: ok`, zh-CN `请只回复：ok`).
 - copilot-only: `--model <provider/id>` (default `github-copilot/gpt-6-luna`);
@@ -111,20 +116,23 @@ passing the flag every time:
 
 ## Verify
 
-- Open the SVG in a **browser** — Quick Look ignores the embedded fonts.
-- Check the window title (`opencode`, not the session id), the opening frame
-  (home screen with the logo), the prompt typing, the finished reply, and the
-  footer quota (go: `Go 5h … · Weekly … · Monthly …`, `周` / `月` for zh-CN;
-  copilot: `Copilot NN% (…)`; kimi: `Kimi 5h … · Weekly …`, `周` for zh-CN).
-  Confirm the model line matches the take's model and the palette matches the
+- Render single frames from the master and look at them in a browser (e.g.
+  `agent-browser open file://… && agent-browser screenshot …`):
+  `terminal-record assets/demo.en.cast --at 0 -o /tmp/first.svg` (opening
+  frame) and `terminal-record assets/demo.en.cast --static -o /tmp/last.svg`
+  (final frame).
+- Check the window title (`opencode`), the opening frame (home screen with the
+  logo), the prompt typing, the finished reply, and the footer quota (go:
+  `Go 5h … · Weekly … · Monthly …`, `周` / `月` for zh-CN; copilot:
+  `Copilot NN% (…)`; kimi: `Kimi 5h … · Weekly …`, `周` for zh-CN). Confirm
+  the model line matches the take's model and the palette matches the
   requested `--tui-theme`, that no cursor block is rendered, and grep the SVG
-  for `U+FFFD` (a corrupted glyph would show as a stray `?`).
+  for `U+FFFD`.
 - Eyeball for secrets and personal paths; the prompt and the model's reply are
-  recorded verbatim. The real local configuration is used — only the session
-  and its project directory are throw-away.
-- Re-render from the master without re-recording:
-  `terminal-svg assets/demo.en.cast --theme nord -o /tmp/demo.svg` (go) or
-  `terminal-svg assets/demo.cast --theme nord -o /tmp/demo.svg` (copilot).
+  recorded verbatim.
+- Re-render the animation from the master without re-recording:
+  `terminal-record assets/demo.en.cast -o /tmp/demo.svg`. The master is
+  already trimmed, sped up, and cursor-free, so this reproduces the SVG.
 
 ## Use in the README
 
@@ -139,19 +147,20 @@ passing the flag every time:
 
 ## Gotchas
 
-- **Dark themes only** for assets whose content paints its own dark
-  background. Light themes (`--theme-light github-light`) expose hairline
-  seams between the tiled background rects (see #65).
-- `terminal-svg rec` has no `--timeout`; the take ends when the recorded
-  command exits — the recorder sends `Escape` + `ctrl+c` to quit the TUI.
-- Never trim the head with `terminal-svg edit --cut`: the remaining events are
-  screen deltas and cannot rebuild state (black holes). Trim at render time
-  with `--from` / `--to`; the recorder opens the animation at the TUI's first
-  paint (home screen) and cuts at the alt-screen exit, so it neither starts on
-  a blank, collapsing window nor ends on opencode's exit frame. Both gaps are
-  tracked in #68.
-- `rec` titles the cast with the recorded command (session id included); the
-  recorder rewrites the header title and passes `--title opencode`.
+- **`terminal-record` only renders**: it has no trimming, speed, or cursor
+  options, so `trimCast` edits the cast before rendering. Output events are
+  screen deltas, so the head before the first paint is **folded into one
+  zero-interval event** instead of dropped (dropping it loses screen state),
+  and only the tail after the alt-screen exit (opencode's exit frame) is
+  dropped. Intervals are divided by the speed factor; pauses are capped by
+  the header's `idle_time_limit`, which `terminal-record` honors.
+- **The cursor is hidden by stripping `ESC[?25h`**: `terminal-record` always
+  draws a block cursor while the terminal shows one (opencode 2.1.4 shows it
+  in the composer).
+- **Ready marker**: the recorder waits for `ctrl+p` from the built-in footer
+  (`ctrl+p commands`). A developer `cli.json` with
+  `"plugins": ["-opencode.prompt.footer"]` hides it, which is one reason the
+  throw-away config drops the `plugins` list (seen on opencode 2.1.4).
 - **The home screen's model comes from `model.json`, not the project config**:
   opencode's home screen shows the globally most-recent model, so a stale
   entry (e.g. a Go model from an unrelated session) silently records the wrong
@@ -163,18 +172,8 @@ passing the flag every time:
   `record-demo.config.json` when your integration differs from the wrapper
   default; verify the model line in the frame (`Build · <model> <provider>`)
   after recording.
-- Tiled background rects are sealed with `shape-rendering="crispEdges"` after
-  rendering: their shared edges otherwise show the window background as a
-  hairline seam once the SVG is displayed at a fractional scale (README width,
-  browser zoom, HiDPI). The rounded window body stays smooth; see #65 to remove
-  the seal.
-- The cursor is hidden by default (`--cursor none`); pass `--cursor block` to
-  record it.
-- **terminal-svg corrupts multi-byte glyphs at its 1024-byte read boundary**
-  (see #64): the recorder repairs the cast after recording (`repairCast`,
-  warned in the log). Re-check the logo after re-recording and report upstream
-  if it ever changes shape.
-- `--no-embed-source` is deliberate: the SVG does not carry the cast in its
-  `<metadata>`; the `.cast` master is committed next to it.
+- The window chrome comes from `--theme`: under tmux, asciinema stores no
+  terminal palette in the cast, so `auto` falls back to `terminal-record`'s
+  built-in dark theme anyway (asciinema 3.2.1, tmux 3.8).
 - Keep prompts short and tool-free so the turn finishes cleanly without
   permission dialogs.

@@ -16,9 +16,11 @@ import {
   DEFAULT_CURSOR,
   DEFAULT_REPLY_TIMEOUT_MS,
   DEFAULT_THEME,
+  RENDER_THEMES,
   type CursorStyle,
   type DemoConfig,
   type DemoTake,
+  type RenderTheme,
 } from "./record-demo";
 import type { Env } from "./run";
 
@@ -44,7 +46,7 @@ export type RecordDemoCli = {
 
 export type RecordDemoArgs = {
   takes: DemoTake[];
-  theme: string;
+  theme: RenderTheme;
   tuiTheme?: string;
   cursor: CursorStyle;
   from?: number;
@@ -88,12 +90,13 @@ function usage(cli: RecordDemoCli, packageRoot: string): string {
             .join(", ")})`
       : `  --prompt <text>         Prompt to type (default: ${JSON.stringify(cli.takes[0]!.prompt)})`,
     `  --model <provider/id>   Model to record with (default: ${cli.defaultModel.providerID}/${cli.defaultModel.id})`,
-    `  --theme <name>          terminal-svg theme (default: ${DEFAULT_THEME})`,
+    `  --theme <name>          terminal-record colors: ${RENDER_THEMES.join("|")} (default: ${DEFAULT_THEME})`,
     "  --tui-theme <name>      OpenCode TUI theme for the recording (inline CLI settings;",
     "                          default: your own theme)",
-    "  --cursor <style>        Cursor shape in the SVG: block|bar|underline|none",
+    "  --cursor <style>        Cursor in the SVG: block|none",
     `                          (default: ${DEFAULT_CURSOR})`,
-    "  --from <seconds>        Start the animation here instead of the first paint",
+    "  --from <seconds>        Start the animation here (seconds into the raw recording)",
+    "                          instead of the first paint",
     `  --reply-timeout <ms>    How long to wait for a finished turn (default: ${DEFAULT_REPLY_TIMEOUT_MS})`,
     `  --dir <path>            Throw-away project directory (default: ${DEFAULT_DIR})`,
     "",
@@ -116,7 +119,7 @@ export function parseRecordDemoArgs(options: {
   const { cli, config, argv, packageRoot } = options;
   const locales = cli.takes.length > 1;
   let model = cli.defaultModel;
-  let theme = config.theme ?? DEFAULT_THEME;
+  let theme: RenderTheme = config.theme ?? DEFAULT_THEME;
   let tuiTheme = config.tuiTheme;
   let cursor = config.cursor ?? DEFAULT_CURSOR;
   let from: number | undefined;
@@ -152,24 +155,22 @@ export function parseRecordDemoArgs(options: {
         model = parseModel(need(argv, i, flag));
         i++;
         continue;
-      case "--theme":
-        theme = need(argv, i, flag);
+      case "--theme": {
+        const value = need(argv, i, flag);
+        if (!RENDER_THEMES.includes(value as RenderTheme))
+          throw new Error(`unknown theme: ${value}`);
+        theme = value as RenderTheme;
         i++;
         continue;
+      }
       case "--tui-theme":
         tuiTheme = need(argv, i, flag);
         i++;
         continue;
       case "--cursor": {
         const value = need(argv, i, flag);
-        if (
-          value !== "block" &&
-          value !== "bar" &&
-          value !== "underline" &&
-          value !== "none"
-        ) {
+        if (value !== "block" && value !== "none")
           throw new Error(`unknown cursor style: ${value}`);
-        }
         cursor = value;
         i++;
         continue;

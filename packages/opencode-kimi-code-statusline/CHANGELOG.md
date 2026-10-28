@@ -7,6 +7,7 @@
 ### Changed
 
 - Correct the README's plan, examples, and `Kimi —` troubleshooting to match the per-plan quota, name the config files that take the `language` option, note that `cli.json` takes precedence, and link the changelog.
+- Re-record the README demo animation.
 
 ### Fixed
 

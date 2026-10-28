@@ -1,7 +1,7 @@
 // Shared README demo recorder: drives a real OpenCode TUI in a fixed-size
-// tmux pane, wrapped in `terminal-svg rec`, and renders the finished cast to
-// an animated SVG (plus the asciicast master). Package wrappers
-// (`opencode-go-statusline/scripts/record-demo.ts`,
+// tmux pane, wrapped in `asciinema rec`, and renders the finished cast to an
+// animated SVG with `terminal-record` (plus the asciicast master). Package
+// wrappers (`opencode-go-statusline/scripts/record-demo.ts`,
 // `opencode-copilot-statusline/scripts/record-demo.ts`) configure the takes;
 // this module has no notion of locale or footer label text, only "what to
 // type, in what environment, into which output file".
@@ -10,11 +10,25 @@
 // credentials, in a throw-away project directory (default `~/oc-demo`,
 // deleted before and after each take); the throw-away session is deleted too.
 //
+// The recorded TUI runs `opencode --standalone` (a private server, so the
+// developer's background service is never touched) with `XDG_CONFIG_HOME`
+// pointed at a throw-away config home (`prepareConfigHome`): a copy of the
+// developer's `opencode.json` and `cli.json` (theme, `session.tps`, ...)
+// minus the `cli.json` `plugins` list, plus re-export shims that load the
+// package's built `dist/` as a global plugin, the same way the e2e harness
+// does. The demo therefore shows the working tree's statusline and the
+// built-in footer, never the developer's own TUI plugins. Credentials live in
+// the data directory and are shared.
+//
 // The take opens on opencode's home screen (logo + composer), types the
-// prompt, waits for the reply to finish, then quits; the cast is rendered
-// starting at the TUI's first paint so the animation does not open on the
-// blank/collapsing terminal. The cursor is hidden by default (`cursor:
-// "block"` to render it) so the README image stays clean.
+// prompt, waits for the reply to finish, then quits. `terminal-record` has no
+// trimming or cursor options, so the recorder edits the cast itself
+// (`trimCast`): everything before the TUI's first paint is folded into one
+// instant event (the screen state survives, the blank/collapsing terminal is
+// never shown), everything after the alt-screen exit is dropped, the timeline
+// is sped up, and the cursor is hidden by default (`cursor: "block"` to keep
+// it) so the README image stays clean. The edited cast is the committed
+// master, so re-rendering it reproduces the SVG.
 //
 // The home screen's model (and therefore which statusline renders) follows
 // the globally most-recent model in opencode's `model.json`, not the project
@@ -23,23 +37,10 @@
 // verified against the local `/api/model` catalog: when the pinned entry
 // names a provider/model the instance does not have, opencode silently falls
 // back to the next recent model, and the check fails loudly instead. A take
-// can likewise pin the TUI theme (`tuiTheme`): CLI settings like
-// `theme.name` have no project-local file, so the recorder hands the theme
-// to the recorded TUI as inline CLI settings
-// (`OPENCODE_CLI_CONFIG_CONTENT`) in the throw-away pane; the developer's own
-// global `cli.json` is never touched.
-//
-// Casts are repaired after recording: terminal-svg's PTY reader decodes each
-// 1024-byte read as UTF-8 independently, corrupting a multi-byte glyph that
-// straddles the boundary into `U+FFFD` (visible as a stray replacement glyph
-// in the logo). `repairCast` restores the glyph and drops the stray byte
-// (terminal-svg#4, tracked in #64). The rendered SVG is sealed against scaling
-// seams: `sealTiledRects` adds `shape-rendering="crispEdges"` to the tiled
-// background rects, whose shared edges would otherwise expose the window
-// background as a hairline seam at fractional display scales (terminal-svg#3,
-// tracked in #65).
-import { mkdir, realpath, rm, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
+// can likewise pin the TUI theme (`tuiTheme`), written into the throw-away
+// `cli.json`; the developer's own global `cli.json` is never touched.
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { run, type Env } from "./run";
 import type { ModelRef } from "./harness";
@@ -53,17 +54,21 @@ const HOME_SCREEN_PAUSE_MS = 700;
 const IDLE_TIME_LIMIT = 1.2;
 const SPEED = 1.25;
 export const DEFAULT_REPLY_TIMEOUT_MS = 180_000;
-export const DEFAULT_THEME = "github-dark";
+/** `terminal-record --theme`: `auto` uses the palette asciinema stored in the cast. */
+export const DEFAULT_THEME: RenderTheme = "dark";
 /** Default cursor style: no cursor keeps the README image clean. */
 export const DEFAULT_CURSOR: CursorStyle = "none";
-/** Window title shown in the SVG chrome (the cast header stores the command). */
+/** Window title shown in the SVG chrome (stored in the cast header). */
 const WINDOW_TITLE = "opencode";
 /** Home-screen footer hint; present once the TUI is ready for input. */
 const READY_MARKER = "ctrl+p";
 /** Assistant metadata line; present once a turn has finished. */
 const DONE_MARKER = "tok/s";
 
-export type CursorStyle = "block" | "bar" | "underline" | "none";
+/** `terminal-record` always draws a block cursor; `none` hides it in the cast. */
+export type CursorStyle = "block" | "none";
+export type RenderTheme = "auto" | "dark" | "light";
+export const RENDER_THEMES: RenderTheme[] = ["auto", "dark", "light"];
 
 /** One recorded take: a prompt, a model, and where the output lands. */
 export type DemoTake = {
@@ -84,8 +89,8 @@ export type DemoConfig = {
   /** Prompt to type; overrides the wrapper's default for every take. */
   prompt?: string;
   cursor?: CursorStyle;
-  theme?: string;
-  /** OpenCode TUI theme handed to the recorded TUI as inline CLI settings (e.g. "aura"); defaults to the developer's own theme. */
+  theme?: RenderTheme;
+  /** OpenCode TUI theme for the recording (e.g. "aura"); defaults to the developer's own theme. */
   tuiTheme?: string;
   /** How long to wait for a finished turn, in ms. */
   replyTimeout?: number;
@@ -94,6 +99,7 @@ export type DemoConfig = {
 };
 
 const CONFIG_FILENAME = "record-demo.config.json";
+const TERMINAL_RECORD = process.env.TERMINAL_RECORD ?? "terminal-record";
 
 /**
  * Load `<packageRoot>/record-demo.config.json` when present (the file is
@@ -132,22 +138,19 @@ export async function loadDemoConfig(packageRoot: string): Promise<DemoConfig> {
     config.prompt = raw.prompt;
   }
   if (raw.cursor !== undefined) {
-    if (
-      raw.cursor !== "block" &&
-      raw.cursor !== "bar" &&
-      raw.cursor !== "underline" &&
-      raw.cursor !== "none"
-    ) {
+    if (raw.cursor !== "block" && raw.cursor !== "none") {
       throw new Error(
-        `${path}: "cursor" must be block|bar|underline|none, got ${JSON.stringify(raw.cursor)}`,
+        `${path}: "cursor" must be block|none, got ${JSON.stringify(raw.cursor)}`,
       );
     }
     config.cursor = raw.cursor;
   }
   if (raw.theme !== undefined) {
-    if (typeof raw.theme !== "string" || raw.theme === "")
-      throw new Error(`${path}: "theme" must be a non-empty string`);
-    config.theme = raw.theme;
+    if (!RENDER_THEMES.includes(raw.theme as RenderTheme))
+      throw new Error(
+        `${path}: "theme" must be ${RENDER_THEMES.join("|")}, got ${JSON.stringify(raw.theme)}`,
+      );
+    config.theme = raw.theme as RenderTheme;
   }
   if (raw.tuiTheme !== undefined) {
     if (typeof raw.tuiTheme !== "string" || raw.tuiTheme === "")
@@ -178,41 +181,37 @@ export type RecordDemoOptions = {
   /** Plugin package root; takes are written under `<root>/assets`. */
   packageRoot: string;
   takes: DemoTake[];
-  theme?: string;
-  /** OpenCode TUI theme for the recording, passed as inline CLI settings; defaults to the developer's own theme. */
+  theme?: RenderTheme;
+  /** OpenCode TUI theme for the recording; defaults to the developer's own theme. */
   tuiTheme?: string;
   /** Cursor shape in the rendered SVG; defaults to `none` for a clean README image. */
   cursor?: CursorStyle;
-  /** Start the animation here instead of the TUI's first paint. */
+  /** Start the animation here (seconds into the raw recording) instead of the TUI's first paint. */
   from?: number;
   replyTimeoutMs?: number;
   /** Throw-away project directory; defaults to `~/oc-demo`. */
   dir?: string;
 };
 
-/** Verify `opencode`, `tmux`, and `terminal-svg` are on PATH; log their versions. */
+/** Verify `opencode`, `tmux`, `asciinema`, and `terminal-record` are on PATH; log their versions. */
 export async function assertRecordingTools(): Promise<void> {
   for (const tool of [
-    { name: "opencode", args: ["--version"] },
-    { name: "tmux", args: ["-V"] },
+    { name: "opencode", args: ["--version"], hint: "" },
+    { name: "tmux", args: ["-V"], hint: "" },
+    { name: "asciinema", args: ["--version"], hint: " (asciinema 3+)" },
+    {
+      name: TERMINAL_RECORD,
+      args: ["--version"],
+      hint: " (cargo install --path . --locked in a terminal-record checkout)",
+    },
   ]) {
     const result = await run([tool.name, ...tool.args], { timeoutMs: 30_000 });
     if (result.code !== 0)
       throw new Error(
-        `${tool.name} is required for recording (not found on PATH)`,
+        `${tool.name} is required for recording (not found on PATH)${tool.hint}`,
       );
     console.log(result.stdout.trim().split("\n")[0]);
   }
-  const terminalSvg = await run([
-    process.env.TERMINAL_SVG ?? "terminal-svg",
-    "--version",
-  ]);
-  if (terminalSvg.code !== 0) {
-    throw new Error(
-      "terminal-svg is required: brew install russmckendrick/tap/terminal-svg",
-    );
-  }
-  console.log(terminalSvg.stdout.trim());
 }
 
 /** Record every take in sequence, each in its own throw-away project directory. */
@@ -226,18 +225,71 @@ export async function recordDemo(options: RecordDemoOptions): Promise<void> {
 
   await assertModelsAvailable(options.takes.map((take) => take.model));
   await mkdir(assetsDir, { recursive: true });
-  for (const take of options.takes) {
-    console.log(`\n=== ${take.name} ===`);
-    await recordTake(take, {
-      assetsDir,
-      theme,
-      tuiTheme: options.tuiTheme,
-      cursor,
-      from: options.from,
-      replyTimeoutMs,
-      dir,
-    });
+  const configHome = await prepareConfigHome(packageRoot, options.tuiTheme);
+  try {
+    for (const take of options.takes) {
+      console.log(`\n=== ${take.name} ===`);
+      await recordTake(take, {
+        assetsDir,
+        configHome,
+        theme,
+        cursor,
+        from: options.from,
+        replyTimeoutMs,
+        dir,
+      });
+    }
+  } finally {
+    await rm(configHome, { recursive: true, force: true });
   }
+}
+
+/**
+ * Build the throw-away `XDG_CONFIG_HOME` for the recorded TUI: the
+ * developer's `opencode.json` and `cli.json` without its `plugins` list (which
+ * can disable the built-in footer or swap in the developer's own), and the
+ * package's built entries as a global plugin. Returns its path.
+ */
+async function prepareConfigHome(
+  packageRoot: string,
+  tuiTheme: string | undefined,
+): Promise<string> {
+  const entries = ["index.js", "tui.js"].map((name) =>
+    join(packageRoot, "dist", name),
+  );
+  for (const entry of entries) {
+    if (!(await Bun.file(entry).exists()))
+      throw new Error(`${entry} is missing — run \`bun run build\` first`);
+  }
+  const home = await mkdtemp(join(tmpdir(), "oc-demo-config-"));
+  const config = join(home, "opencode");
+  const plugin = join(config, "plugins", "statusline");
+  await mkdir(plugin, { recursive: true });
+  await writeFile(
+    join(plugin, "index.ts"),
+    `export { default } from "file://${entries[0]}"\n`,
+  );
+  await writeFile(
+    join(plugin, "tui.tsx"),
+    `export { default } from "file://${entries[1]}"\n`,
+  );
+
+  const userConfig = join(
+    process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config"),
+    "opencode",
+  );
+  const server = Bun.file(join(userConfig, "opencode.json"));
+  if (await server.exists())
+    await Bun.write(join(config, "opencode.json"), server);
+  const cliFile = Bun.file(join(userConfig, "cli.json"));
+  const cli = ((await cliFile.exists()) ? await cliFile.json() : {}) as Record<
+    string,
+    unknown
+  >;
+  delete cli.plugins;
+  if (tuiTheme) cli.theme = { ...(cli.theme as object), name: tuiTheme };
+  await writeFile(join(config, "cli.json"), JSON.stringify(cli, null, 2));
+  return home;
 }
 
 /**
@@ -341,8 +393,8 @@ async function recordTake(
   take: DemoTake,
   ctx: {
     assetsDir: string;
-    theme: string;
-    tuiTheme?: string;
+    configHome: string;
+    theme: RenderTheme;
     cursor: CursorStyle;
     from?: number;
     replyTimeoutMs: number;
@@ -370,7 +422,7 @@ async function recordTake(
   const tmuxSocket = `oc-demo-${process.pid}`;
   const svgPath = join(ctx.assetsDir, `${take.outputBasename}.svg`);
   const castPath = join(ctx.assetsDir, `${take.outputBasename}.cast`);
-  const rawSvgPath = join(projectDir, "recording.svg");
+  const rawCastPath = join(projectDir, "recording.cast");
   const paneScript = join(projectDir, "record.sh");
   const paneEnv: Env = take.env ?? {};
 
@@ -408,21 +460,15 @@ async function recordTake(
     await rm(castPath, { force: true });
 
     // Plain `opencode` starts on the home screen (logo + composer); the
-    // session is created by the first prompt and deleted in cleanup. CLI
-    // settings (like the TUI theme) have no project-local file, so a themed
-    // take is handed to the TUI as inline CLI settings in this throw-away
-    // script — the developer's own global `cli.json` stays untouched.
-    const paneLines = ["#!/usr/bin/env bash"];
-    if (ctx.tuiTheme) {
-      paneLines.push(
-        `export OPENCODE_CLI_CONFIG_CONTENT=${shq(JSON.stringify({ theme: { name: ctx.tuiTheme } }))}`,
-      );
-    }
-    paneLines.push(
-      `exec ${process.env.TERMINAL_SVG ?? "terminal-svg"} rec -c ${COLS} -r ${ROWS} ` +
-        `-o ${shq(rawSvgPath)} --cast ${shq(castPath)} -- opencode`,
+    // session is created by the first prompt and deleted in cleanup.
+    const paneLines = [
+      "#!/usr/bin/env bash",
+      `export XDG_CONFIG_HOME=${shq(ctx.configHome)}`,
+      `exec asciinema rec --quiet --overwrite --title ${WINDOW_TITLE} ` +
+        `--idle-time-limit ${IDLE_TIME_LIMIT} ` +
+        `--command 'opencode --standalone' ${shq(rawCastPath)}`,
       "",
-    );
+    ];
     await writeFile(paneScript, paneLines.join("\n"));
 
     await mustTmux(
@@ -454,7 +500,7 @@ async function recordTake(
     await waitFor(DONE_MARKER, ctx.replyTimeoutMs);
     await Bun.sleep(1_500);
 
-    // `rec` has no --timeout: quit the TUI and the recorder renders on exit.
+    // Quit the TUI; `asciinema rec` finishes the cast when its command exits.
     // Escape clears any autocomplete before ctrl+c exits (app_exit keybind).
     await mustTmux("send-keys", "-t", SESSION, "Escape");
     await Bun.sleep(300);
@@ -466,52 +512,33 @@ async function recordTake(
       await Bun.sleep(1_000);
     }
 
-    // The cast ends with opencode restoring the primary screen; cut there so
-    // the animation holds the finished conversation instead of the exit frame.
-    const repaired = await repairCast(castPath);
-    if (repaired > 0)
-      console.warn(
-        `repaired ${repaired} corrupted cast event(s) (terminal-svg chunk-boundary bug)`,
-      );
-    const exitAt = await altScreenExitTime(castPath);
-    if (exitAt === undefined)
+    // Open on opencode's home screen (skip the blank terminal and its
+    // collapsing window before the first paint) and end at the alt-screen
+    // exit, so the animation holds the finished conversation instead of the
+    // exit frame.
+    const raw = parseCast(await Bun.file(rawCastPath).text());
+    const from = ctx.from ?? firstPaintTime(raw.events);
+    const to = altScreenExitTime(raw.events);
+    if (to === undefined)
       console.warn(
         "no alt-screen exit found; rendering to the end of the cast",
       );
-    await retitleCast(castPath, WINDOW_TITLE);
+    await Bun.write(
+      castPath,
+      trimCast(raw, { from, to, hideCursor: ctx.cursor === "none" }),
+    );
 
-    // Skip the blank terminal (and its collapsing window) before the first
-    // paint: open on opencode's home screen.
-    const from = ctx.from ?? (await firstPaintTime(castPath));
-
-    const render = [
-      process.env.TERMINAL_SVG ?? "terminal-svg",
+    const rendered = await run([
+      TERMINAL_RECORD,
       castPath,
       "--theme",
       ctx.theme,
-      "--title",
-      WINDOW_TITLE,
-      "--idle-time-limit",
-      String(IDLE_TIME_LIMIT),
-      "--speed",
-      String(SPEED),
-      "--cursor",
-      ctx.cursor,
-      "--no-embed-source",
       "-o",
       svgPath,
-    ];
-    if (from !== undefined) render.push("--from", String(from));
-    if (exitAt !== undefined) render.push("--to", String(exitAt));
-    const rendered = await run(render);
+    ]);
     if (rendered.code !== 0)
       throw new Error(
-        `terminal-svg failed:\n${rendered.stderr || rendered.stdout}`,
-      );
-    const sealed = await sealTiledRects(svgPath);
-    if (sealed > 0)
-      console.log(
-        `sealed ${sealed} tiled background rect(s) for seam-free scaling (terminal-svg#3)`,
+        `terminal-record failed:\n${rendered.stderr || rendered.stdout}`,
       );
 
     console.log(`wrote ${svgPath}\n      ${castPath}`);
@@ -521,84 +548,13 @@ async function recordTake(
     throw error;
   } finally {
     await run(["tmux", "-L", tmuxSocket, "kill-server"]);
+    // asciinema survives the pane's hangup (asciinema 3.2.1), so a take that
+    // failed before the TUI exited would leave it and opencode running.
+    await run(["pkill", "-f", `asciinema rec .*${rawCastPath}`]);
     await deleteSessionsFor(canonicalDir);
     await rm(projectDir, { recursive: true, force: true });
     await restoreModel();
   }
-}
-
-/**
- * Repair a terminal-svg cast corrupted at a 1024-byte read boundary: its PTY
- * reader decodes each read as UTF-8 independently, so a multi-byte glyph
- * split across the boundary becomes `U+FFFD` at the end of one output event
- * plus a stray continuation byte (`U+FFFD`) at the start of the next — e.g.
- * `\x1b[12;63H\uFFFD` / `\uFFFD\x1b[12;64H`. Both sit in the same cell (the
- * continuation byte is never drawn), so the original glyph is the two
- * replacement characters in event order; substituting a `▀` and dropping the
- * leftover byte restores the screen. Upstream: russmckendrick/terminal-svg#4
- * (remove this once fixed; tracked in #64). Returns the number of repaired
- * pairs.
- */
-async function repairCast(castPath: string): Promise<number> {
-  const text = await Bun.file(castPath).text();
-  const lines = text.split("\n");
-  const events = new Map<number, [number, string, string]>();
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.trim() || !line.includes("\ufffd")) continue;
-    try {
-      const event = JSON.parse(line) as [number, string, string];
-      if (event[1] === "o" && typeof event[2] === "string")
-        events.set(i, event);
-    } catch {
-      // leave malformed lines untouched
-    }
-  }
-
-  let repaired = 0;
-  const drop = new Set<number>();
-  const indexes = [...events.keys()].sort((a, b) => a - b);
-  const consumed = new Set<number>();
-  for (const index of indexes) {
-    if (consumed.has(index)) continue;
-    const event = events.get(index)!;
-    const data = event[2];
-    if (!data.includes("\ufffd")) continue;
-    const nextIndex = index + 1;
-    const next = events.get(nextIndex);
-    if (
-      data.endsWith("\ufffd") &&
-      !data.endsWith("\ufffd\ufffd") &&
-      next &&
-      next[2].startsWith("\ufffd")
-    ) {
-      // The glyph split across two events: the trailing U+FFFD is its start,
-      // and the leading U+FFFD(s) of the next event are stray continuation
-      // bytes (the first pairs with the split, any further ones are orphans).
-      event[2] = data.replace(/\ufffd$/, "\u2580");
-      next[2] = next[2].replace(/^\ufffd+/, "");
-      consumed.add(nextIndex);
-      if (next[2] === "") {
-        drop.add(nextIndex);
-        events.delete(nextIndex);
-      } else {
-        lines[nextIndex] = JSON.stringify([next[0], next[1], next[2]]);
-      }
-      repaired++;
-    } else if (data.includes("\ufffd\ufffd")) {
-      // Both halves landed in one event.
-      event[2] = data.replaceAll("\ufffd\ufffd", "\u2580");
-      repaired++;
-    } else {
-      continue;
-    }
-    lines[index] = JSON.stringify([event[0], event[1], event[2]]);
-  }
-  if (repaired > 0) {
-    const kept = lines.filter((_, index) => !drop.has(index));
-    await Bun.write(castPath, kept.join("\n"));
-  }
-  return repaired;
 }
 
 /** Best effort: delete every session whose directory is the throw-away dir. */
@@ -623,24 +579,47 @@ async function deleteSessionsFor(directory: string): Promise<void> {
   }
 }
 
-/** Time of the last `ESC[?1049l` (leaving the alternate screen) in the cast. */
-async function altScreenExitTime(
-  castPath: string,
-): Promise<number | undefined> {
-  const text = await Bun.file(castPath).text();
-  let exitAt: number | undefined;
-  for (const line of text.split("\n")) {
-    const event = parseEvent(line);
-    if (!event) continue;
-    const [time, type, data] = event;
+type CastEvent = [interval: number, code: string, data: unknown];
+type Cast = { header: string; events: CastEvent[] };
+
+/** Split an asciicast v3 file into its header line and events. */
+function parseCast(text: string): Cast {
+  const [header = "", ...lines] = text.split("\n");
+  const events: CastEvent[] = [];
+  for (const line of lines) {
+    if (!line.trim() || line.startsWith("#")) continue;
+    const event = JSON.parse(line) as unknown;
     if (
-      type === "o" &&
+      Array.isArray(event) &&
+      typeof event[0] === "number" &&
+      typeof event[1] === "string"
+    )
+      events.push(event as CastEvent);
+  }
+  return { header, events };
+}
+
+/** v3 events carry the interval since the previous event; yield absolute times. */
+function* timed(events: CastEvent[]): Generator<[number, CastEvent]> {
+  let time = 0;
+  for (const event of events) {
+    time += event[0];
+    yield [time, event];
+  }
+}
+
+/** Time of the last `ESC[?1049l` (leaving the alternate screen). */
+function altScreenExitTime(events: CastEvent[]): number | undefined {
+  let exitAt: number | undefined;
+  for (const [time, [, code, data]] of timed(events)) {
+    if (
+      code === "o" &&
       typeof data === "string" &&
       data.includes("\u001b[?1049l")
     )
       exitAt = time;
   }
-  return exitAt === undefined ? undefined : Math.max(0, exitAt - 0.01);
+  return exitAt;
 }
 
 /**
@@ -648,67 +627,62 @@ async function altScreenExitTime(
  * explicit background (the blank terminal before it only uses default
  * colours). A short beat later the home screen is fully drawn.
  */
-async function firstPaintTime(castPath: string): Promise<number | undefined> {
-  const text = await Bun.file(castPath).text();
-  for (const line of text.split("\n")) {
-    const event = parseEvent(line);
-    if (!event) continue;
-    const [time, type, data] = event;
+function firstPaintTime(events: CastEvent[]): number | undefined {
+  for (const [time, [, code, data]] of timed(events)) {
     if (
-      type === "o" &&
+      code === "o" &&
       typeof data === "string" &&
       /\u001b\[(?:48;[25];|4[0-7]m)/.test(data)
-    ) {
+    )
       return time + 0.3;
-    }
   }
   return undefined;
 }
 
-function parseEvent(line: string): [number, string, unknown] | undefined {
-  if (!line.trim()) return undefined;
-  let event: unknown;
-  try {
-    event = JSON.parse(line);
-  } catch {
-    return undefined;
-  }
-  if (
-    !Array.isArray(event) ||
-    typeof event[0] !== "number" ||
-    typeof event[1] !== "string"
-  )
-    return undefined;
-  return event as [number, string, unknown];
-}
-
-/** Rewrite the cast header title (`rec` stores the command string there). */
-async function retitleCast(castPath: string, title: string): Promise<void> {
-  const text = await Bun.file(castPath).text();
-  const newline = text.indexOf("\n");
-  if (newline < 0) return;
-  const header = JSON.parse(text.slice(0, newline)) as { title?: string };
-  header.title = title;
-  await Bun.write(castPath, JSON.stringify(header) + text.slice(newline));
-}
+const SHOW_CURSOR = "\u001b[?25h";
+const HIDE_CURSOR = "\u001b[?25l";
 
 /**
- * Add `shape-rendering="crispEdges"` to the tiled background rects: their
- * shared edges sit at fractional coordinates, so with independent
- * antialiasing the window background shows through as a hairline seam once
- * the SVG is displayed at a fractional scale (e.g. scaled down in a README,
- * or on a HiDPI screen). Rects with `rx` (the rounded window body) keep their
- * smooth corners. Upstream: russmckendrick/terminal-svg#3 (remove this once
- * fixed; tracked in #65). Returns the number of rects patched.
+ * Cut the cast to `[from, to)` without losing screen state: output events are
+ * screen deltas, so the head is folded into a single zero-interval event
+ * instead of dropped, and only the tail after `to` (the exit frame) is
+ * dropped. Intervals are divided by `SPEED`; `hideCursor` removes every
+ * show-cursor sequence because `terminal-record` always draws a visible
+ * cursor.
  */
-async function sealTiledRects(svgPath: string): Promise<number> {
-  const svg = await Bun.file(svgPath).text();
-  let patched = 0;
-  const sealed = svg.replace(/<rect\b[^>]*>/g, (tag) => {
-    if (tag.includes("rx=") || tag.includes("shape-rendering=")) return tag;
-    patched++;
-    return tag.replace("<rect", `<rect shape-rendering="crispEdges"`);
-  });
-  if (patched > 0) await Bun.write(svgPath, sealed);
-  return patched;
+function trimCast(
+  cast: Cast,
+  options: { from?: number; to?: number; hideCursor: boolean },
+): string {
+  const { from = 0, to = Infinity, hideCursor } = options;
+  const out: CastEvent[] = [];
+  let head = hideCursor ? HIDE_CURSOR : "";
+  let last = from;
+  for (const [time, event] of timed(cast.events)) {
+    if (time >= to) break;
+    let [, code, data] = event;
+    if (hideCursor && code === "o" && typeof data === "string")
+      data = data.replaceAll(SHOW_CURSOR, "");
+    if (time < from) {
+      if (code === "o" && typeof data === "string") head += data;
+      else if (code === "r") {
+        // Keep a resize in order with the output around it.
+        if (head) out.push([0, "o", head]);
+        head = "";
+        out.push([0, code, data]);
+      }
+      continue;
+    }
+    if (head) {
+      out.push([0, "o", head]);
+      head = "";
+    }
+    out.push([Math.round(((time - last) / SPEED) * 1e6) / 1e6, code, data]);
+    last = time;
+  }
+  if (head) out.push([0, "o", head]);
+  return (
+    [cast.header, ...out.map((event) => JSON.stringify(event))].join("\n") +
+    "\n"
+  );
 }

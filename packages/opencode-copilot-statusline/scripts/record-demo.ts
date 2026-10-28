@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 // Record the README demo for `opencode-copilot-statusline` via the shared
 // core recorder (`core/src/record-demo.ts`): a real TUI in a fixed-size tmux
-// pane, wrapped in `terminal-svg rec`, driven with tmux send-keys, then
-// rendered to an animated SVG (plus the asciicast master). The statusline has
-// no localizable text, so there is a single take (no `demo.<locale>` split).
+// pane, wrapped in `asciinema rec`, driven with tmux send-keys, then
+// rendered by `terminal-record` to an animated SVG (plus the asciicast
+// master). The statusline has no localizable text, so there is a single take
+// (no `demo.<locale>` split).
 //
 // Uses the developer's own OpenCode configuration and Copilot credential, in
 // a throw-away project directory (default `~/oc-demo`, deleted before and
@@ -12,8 +13,8 @@
 // Defaults can live in `<package>/record-demo.config.json` (gitignored, e.g.
 // `{ "model": "github-copilot/claude-sonnet-5" }`); CLI flags override it.
 //
-// Requirements: `opencode`, `tmux`, and `terminal-svg`
-// (`brew install russmckendrick/tap/terminal-svg`) on PATH, and a GitHub
+// Requirements: `opencode`, `tmux`, `asciinema` (3+), and `terminal-record`
+// on PATH, and a GitHub
 // Copilot credential connected to OpenCode
 // (`opencode auth login github-copilot`) whose plan supports the recorded
 // model — override `--model` if the default is rejected (e.g. Copilot Free

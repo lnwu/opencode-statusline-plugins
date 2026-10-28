@@ -1,22 +1,23 @@
 #!/usr/bin/env bun
 // Record the README demo(s) for `opencode-kimi-code-statusline` via the shared
 // core recorder (`core/src/record-demo.ts`): a real TUI in a fixed-size tmux
-// pane, wrapped in `terminal-svg rec`, driven with tmux send-keys, then
-// rendered to an animated SVG (plus the asciicast master). Two takes, one per
-// locale, because the footer labels are bilingual (`5h / Weekly` vs
-// `5h / 周`) — the only difference between them is the pane's `LANG` and the
-// prompt.
+// pane, wrapped in `asciinema rec`, driven with tmux send-keys, then
+// rendered by `terminal-record` to an animated SVG (plus the asciicast
+// master). Two takes, one per locale, because the footer labels are bilingual
+// (`5h / Weekly` vs `5h / 周`) — the only difference between them is the
+// pane's `LANG` and the prompt.
 //
 // Uses the developer's own OpenCode configuration and Kimi For Coding
 // credential, in a throw-away project directory (default `~/oc-demo`, deleted
 // before and after each take); the throw-away sessions are deleted too.
-// Records whatever plugins the local configuration loads.
+// Records the working tree's build, not the plugins the local configuration
+// loads.
 //
 // Defaults can live in `<package>/record-demo.config.json` (gitignored, e.g.
 // `{ "model": "kimi-code-plan-global/k3" }`); CLI flags override it.
 //
-// Requirements: `opencode`, `tmux`, and `terminal-svg`
-// (`brew install russmckendrick/tap/terminal-svg`) on PATH, and a logged-in
+// Requirements: `opencode`, `tmux`, `asciinema` (3+), and `terminal-record`
+// on PATH, and a logged-in
 // Kimi For Coding credential (`opencode auth login kimi-code-plan-global`).
 //
 // Usage:
