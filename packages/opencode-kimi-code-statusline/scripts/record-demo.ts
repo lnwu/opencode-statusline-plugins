@@ -17,11 +17,13 @@
 // `{ "model": "kimi-code-plan-global/k3" }`); CLI flags override it.
 //
 // Requirements: `opencode`, `tmux`, `asciinema` (3+), and `terminal-record`
-// on PATH, and a logged-in
-// Kimi For Coding credential (`opencode auth login kimi-code-plan-global`).
+// on PATH, and a logged-in Kimi For Coding credential
+// (`opencode auth login kimi-code-plan-global`; for the China plan, log in to
+// `kimi-code-plan-cn` and pass `--model kimi-code-plan-cn/kimi-for-coding`).
 //
 // Usage:
 //   bun scripts/record-demo.ts                 # en and zh-CN
+//   bun scripts/record-demo.ts --model kimi-code-plan-cn/kimi-for-coding
 //   bun scripts/record-demo.ts --locale en
 //   bun scripts/record-demo.ts --prompt "Reply with: ok"
 //   bun scripts/record-demo.ts --cursor block  # render the TUI cursor
