@@ -62,7 +62,8 @@ writes the theme into the throw-away `cli.json`.
 - The package's own credential logged in locally: an OpenCode Go account for
   `opencode-go-statusline`, a GitHub Copilot account
   (`opencode auth login github-copilot`) for `opencode-copilot-statusline`,
-  a Kimi For Coding account (`opencode auth login kimi-code-plan-global`) for
+  a Kimi For Coding account (`opencode auth login kimi-code-plan-global`, or
+  `kimi-code-plan-cn` with a matching `--model`) for
   `opencode-kimi-code-statusline`
 - Network access (models.dev; every take makes a real model call)
 
@@ -88,6 +89,9 @@ bun scripts/record-demo.ts --model github-copilot/gpt-4o-mini-2024-07-18
 
 # kimi: en and zh-CN
 bun run --filter opencode-kimi-code-statusline record:demo -- --tui-theme aura
+
+# kimi: China plan (the committed demos were recorded this way)
+bun scripts/record-demo.ts --model kimi-code-plan-cn/kimi-for-coding
 ```
 
 There is no npm key needed. Each `record:demo` script builds `dist/` first.
@@ -99,7 +103,9 @@ passing the flag every time:
 { "model": "github-copilot/claude-sonnet-5", "tuiTheme": "aura" }
 ```
 
-- Common options (all packages): `--prompt "..."`,
+- Common options (all packages): `--prompt "..."`, `--model <provider/id>`
+  (defaults: go `opencode-go/deepseek-v4.1-flash`, copilot
+  `github-copilot/gpt-6-luna`, kimi `kimi-code-plan-global/kimi-for-coding`),
   `--theme auto|dark|light` (window colors in `terminal-record`; default
   `dark`), `--tui-theme <opencode theme>` (default: the developer's own),
   `--cursor block|none` (default `none`), `--from <seconds>` (into the raw
@@ -107,8 +113,7 @@ passing the flag every time:
   (default `180000`), `--dir <path>` (default `~/oc-demo`).
 - go and kimi: `--locale en|zh-CN|all` (default `all`); `--prompt` overrides
   both locales' default (en `Reply with exactly: ok`, zh-CN `请只回复：ok`).
-- copilot-only: `--model <provider/id>` (default `github-copilot/gpt-6-luna`);
-  default prompt is `Reply with exactly: ok`.
+- copilot: default prompt is `Reply with exactly: ok`.
 - Outputs (repo-only; `files: ["dist"]` keeps them out of the npm tarball):
   - go: `assets/demo.en.svg`, `assets/demo.zh-CN.svg` (+ matching `.cast`)
   - copilot: `assets/demo.svg` (+ `assets/demo.cast`)
